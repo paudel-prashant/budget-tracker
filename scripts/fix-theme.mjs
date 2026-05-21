@@ -1,4 +1,6 @@
-"use client";
+import fs from "fs";
+
+const content = `"use client";
 
 import { createTheme, type PaletteMode, type ThemeOptions } from "@mui/material/styles";
 
@@ -235,3 +237,7 @@ const getDesignTokens = (mode: PaletteMode) => ({
 
 export const createAppTheme = (mode: PaletteMode) =>
   createTheme(getDesignTokens(mode) as ThemeOptions);
+`;
+
+fs.writeFileSync("lib/theme.ts", content, "utf8");
+console.log("Fixed lib/theme.ts");
