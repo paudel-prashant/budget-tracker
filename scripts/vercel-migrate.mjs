@@ -1,6 +1,6 @@
 /**
- * Runs `prisma migrate deploy` for Vercel builds.
- * Uses DIRECT_URL (non-pooled). Neon pooler URLs are auto-converted for migrations only.
+ * Applies Prisma migrations (run locally or in CI — not during Vercel build).
+ * Uses a direct Neon URL; pooler URLs are auto-converted. Disables advisory lock to avoid P1002 on Neon.
  */
 import { spawnSync } from "node:child_process";
 
@@ -83,13 +83,15 @@ Example:
 
 const migrationDirectUrl = resolveDirectUrl();
 process.env.DIRECT_URL = migrationDirectUrl;
+// Neon/serverless: advisory locks often time out (P1002). Safe when only one migrate runs at a time.
+process.env.PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK = "1";
 
 console.log("[vercel-migrate] Applying migrations via direct connection...");
 
 const result = spawnSync("npx", ["prisma", "migrate", "deploy"], {
   stdio: "inherit",
   shell: true,
-  env: process.env,
+  env: { ...process.env },
 });
 
 if (result.status !== 0) {

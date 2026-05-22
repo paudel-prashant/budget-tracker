@@ -139,31 +139,29 @@ git push -u origin main
 
 ### Step 4 — Configure build
 
-`vercel.json` runs migrations then builds:
+`vercel.json` builds the app only (migrations are **not** run on Vercel — avoids Neon **P1002** advisory lock timeouts):
 
 ```json
 {
-  "buildCommand": "node scripts/vercel-migrate.mjs && npm run build"
+  "buildCommand": "npm run build"
 }
 ```
 
-**`DIRECT_URL` on Vercel:** Use the **direct** Neon/Vercel URL (host without `-pooler`). If you only set the pooler URL, the build script auto-derives a direct URL for migrations, but you should still configure `DIRECT_URL` correctly. A pooler-only setup can cause **P1002** (advisory lock timeout) in some cases.
-
-For **Neon** (not Vercel Postgres storage):
+**Vercel environment variables (Neon):**
 
 | Variable | Value |
 |----------|--------|
-| `DATABASE_URL` | Pooled connection string (`-pooler` host) |
-| `DIRECT_URL` | Direct connection string (same endpoint id, **no** `-pooler`) |
+| `DATABASE_URL` | Pooled URL (`ep-…-pooler.….neon.tech`) — used by the app |
+| `DIRECT_URL` | Same as `DATABASE_URL` is OK; migrate script derives the direct host |
 
-Apply migrations once from your machine if a deploy is stuck:
+**Before or after each deploy that includes new migrations**, run once from your machine:
 
 ```bash
 vercel env pull .env.local
 npm run db:migrate:deploy
 ```
 
-You can override the build command in the Vercel UI only if you keep the same steps.
+Do not override the Vercel build command to run `prisma migrate deploy` unless you use a dedicated migration job with a direct DB URL.
 
 ### Step 5 — Deploy
 
