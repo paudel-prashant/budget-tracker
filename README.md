@@ -139,19 +139,29 @@ git push -u origin main
 
 ### Step 4 — Configure build
 
-`vercel.json` is already set:
+`vercel.json` runs migrations then builds:
 
 ```json
 {
-  "buildCommand": "prisma generate && prisma migrate deploy && next build"
+  "buildCommand": "node scripts/vercel-migrate.mjs && npm run build"
 }
 ```
 
-This ensures:
+**`DIRECT_URL` is required on Vercel.** If it is missing or points at a pooler host (`-pooler`), `prisma migrate deploy` fails with **P1002** (advisory lock timeout). The build log will show a pooled hostname like `ep-xxx-pooler....neon.tech` — fix by setting `DIRECT_URL` to the **direct** Neon/Vercel URL (no `-pooler`).
 
-1. Prisma Client is generated
-2. Migrations run against production Postgres
-3. Next.js builds the app
+For **Neon** (not Vercel Postgres storage):
+
+| Variable | Value |
+|----------|--------|
+| `DATABASE_URL` | Pooled connection string (`-pooler` host) |
+| `DIRECT_URL` | Direct connection string (same endpoint id, **no** `-pooler`) |
+
+Apply migrations once from your machine if a deploy is stuck:
+
+```bash
+vercel env pull .env.local
+npm run db:migrate:deploy
+```
 
 You can override the build command in the Vercel UI only if you keep the same steps.
 
