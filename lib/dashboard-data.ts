@@ -8,6 +8,7 @@ import {
   buildBalanceOverTimeData,
   buildMonthlyIncomeExpenseData,
 } from "@/lib/chart-data";
+import { buildDashboardInsights } from "@/lib/dashboard-insights";
 import type { DashboardData, Transaction } from "@/lib/types";
 
 function serializeTransaction(transaction: {
@@ -54,16 +55,19 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
   const serialized = transactions.map(serializeTransaction);
   const totalIncome = incomeResult._sum.amount ?? 0;
   const totalExpenses = expenseResult._sum.amount ?? 0;
+  const summary = {
+    totalIncome,
+    totalExpenses,
+    netBalance: totalIncome - totalExpenses,
+  };
+  const monthlyChartData = buildMonthlyIncomeExpenseData(serialized);
 
   return {
-    summary: {
-      totalIncome,
-      totalExpenses,
-      netBalance: totalIncome - totalExpenses,
-    },
+    summary,
     balanceChartData: buildBalanceOverTimeData(serialized),
-    monthlyChartData: buildMonthlyIncomeExpenseData(serialized),
+    monthlyChartData,
     budgetHealth: budgetData.health,
     budgetWarnings: budgetData.warnings,
+    insights: buildDashboardInsights(serialized, summary, monthlyChartData),
   };
 }

@@ -5,16 +5,19 @@ import {
   Chip,
   IconButton,
   LinearProgress,
-  Paper,
   Stack,
   Tooltip,
   Typography,
+  alpha,
+  useTheme,
 } from "@mui/material";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import {
   getProgressBarColor,
   getProgressBarValue,
 } from "@/lib/budget-calculations";
+import { SurfaceCard } from "@/components/ui/surface-card";
+import { CARD_PADDING } from "@/lib/layout-constants";
 import { formatCurrency, formatPercent } from "@/lib/format";
 import type { BudgetWithProgress } from "@/lib/types";
 
@@ -24,6 +27,7 @@ type BudgetCardProps = {
 };
 
 export function BudgetCard({ budget, onDelete }: BudgetCardProps) {
+  const theme = useTheme();
   const progressColor = getProgressBarColor(budget.percentUsed, budget.isOverBudget);
   const progressValue = getProgressBarValue(budget.percentUsed);
 
@@ -39,20 +43,28 @@ export function BudgetCard({ budget, onDelete }: BudgetCardProps) {
       ? "warning"
       : "success";
 
+  const accent =
+    statusColor === "error"
+      ? theme.palette.error.main
+      : statusColor === "warning"
+        ? theme.palette.warning.main
+        : theme.palette.success.main;
+
   return (
-    <Paper
+    <SurfaceCard
+      hover
+      accentColor={accent}
       sx={{
-        p: { xs: 2.5, sm: 3 },
-        border: 1,
-        borderColor: budget.isOverBudget ? "error.main" : "divider",
+        p: CARD_PADDING,
         height: "100%",
         display: "flex",
         flexDirection: "column",
+        borderColor: budget.isOverBudget ? alpha(theme.palette.error.main, 0.4) : "divider",
       }}
     >
       <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
         <Box sx={{ minWidth: 0, flex: 1 }}>
-          <Typography variant="h6" noWrap>
+          <Typography variant="h6" fontWeight={700} noWrap>
             {budget.category}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
@@ -66,6 +78,7 @@ export function BudgetCard({ budget, onDelete }: BudgetCardProps) {
               size="small"
               aria-label={`Delete ${budget.category} budget`}
               onClick={() => onDelete(budget)}
+              sx={{ color: "text.secondary" }}
             >
               <DeleteOutlineOutlinedIcon fontSize="small" />
             </IconButton>
@@ -101,13 +114,16 @@ export function BudgetCard({ budget, onDelete }: BudgetCardProps) {
           sx={{
             height: 10,
             borderRadius: 5,
-            bgcolor: "action.hover",
+            bgcolor: alpha(theme.palette[progressColor].main, 0.12),
+            "& .MuiLinearProgress-bar": {
+              borderRadius: 5,
+            },
           }}
         />
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 1.25, display: "block", fontWeight: 500 }}>
           {formatPercent(budget.percentUsed)} of budget used
         </Typography>
       </Box>
-    </Paper>
+    </SurfaceCard>
   );
 }

@@ -16,6 +16,7 @@ import {
 import { CategorySelectField } from "@/components/ui/category-select-field";
 import { formTextFieldProps } from "@/lib/form-field";
 import { getCurrentMonthYear } from "@/lib/budget-calculations";
+import { FORM_STACK_SPACING } from "@/lib/layout-constants";
 
 type AddBudgetDialogProps = {
   open: boolean;
@@ -108,7 +109,7 @@ export function AddBudgetDialog({
       <form onSubmit={handleSubmit}>
         <DialogTitle>Add Category Budget</DialogTitle>
         <DialogContent dividers>
-          <Stack spacing={3} sx={{ py: 1 }}>
+          <Stack spacing={FORM_STACK_SPACING} sx={{ py: 1 }}>
             {error && <Alert severity="error">{error}</Alert>}
 
             <CategorySelectField

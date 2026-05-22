@@ -5,7 +5,7 @@ import { ResponsiveColumns } from "@/components/ui/responsive-columns";
 
 export default function DashboardLoading() {
   return (
-    <PageStack spacing={2.5}>
+    <PageStack>
       <PageHeader
         title="Dashboard"
         description="Overview of your financial activity and trends."

@@ -1,7 +1,9 @@
-import { Paper, Typography, Stack, Divider } from "@mui/material";
+import { Typography, Stack, Divider } from "@mui/material";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageStack } from "@/components/ui/page-stack";
+import { SurfaceCard } from "@/components/ui/surface-card";
 import { ImportExportSection } from "@/components/settings/import-export-section";
+import { CARD_PADDING } from "@/lib/layout-constants";
 
 export function SettingsView() {
   return (
@@ -10,10 +12,10 @@ export function SettingsView() {
         title="Settings"
         description="Configure your preferences and manage transaction data."
       />
-      <Paper elevation={0} sx={{ border: 1, borderColor: "divider", overflow: "hidden" }}>
+      <SurfaceCard sx={{ overflow: "hidden" }}>
         <Stack divider={<Divider />}>
-          <Stack sx={{ p: 3 }} spacing={0.5}>
-            <Typography variant="subtitle1" fontWeight={600}>
+          <Stack sx={{ p: CARD_PADDING }} spacing={0.75}>
+            <Typography variant="subtitle1">
               Appearance
             </Typography>
             <Typography variant="body2" color="text.secondary">
@@ -21,16 +23,16 @@ export function SettingsView() {
             </Typography>
           </Stack>
           <ImportExportSection />
-          <Stack sx={{ p: 3 }} spacing={0.5}>
-            <Typography variant="subtitle1" fontWeight={600}>
+          <Stack sx={{ p: CARD_PADDING }} spacing={0.75}>
+            <Typography variant="subtitle1">
               Currency
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Currency selection will be available in a future update. Exports use USD formatting.
             </Typography>
           </Stack>
-          <Stack sx={{ p: 3 }} spacing={0.5}>
-            <Typography variant="subtitle1" fontWeight={600}>
+          <Stack sx={{ p: CARD_PADDING }} spacing={0.75}>
+            <Typography variant="subtitle1">
               Notifications
             </Typography>
             <Typography variant="body2" color="text.secondary">
@@ -38,7 +40,7 @@ export function SettingsView() {
             </Typography>
           </Stack>
         </Stack>
-      </Paper>
+      </SurfaceCard>
     </PageStack>
   );
 }

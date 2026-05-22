@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { ChartCard } from "@/components/dashboard/chart-card";
+import { getChartGridStroke, getChartTooltipStyle } from "@/lib/chart-styles";
 import { formatCurrency, formatMonth } from "@/lib/format";
 import { CHART_AREA_HEIGHT } from "@/lib/layout-constants";
 import type { MonthlyChartPoint } from "@/lib/types";
@@ -41,50 +42,53 @@ export function MonthlyIncomeExpenseChart({
       isEmpty={isEmpty}
     >
       {!chartReady && !isEmpty ? (
-        <Skeleton variant="rounded" sx={{ width: "100%", height: CHART_AREA_HEIGHT }} />
+        <Skeleton variant="rounded" sx={{ width: "100%", height: CHART_AREA_HEIGHT, borderRadius: 2 }} />
       ) : (
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={chartData} margin={{ top: 8, right: 12, left: 4, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-          <XAxis
-            dataKey="label"
-            tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
-            axisLine={{ stroke: theme.palette.divider }}
-            tickMargin={8}
-          />
-          <YAxis
-            tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
-            axisLine={{ stroke: theme.palette.divider }}
-            tickFormatter={(value) => `$${value}`}
-            width={72}
-          />
-          <Tooltip
-            formatter={(value) =>
-              formatCurrency(typeof value === "number" ? value : Number(value ?? 0))
-            }
-            contentStyle={{
-              backgroundColor: theme.palette.background.paper,
-              border: `1px solid ${theme.palette.divider}`,
-              borderRadius: 8,
-            }}
-          />
-          <Legend />
-          <Bar
-            dataKey="income"
-            name="Income"
-            fill={theme.palette.success.main}
-            radius={[4, 4, 0, 0]}
-            maxBarSize={48}
-          />
-          <Bar
-            dataKey="expenses"
-            name="Expenses"
-            fill={theme.palette.error.main}
-            radius={[4, 4, 0, 0]}
-            maxBarSize={48}
-          />
-        </BarChart>
-      </ResponsiveContainer>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={chartData} margin={{ top: 12, right: 16, left: 4, bottom: 4 }} barGap={6}>
+            <CartesianGrid strokeDasharray="4 4" stroke={getChartGridStroke(theme)} vertical={false} />
+            <XAxis
+              dataKey="label"
+              tick={{ fill: theme.palette.text.secondary, fontSize: 11 }}
+              axisLine={false}
+              tickLine={false}
+              tickMargin={10}
+            />
+            <YAxis
+              tick={{ fill: theme.palette.text.secondary, fontSize: 11 }}
+              axisLine={false}
+              tickLine={false}
+              tickFormatter={(value) => `$${value}`}
+              width={76}
+            />
+            <Tooltip
+              formatter={(value) =>
+                formatCurrency(typeof value === "number" ? value : Number(value ?? 0))
+              }
+              contentStyle={getChartTooltipStyle(theme)}
+              cursor={{ fill: theme.palette.action.hover }}
+            />
+            <Legend
+              wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
+              iconType="circle"
+              iconSize={8}
+            />
+            <Bar
+              dataKey="income"
+              name="Income"
+              fill={theme.palette.success.main}
+              radius={[6, 6, 0, 0]}
+              maxBarSize={40}
+            />
+            <Bar
+              dataKey="expenses"
+              name="Expenses"
+              fill={theme.palette.error.main}
+              radius={[6, 6, 0, 0]}
+              maxBarSize={40}
+            />
+          </BarChart>
+        </ResponsiveContainer>
       )}
     </ChartCard>
   );

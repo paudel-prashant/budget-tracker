@@ -1,18 +1,20 @@
 import type { SxProps, Theme } from "@mui/material";
 import type { TextFieldProps } from "@mui/material";
 
-/** Uniform 56px outlined control height (MUI medium standard). */
+/** Uniform outlined control height aligned with theme (52px). */
 export const formFieldSx: SxProps<Theme> = {
   "& .MuiOutlinedInput-root": {
-    minHeight: 56,
+    minHeight: 52,
   },
   "& .MuiInputBase-input": {
-    padding: "16.5px 14px",
+    padding: "14px 16px",
+    fontSize: "0.9375rem",
     boxSizing: "border-box",
   },
   "& .MuiSelect-select": {
-    padding: "16.5px 14px",
-    minHeight: 23,
+    padding: "14px 16px",
+    minHeight: 22,
+    fontSize: "0.9375rem",
     display: "flex",
     alignItems: "center",
     boxSizing: "border-box",

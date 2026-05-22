@@ -5,6 +5,7 @@ import { BudgetHealthWidget } from "@/components/dashboard/budget-health-widget"
 import { BudgetWarnings } from "@/components/dashboard/budget-warnings";
 import { DashboardCharts } from "@/components/dashboard/dashboard-charts";
 import { DashboardGettingStarted } from "@/components/dashboard/dashboard-getting-started";
+import { DashboardInsightsWidget } from "@/components/dashboard/dashboard-insights-widget";
 import type { DashboardData } from "@/lib/types";
 
 type DashboardContentProps = {
@@ -18,7 +19,7 @@ export function DashboardContent({ data }: DashboardContentProps) {
     data.balanceChartData.length === 0;
 
   return (
-    <PageStack spacing={2.5}>
+    <PageStack>
       <PageHeader
         title="Dashboard"
         description="Overview of your financial activity and trends."
@@ -30,6 +31,7 @@ export function DashboardContent({ data }: DashboardContentProps) {
         year={data.budgetHealth.year}
       />
       <SummaryCards summary={data.summary} />
+      {data.insights && <DashboardInsightsWidget insights={data.insights} />}
       <BudgetHealthWidget health={data.budgetHealth} />
       <DashboardCharts
         balanceChartData={data.balanceChartData}

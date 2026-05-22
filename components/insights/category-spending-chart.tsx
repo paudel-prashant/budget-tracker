@@ -13,14 +13,13 @@ import {
   YAxis,
 } from "recharts";
 import { ChartCard } from "@/components/dashboard/chart-card";
+import { CHART_PALETTE, getChartGridStroke, getChartTooltipStyle } from "@/lib/chart-styles";
 import { formatCurrency } from "@/lib/format";
 import { CHART_AREA_HEIGHT } from "@/lib/layout-constants";
 
 type CategorySpendingChartProps = {
   data: Array<{ category: string; amount: number }>;
 };
-
-const BAR_COLORS = ["#1a73e8", "#34a853", "#f9ab00", "#ea4335", "#9334e6", "#5f6368"];
 
 export function CategorySpendingChart({ data }: CategorySpendingChartProps) {
   const theme = useTheme();
@@ -30,7 +29,7 @@ export function CategorySpendingChart({ data }: CategorySpendingChartProps) {
     setMounted(true);
   }, []);
 
-  const chartData = data.slice(0, 6);
+  const chartData = data.slice(0, 8);
   const isEmpty = chartData.length === 0;
 
   return (
@@ -41,45 +40,44 @@ export function CategorySpendingChart({ data }: CategorySpendingChartProps) {
       emptyMessage="No expense categories to chart yet."
     >
       {!mounted && !isEmpty ? (
-        <Skeleton variant="rounded" sx={{ width: "100%", height: CHART_AREA_HEIGHT }} />
+        <Skeleton variant="rounded" sx={{ width: "100%", height: CHART_AREA_HEIGHT, borderRadius: 2 }} />
       ) : (
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={chartData}
             layout="vertical"
-            margin={{ top: 8, right: 16, left: 4, bottom: 0 }}
+            margin={{ top: 8, right: 20, left: 4, bottom: 4 }}
           >
             <CartesianGrid
-              strokeDasharray="3 3"
-              stroke={theme.palette.divider}
+              strokeDasharray="4 4"
+              stroke={getChartGridStroke(theme)}
               horizontal={false}
             />
             <XAxis
               type="number"
-              tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
-              axisLine={{ stroke: theme.palette.divider }}
+              tick={{ fill: theme.palette.text.secondary, fontSize: 11 }}
+              axisLine={false}
+              tickLine={false}
               tickFormatter={(value) => `$${value}`}
             />
             <YAxis
               type="category"
               dataKey="category"
-              width={100}
-              tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
-              axisLine={{ stroke: theme.palette.divider }}
+              width={108}
+              tick={{ fill: theme.palette.text.secondary, fontSize: 11 }}
+              axisLine={false}
+              tickLine={false}
             />
             <Tooltip
               formatter={(value) =>
                 formatCurrency(typeof value === "number" ? value : Number(value ?? 0))
               }
-              contentStyle={{
-                backgroundColor: theme.palette.background.paper,
-                border: `1px solid ${theme.palette.divider}`,
-                borderRadius: 8,
-              }}
+              contentStyle={getChartTooltipStyle(theme)}
+              cursor={{ fill: theme.palette.action.hover }}
             />
-            <Bar dataKey="amount" name="Spent" radius={[0, 4, 4, 0]} maxBarSize={28}>
+            <Bar dataKey="amount" name="Spent" radius={[0, 6, 6, 0]} maxBarSize={32}>
               {chartData.map((_, index) => (
-                <Cell key={index} fill={BAR_COLORS[index % BAR_COLORS.length]} />
+                <Cell key={index} fill={CHART_PALETTE[index % CHART_PALETTE.length]} />
               ))}
             </Bar>
           </BarChart>

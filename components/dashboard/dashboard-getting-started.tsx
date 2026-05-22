@@ -4,7 +4,7 @@ import NextLink from "next/link";
 import { Box, Button, Paper, Stack, Typography, useTheme } from "@mui/material";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
-import { CARD_SHADOW } from "@/lib/layout-constants";
+import { CARD_PADDING, CARD_SHADOW } from "@/lib/layout-constants";
 
 export function DashboardGettingStarted() {
   const theme = useTheme();
@@ -13,7 +13,7 @@ export function DashboardGettingStarted() {
     <Paper
       elevation={0}
       sx={{
-        p: { xs: 2.5, sm: 3 },
+        p: CARD_PADDING,
         border: 1,
         borderColor: "divider",
         background:

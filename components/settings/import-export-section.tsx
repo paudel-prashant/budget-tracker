@@ -26,6 +26,7 @@ import dayjs, { type Dayjs } from "dayjs";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import FileUploadOutlinedIcon from "@mui/icons-material/FileUploadOutlined";
 import { formFieldSx, formTextFieldProps } from "@/lib/form-field";
+import { CARD_PADDING, FORM_STACK_SPACING } from "@/lib/layout-constants";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { useSnackbar } from "@/components/providers/snackbar-provider";
 import type { ImportPreviewResponse } from "@/lib/types";
@@ -201,7 +202,7 @@ export function ImportExportSection() {
 
   return (
     <>
-      <Stack sx={{ p: 3 }} spacing={2}>
+      <Stack sx={{ p: CARD_PADDING }} spacing={2.5}>
         <Box>
           <Typography variant="subtitle1" fontWeight={600}>
             Import / Export
@@ -242,7 +243,7 @@ export function ImportExportSection() {
         <DialogTitle>Export Transactions</DialogTitle>
         <DialogContent dividers>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Stack spacing={2.5} sx={{ py: 1 }}>
+            <Stack spacing={FORM_STACK_SPACING} sx={{ py: 1 }}>
               <Alert severity="info" variant="outlined">
                 Leave dates empty to export all transactions. Otherwise only transactions within
                 the range are included.

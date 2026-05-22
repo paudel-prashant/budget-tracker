@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
 import { formatCurrency, formatMonth, formatPercent } from "@/lib/format";
+import { CARD_PADDING } from "@/lib/layout-constants";
 import type { SpendingSpike } from "@/lib/types";
 
 type SpendingSpikesPanelProps = {
@@ -21,7 +22,7 @@ export function SpendingSpikesPanel({ spikes }: SpendingSpikesPanelProps) {
     <Paper
       elevation={0}
       sx={{
-        p: { xs: 2.5, sm: 3 },
+        p: CARD_PADDING,
         border: 1,
         borderColor: "divider",
         height: "100%",

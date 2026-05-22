@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { ChartCard } from "@/components/dashboard/chart-card";
+import { getChartGridStroke, getChartTooltipStyle } from "@/lib/chart-styles";
 import { formatCurrency, formatMonth } from "@/lib/format";
 import { CHART_AREA_HEIGHT } from "@/lib/layout-constants";
 import type { MonthlySavingsPoint } from "@/lib/types";
@@ -23,6 +24,7 @@ type SavingsTrendChartProps = {
 export function SavingsTrendChart({ data }: SavingsTrendChartProps) {
   const theme = useTheme();
   const [mounted, setMounted] = useState(false);
+  const gradientId = "savingsAreaGradient";
 
   useEffect(() => {
     setMounted(true);
@@ -42,55 +44,51 @@ export function SavingsTrendChart({ data }: SavingsTrendChartProps) {
       isEmpty={isEmpty}
     >
       {!mounted && !isEmpty ? (
-        <Skeleton variant="rounded" sx={{ width: "100%", height: CHART_AREA_HEIGHT }} />
+        <Skeleton variant="rounded" sx={{ width: "100%", height: CHART_AREA_HEIGHT, borderRadius: 2 }} />
       ) : (
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 8, right: 12, left: 4, bottom: 0 }}>
+          <AreaChart data={chartData} margin={{ top: 12, right: 16, left: 4, bottom: 4 }}>
             <defs>
-              <linearGradient id="savingsGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={theme.palette.primary.main} stopOpacity={0.35} />
-                <stop offset="95%" stopColor={theme.palette.primary.main} stopOpacity={0} />
+              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={theme.palette.success.main} stopOpacity={0.4} />
+                <stop offset="100%" stopColor={theme.palette.success.main} stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+            <CartesianGrid strokeDasharray="4 4" stroke={getChartGridStroke(theme)} vertical={false} />
             <XAxis
               dataKey="label"
-              tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
-              axisLine={{ stroke: theme.palette.divider }}
-              tickMargin={8}
+              tick={{ fill: theme.palette.text.secondary, fontSize: 11 }}
+              axisLine={false}
+              tickLine={false}
+              tickMargin={10}
             />
             <YAxis
-              tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
-              axisLine={{ stroke: theme.palette.divider }}
+              tick={{ fill: theme.palette.text.secondary, fontSize: 11 }}
+              axisLine={false}
+              tickLine={false}
               tickFormatter={(value) => `$${value}`}
-              width={72}
+              width={76}
             />
             <Tooltip
               formatter={(value, name) => {
                 const label =
-                  name === "savings"
-                    ? "Savings"
-                    : name === "income"
-                      ? "Income"
-                      : "Expenses";
+                  name === "savings" ? "Savings" : name === "income" ? "Income" : "Expenses";
                 return [
                   formatCurrency(typeof value === "number" ? value : Number(value ?? 0)),
                   label,
                 ];
               }}
-              contentStyle={{
-                backgroundColor: theme.palette.background.paper,
-                border: `1px solid ${theme.palette.divider}`,
-                borderRadius: 8,
-              }}
+              contentStyle={getChartTooltipStyle(theme)}
+              cursor={{ stroke: theme.palette.success.main, strokeWidth: 1, strokeDasharray: "4 4" }}
             />
             <Area
               type="monotone"
               dataKey="savings"
               name="savings"
-              stroke={theme.palette.primary.main}
-              fill="url(#savingsGradient)"
-              strokeWidth={2}
+              stroke={theme.palette.success.main}
+              fill={`url(#${gradientId})`}
+              strokeWidth={2.5}
+              activeDot={{ r: 6, strokeWidth: 2, stroke: theme.palette.background.paper }}
             />
           </AreaChart>
         </ResponsiveContainer>

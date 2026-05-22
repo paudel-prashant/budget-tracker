@@ -2,6 +2,7 @@
 
 import { Box } from "@mui/material";
 import type { ReactNode } from "react";
+import { SECTION_GAP } from "@/lib/layout-constants";
 
 export type ColumnBreakpoints = {
   xs?: number;
@@ -50,7 +51,7 @@ export function ResponsiveColumns({
   children,
   columns = { xs: 1, sm: 2, md: 3 },
   templateColumns,
-  gap = 2.5,
+  gap = SECTION_GAP,
 }: ResponsiveColumnsProps) {
   const equalColumns = {
     xs: `repeat(${resolveColumns(columns, "xs", 1)}, minmax(0, 1fr))`,

@@ -4,7 +4,12 @@ import { useState } from "react";
 import { Box, Container, Toolbar, useMediaQuery, useTheme } from "@mui/material";
 import { TopNav } from "@/components/layout/top-nav";
 import { Sidebar } from "@/components/layout/sidebar";
-import { APP_BAR_HEIGHT, DRAWER_WIDTH } from "@/lib/layout-constants";
+import {
+  APP_BAR_HEIGHT,
+  DRAWER_WIDTH,
+  PAGE_PADDING_X,
+  PAGE_PADDING_Y,
+} from "@/lib/layout-constants";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -53,9 +58,9 @@ export function AppShell({ children }: AppShellProps) {
             sx={{
               width: "100%",
               mx: "auto",
-              py: { xs: 2, sm: 3 },
-              pb: { xs: 3, sm: 4 },
-              px: { xs: 2, sm: 3 },
+              py: PAGE_PADDING_Y,
+              pb: { xs: 3.5, sm: 4.5, md: 5 },
+              px: PAGE_PADDING_X,
             }}
           >
             {children}

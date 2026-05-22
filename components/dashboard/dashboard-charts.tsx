@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Box, Paper, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { BalanceLineChart } from "@/components/dashboard/balance-line-chart";
 import { MonthlyIncomeExpenseChart } from "@/components/dashboard/monthly-income-expense-chart";
 import { ResponsiveColumns } from "@/components/ui/responsive-columns";
-import { CARD_SHADOW } from "@/lib/layout-constants";
+import { SurfaceCard } from "@/components/ui/surface-card";
+import { CARD_PADDING } from "@/lib/layout-constants";
 import type { BalanceChartPoint, MonthlyChartPoint } from "@/lib/types";
 
 type DashboardChartsProps = {
@@ -27,36 +28,28 @@ export function DashboardCharts({
 
   if (isEmpty) {
     return (
-      <Paper
-        elevation={0}
-        sx={{
-          p: { xs: 2, sm: 2.5 },
-          border: 1,
-          borderColor: "divider",
-          boxShadow: CARD_SHADOW,
-          width: "100%",
-        }}
-      >
-        <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 0.5 }}>
+      <SurfaceCard sx={{ p: CARD_PADDING, width: "100%" }}>
+        <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 0.5 }}>
           Trends & charts
         </Typography>
-        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+        <Typography variant="body2" color="text.secondary" display="block" sx={{ mb: 2.5 }}>
           Balance over time and monthly income vs expenses appear once you have transaction history.
         </Typography>
-        <ResponsiveColumns columns={{ xs: 1, sm: 2 }} gap={2}>
+        <ResponsiveColumns columns={{ xs: 1, sm: 2 }}>
           <Box
             sx={{
-              py: 2,
-              px: 2,
-              borderRadius: 2,
+              py: 3,
+              px: 2.5,
+              borderRadius: 2.5,
               border: 1,
               borderColor: "divider",
               borderStyle: "dashed",
-              bgcolor: "background.default",
+              bgcolor: "action.hover",
               width: "100%",
+              textAlign: "center",
             }}
           >
-            <Typography variant="body2" fontWeight={500}>
+            <Typography variant="body2" fontWeight={600}>
               Balance over time
             </Typography>
             <Typography variant="caption" color="text.secondary">
@@ -65,17 +58,18 @@ export function DashboardCharts({
           </Box>
           <Box
             sx={{
-              py: 2,
-              px: 2,
-              borderRadius: 2,
+              py: 3,
+              px: 2.5,
+              borderRadius: 2.5,
               border: 1,
               borderColor: "divider",
               borderStyle: "dashed",
-              bgcolor: "background.default",
+              bgcolor: "action.hover",
               width: "100%",
+              textAlign: "center",
             }}
           >
-            <Typography variant="body2" fontWeight={500}>
+            <Typography variant="body2" fontWeight={600}>
               Income vs expenses
             </Typography>
             <Typography variant="caption" color="text.secondary">
@@ -83,12 +77,12 @@ export function DashboardCharts({
             </Typography>
           </Box>
         </ResponsiveColumns>
-      </Paper>
+      </SurfaceCard>
     );
   }
 
   return (
-    <ResponsiveColumns columns={{ xs: 1, lg: 2 }} gap={2.5}>
+    <ResponsiveColumns columns={{ xs: 1, lg: 2 }}>
       <BalanceLineChart data={balanceChartData} chartReady={mounted} />
       <MonthlyIncomeExpenseChart data={monthlyChartData} chartReady={mounted} />
     </ResponsiveColumns>

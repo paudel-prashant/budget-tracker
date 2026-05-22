@@ -5,19 +5,19 @@ import {
   Box,
   Button,
   LinearProgress,
-  Paper,
   Stack,
   Typography,
   alpha,
 } from "@mui/material";
 import { ResponsiveColumns } from "@/components/ui/responsive-columns";
+import { CARD_PADDING } from "@/lib/layout-constants";
 import SavingsOutlinedIcon from "@mui/icons-material/SavingsOutlined";
 import {
   getProgressBarColor,
   getProgressBarValue,
 } from "@/lib/budget-calculations";
 import { formatCurrency, formatMonthYear, formatPercent } from "@/lib/format";
-import { CARD_SHADOW } from "@/lib/layout-constants";
+import { SurfaceCard } from "@/components/ui/surface-card";
 import type { BudgetHealth } from "@/lib/types";
 
 type BudgetHealthWidgetProps = {
@@ -36,16 +36,7 @@ export function BudgetHealthWidget({ health }: BudgetHealthWidgetProps) {
   ];
 
   return (
-    <Paper
-      elevation={0}
-      sx={{
-        p: { xs: 2, sm: 2.5 },
-        border: 1,
-        borderColor: "divider",
-        width: "100%",
-        boxShadow: CARD_SHADOW,
-      }}
-    >
+    <SurfaceCard sx={{ p: CARD_PADDING, width: "100%" }}>
       <Stack
         direction={{ xs: "column", sm: "row" }}
         alignItems={{ xs: "flex-start", sm: "center" }}
@@ -137,6 +128,6 @@ export function BudgetHealthWidget({ health }: BudgetHealthWidgetProps) {
           </Typography>
         </>
       )}
-    </Paper>
+    </SurfaceCard>
   );
 }

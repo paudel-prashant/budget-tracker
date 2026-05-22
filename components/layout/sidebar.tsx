@@ -26,6 +26,8 @@ type SidebarProps = {
 };
 
 function SidebarBrand() {
+  const theme = useTheme();
+
   return (
     <Box
       sx={{
@@ -33,29 +35,36 @@ function SidebarBrand() {
         px: 2.5,
         display: "flex",
         alignItems: "center",
-        gap: 1.25,
+        gap: 1.5,
         flexShrink: 0,
         borderBottom: 1,
         borderColor: "divider",
+        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, transparent 70%)`,
       }}
     >
       <Box
         sx={{
-          width: 36,
-          height: 36,
-          borderRadius: 2,
+          width: 40,
+          height: 40,
+          borderRadius: 2.5,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          bgcolor: (theme) => alpha(theme.palette.primary.main, 0.12),
-          color: "primary.main",
+          background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+          color: "primary.contrastText",
+          boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.4)}`,
         }}
       >
         <AccountBalanceWalletOutlinedIcon fontSize="small" />
       </Box>
-      <Typography variant="subtitle1" fontWeight={700} noWrap>
-        Finance Tracker
-      </Typography>
+      <Box sx={{ minWidth: 0 }}>
+        <Typography variant="subtitle1" fontWeight={700} noWrap letterSpacing="-0.02em">
+          Finance Tracker
+        </Typography>
+        <Typography variant="caption" color="text.secondary" noWrap>
+          Personal dashboard
+        </Typography>
+      </Box>
     </Box>
   );
 }
@@ -65,14 +74,14 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const theme = useTheme();
 
   return (
-    <List sx={{ px: 1.5, py: 1.5, flex: 1 }}>
+    <List sx={{ px: 1.5, py: 2, flex: 1 }}>
       {mainNavItems.map((item) => {
         const isActive =
           item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
         const Icon = item.icon;
 
         return (
-          <ListItem key={item.href} disablePadding sx={{ mb: 0.5 }}>
+          <ListItem key={item.href} disablePadding sx={{ mb: 0.75 }}>
             <ListItemButton
               component={Link}
               href={item.href}
@@ -80,12 +89,24 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
               selected={isActive}
               onClick={onNavigate}
               sx={{
-                borderRadius: 2,
-                py: 1,
-                px: 1.5,
+                borderRadius: 2.5,
+                py: 1.15,
+                px: 1.75,
+                position: "relative",
+                overflow: "hidden",
                 "&.Mui-selected": {
                   bgcolor: alpha(theme.palette.primary.main, 0.12),
                   color: "primary.main",
+                  "&::before": {
+                    content: '""',
+                    position: "absolute",
+                    left: 0,
+                    top: "20%",
+                    bottom: "20%",
+                    width: 3,
+                    borderRadius: 2,
+                    bgcolor: "primary.main",
+                  },
                   "&:hover": {
                     bgcolor: alpha(theme.palette.primary.main, 0.16),
                   },
@@ -94,22 +115,22 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
                   },
                 },
                 "&:hover": {
-                  bgcolor: "action.hover",
+                  bgcolor: alpha(theme.palette.action.hover, 0.08),
                 },
               }}
             >
               <ListItemIcon
                 sx={{
-                  minWidth: 36,
+                  minWidth: 38,
                   color: isActive ? "primary.main" : "text.secondary",
                 }}
               >
-                <Icon sx={{ fontSize: 20 }} />
+                <Icon sx={{ fontSize: 21 }} />
               </ListItemIcon>
               <ListItemText
                 primary={item.label}
                 primaryTypographyProps={{
-                  fontSize: "0.875rem",
+                  fontSize: "0.9rem",
                   fontWeight: isActive ? 600 : 500,
                 }}
               />

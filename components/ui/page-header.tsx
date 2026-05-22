@@ -1,4 +1,6 @@
-import { Box, Typography } from "@mui/material";
+"use client";
+
+import { Box, Typography, alpha, useTheme } from "@mui/material";
 
 type PageHeaderProps = {
   title: string;
@@ -7,6 +9,8 @@ type PageHeaderProps = {
 };
 
 export function PageHeader({ title, description, action }: PageHeaderProps) {
+  const theme = useTheme();
+
   return (
     <Box
       sx={{
@@ -14,11 +18,25 @@ export function PageHeader({ title, description, action }: PageHeaderProps) {
         flexDirection: { xs: "column", sm: "row" },
         alignItems: { xs: "stretch", sm: "flex-start" },
         justifyContent: "space-between",
-        gap: 2,
+        gap: 2.5,
+        pb: 0.5,
+        mb: 0.5,
       }}
     >
-      <Box sx={{ minWidth: 0 }}>
-        <Typography variant="h4" component="h1" gutterBottom={!!description}>
+      <Box sx={{ minWidth: 0, position: "relative", pl: { xs: 0, sm: 2.25 } }}>
+        <Box
+          sx={{
+            display: { xs: "none", sm: "block" },
+            position: "absolute",
+            left: 0,
+            top: 6,
+            bottom: 6,
+            width: 4,
+            borderRadius: 2,
+            background: `linear-gradient(180deg, ${theme.palette.primary.main}, ${alpha(theme.palette.primary.main, 0.35)})`,
+          }}
+        />
+        <Typography variant="h4" component="h1" sx={{ mb: description ? 1 : 0 }}>
           {title}
         </Typography>
         {description && (
@@ -28,7 +46,7 @@ export function PageHeader({ title, description, action }: PageHeaderProps) {
         )}
       </Box>
       {action && (
-        <Box sx={{ flexShrink: 0, width: { xs: "100%", sm: "auto" } }}>{action}</Box>
+        <Box sx={{ flexShrink: 0, width: { xs: "100%", sm: "auto" }, pt: { sm: 0.25 } }}>{action}</Box>
       )}
     </Box>
   );

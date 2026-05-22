@@ -20,6 +20,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { type Dayjs } from "dayjs";
 import { CategorySelectField } from "@/components/ui/category-select-field";
 import { formFieldSx, formTextFieldProps } from "@/lib/form-field";
+import { FORM_STACK_SPACING } from "@/lib/layout-constants";
 import type { RecurrenceFrequency, TransactionType } from "@/lib/types";
 
 type AddRecurringDialogProps = {
@@ -131,7 +132,7 @@ export function AddRecurringDialog({
         <DialogTitle>Add Recurring Transaction</DialogTitle>
         <DialogContent dividers sx={{ overflow: "visible" }}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Stack spacing={3} sx={{ py: 1 }}>
+            <Stack spacing={FORM_STACK_SPACING} sx={{ py: 1 }}>
               {error && <Alert severity="error">{error}</Alert>}
 
               <TextField

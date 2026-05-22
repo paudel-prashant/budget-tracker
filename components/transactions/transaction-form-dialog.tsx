@@ -6,10 +6,8 @@ import {
   Box,
   Button,
   CircularProgress,
-  Dialog,
   DialogActions,
   DialogContent,
-  DialogTitle,
   MenuItem,
   Stack,
   TextField,
@@ -19,7 +17,9 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { type Dayjs } from "dayjs";
 import { CategorySelectField } from "@/components/ui/category-select-field";
+import { DialogShell } from "@/components/ui/dialog-shell";
 import { formFieldSx, formTextFieldProps } from "@/lib/form-field";
+import { FORM_STACK_SPACING } from "@/lib/layout-constants";
 import type { Transaction, TransactionType } from "@/lib/types";
 
 type TransactionFormDialogProps = {
@@ -144,19 +144,22 @@ export function TransactionFormDialog({
   };
 
   return (
-    <Dialog
+    <DialogShell
       open={open}
       onClose={handleClose}
       fullWidth
       maxWidth="sm"
-      scroll="paper"
-      sx={{ "& .MuiDialog-paper": { m: { xs: 2, sm: 3 } } }}
+      title={isEdit ? "Edit Transaction" : "Add Transaction"}
+      subtitle={
+        isEdit
+          ? "Update the details below and save your changes."
+          : "Record a new income or expense for your ledger."
+      }
     >
       <form onSubmit={handleSubmit}>
-        <DialogTitle>{isEdit ? "Edit Transaction" : "Add Transaction"}</DialogTitle>
-        <DialogContent dividers sx={{ overflow: "visible" }}>
+        <DialogContent sx={{ overflow: "visible", borderBottom: 1, borderColor: "divider" }}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Stack spacing={3} sx={{ py: 1 }}>
+            <Stack spacing={FORM_STACK_SPACING} sx={{ py: 1 }}>
               {error && <Alert severity="error">{error}</Alert>}
 
               <TextField
@@ -248,6 +251,6 @@ export function TransactionFormDialog({
           </Button>
         </DialogActions>
       </form>
-    </Dialog>
+    </DialogShell>
   );
 }

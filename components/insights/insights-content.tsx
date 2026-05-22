@@ -1,4 +1,5 @@
-import { Box, Paper, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
+import { SurfaceCard } from "@/components/ui/surface-card";
 import { PageStack } from "@/components/ui/page-stack";
 import { ResponsiveColumns } from "@/components/ui/responsive-columns";
 import CategoryOutlinedIcon from "@mui/icons-material/CategoryOutlined";
@@ -8,6 +9,7 @@ import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
 import PaymentsOutlinedIcon from "@mui/icons-material/PaymentsOutlined";
 import SavingsOutlinedIcon from "@mui/icons-material/SavingsOutlined";
 import { PageHeader } from "@/components/ui/page-header";
+import { CARD_PADDING } from "@/lib/layout-constants";
 import { InsightCard } from "@/components/insights/insight-card";
 import { SavingsTrendChart } from "@/components/insights/savings-trend-chart";
 import { CategorySpendingChart } from "@/components/insights/category-spending-chart";
@@ -47,20 +49,15 @@ export function InsightsContent({ insights }: InsightsContentProps) {
       />
 
       {!hasData && (
-        <Paper
-          elevation={0}
-          sx={{
-            p: 4,
-            border: 1,
-            borderColor: "divider",
-            textAlign: "center",
-          }}
-        >
-          <InsightsOutlinedIcon sx={{ fontSize: 40, color: "text.secondary", mb: 1 }} />
-          <Typography variant="body1" color="text.secondary">
+        <SurfaceCard sx={{ p: { xs: 4, sm: 5 }, textAlign: "center" }}>
+          <InsightsOutlinedIcon sx={{ fontSize: 48, color: "primary.main", mb: 1.5, opacity: 0.9 }} />
+          <Typography variant="h6" gutterBottom>
+            Insights unlock with data
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 400, mx: "auto" }}>
             Add transactions to unlock personalized financial insights and charts.
           </Typography>
-        </Paper>
+        </SurfaceCard>
       )}
 
       <ResponsiveColumns columns={{ xs: 1, sm: 2, lg: 3 }}>
@@ -185,22 +182,14 @@ export function InsightsContent({ insights }: InsightsContentProps) {
 
       <ResponsiveColumns columns={{ xs: 1, md: 2 }}>
         <SpendingSpikesPanel spikes={insights.spendingSpikes} />
-          <Paper
-            elevation={0}
-            sx={{
-              p: { xs: 2.5, sm: 3 },
-              border: 1,
-              borderColor: "divider",
-              height: "100%",
-            }}
-          >
+          <SurfaceCard sx={{ p: { xs: 2.5, sm: 3 }, height: "100%" }}>
             <Typography variant="h6" fontWeight={600} sx={{ mb: 0.5 }}>
               Income vs Expenses
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
               Lifetime totals from your transaction history
             </Typography>
-            <ResponsiveColumns columns={{ xs: 2 }} gap={2}>
+            <ResponsiveColumns columns={{ xs: 2 }}>
               <Box>
                 <Typography variant="caption" color="text.secondary" display="block">
                   Total income
@@ -234,7 +223,7 @@ export function InsightsContent({ insights }: InsightsContentProps) {
                 {formatCurrency(insights.totalIncome - insights.totalExpenses)}
               </Typography>
             </Box>
-          </Paper>
+          </SurfaceCard>
       </ResponsiveColumns>
     </PageStack>
   );

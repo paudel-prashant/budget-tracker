@@ -4,13 +4,13 @@ import {
   Box,
   Chip,
   IconButton,
-  Paper,
   Stack,
   Tooltip,
   Typography,
 } from "@mui/material";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import { SurfaceCard } from "@/components/ui/surface-card";
 import { formatCurrency, formatDate } from "@/lib/format";
 import type { Transaction } from "@/lib/types";
 
@@ -30,18 +30,18 @@ export function TransactionMobileCard({
   const isIncome = transaction.type === "INCOME";
 
   return (
-    <Paper
-      elevation={0}
+    <SurfaceCard
+      hover
       sx={{
         p: 2,
-        border: 1,
-        borderColor: "divider",
+        borderLeft: 4,
+        borderLeftColor: isIncome ? "success.main" : "error.main",
       }}
     >
       <Stack spacing={1.5}>
         <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
           <Box sx={{ minWidth: 0 }}>
-            <Typography variant="subtitle1" fontWeight={600} noWrap>
+            <Typography variant="subtitle1" fontWeight={700} noWrap>
               {transaction.title}
             </Typography>
             <Typography variant="body2" color="text.secondary">
@@ -84,7 +84,7 @@ export function TransactionMobileCard({
           />
           <Typography
             variant="subtitle1"
-            fontWeight={600}
+            fontWeight={700}
             color={isIncome ? "success.main" : "error.main"}
           >
             {isIncome ? "+" : "-"}
@@ -92,6 +92,6 @@ export function TransactionMobileCard({
           </Typography>
         </Box>
       </Stack>
-    </Paper>
+    </SurfaceCard>
   );
 }

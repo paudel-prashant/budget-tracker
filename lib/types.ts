@@ -74,6 +74,23 @@ export type BudgetHealth = {
 
 export type TrendDirection = "up" | "down" | "flat";
 
+export type DashboardInsightTone = "positive" | "negative" | "neutral" | "warning";
+
+export type DashboardInsights = {
+  headline: string;
+  subline: string;
+  tone: DashboardInsightTone;
+  totalIncome: number;
+  totalExpenses: number;
+  netBalance: number;
+  topCategory: CategorySpendingInsight | null;
+  savingsTrendDirection: TrendDirection;
+  savingsTrendChangePercent: number | null;
+  incomeExpenseRatio: number | null;
+  latestMonthLabel: string | null;
+  latestMonthSavings: number | null;
+};
+
 export type CategorySpendingInsight = {
   category: string;
   amount: number;
@@ -141,4 +158,5 @@ export type DashboardData = {
   monthlyChartData: MonthlyChartPoint[];
   budgetHealth: BudgetHealth;
   budgetWarnings: BudgetWithProgress[];
+  insights: DashboardInsights | null;
 };

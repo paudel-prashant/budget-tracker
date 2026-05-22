@@ -6,18 +6,23 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
-import { Alert, Snackbar, useTheme } from "@mui/material";
+import { Alert, Box, Fade, useTheme } from "@mui/material";
+
+/** Fixed host id — also styled in globals.css so position never drifts. */
+export const APP_TOAST_HOST_ID = "app-toast-host";
 
 type SnackbarSeverity = "success" | "error" | "info";
 
+/** 2–3s auto-dismiss (errors slightly longer so messages can be read). */
 const AUTO_HIDE_MS: Record<SnackbarSeverity, number> = {
-  success: 2500,
+  success: 2800,
   info: 3000,
-  error: 5000,
+  error: 4000,
 };
 
 type SnackbarState = {
@@ -46,46 +51,93 @@ type SnackbarProviderProps = {
   children: ReactNode;
 };
 
-function AppSnackbar({
-  snackbar,
-  onClose,
-}: {
+type AppToastProps = {
   snackbar: SnackbarState;
-  onClose: (reason?: string) => void;
-}) {
+  onClose: () => void;
+};
+
+function AppToast({ snackbar, onClose }: AppToastProps) {
   const theme = useTheme();
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearHideTimer = useCallback(() => {
+    if (hideTimerRef.current) {
+      clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!snackbar.open) {
+      clearHideTimer();
+      return;
+    }
+
+    clearHideTimer();
+    hideTimerRef.current = setTimeout(() => {
+      onClose();
+    }, AUTO_HIDE_MS[snackbar.severity]);
+
+    return clearHideTimer;
+  }, [snackbar.open, snackbar.message, snackbar.severity, onClose, clearHideTimer]);
 
   return (
-    <Snackbar
-      open={snackbar.open}
-      autoHideDuration={AUTO_HIDE_MS[snackbar.severity]}
-      onClose={(_event, reason) => onClose(reason)}
-      anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      disablePortal
-      sx={{
-        position: "fixed",
-        left: "50%",
-        right: "auto",
-        top: "auto",
-        bottom: { xs: 20, sm: 28 },
-        transform: "translateX(-50%)",
-        zIndex: theme.zIndex.snackbar,
-      }}
-    >
-      <Alert
-        onClose={() => onClose()}
-        severity={snackbar.severity}
-        variant="filled"
+    <Fade in={snackbar.open} timeout={{ enter: 200, exit: 150 }}>
+      <Box
+        component="div"
         sx={{
           width: "100%",
-          maxWidth: { xs: "calc(100vw - 32px)", sm: 420 },
-          borderRadius: 2,
-          boxShadow: theme.shadows[6],
+          maxWidth: 420,
+          pointerEvents: "auto",
         }}
       >
-        {snackbar.message}
-      </Alert>
-    </Snackbar>
+        <Alert
+          onClose={onClose}
+          severity={snackbar.severity}
+          variant="filled"
+          elevation={6}
+          sx={{
+            width: "100%",
+            borderRadius: 2,
+            boxShadow: theme.shadows[8],
+          }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Box>
+    </Fade>
+  );
+}
+
+function ToastPortal({ snackbar, onClose }: AppToastProps) {
+  const theme = useTheme();
+
+  if (!snackbar.open) {
+    return null;
+  }
+
+  return createPortal(
+    <div
+      id={APP_TOAST_HOST_ID}
+      role="presentation"
+      style={{
+        position: "fixed",
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "flex-end",
+        padding: "24px 16px",
+        paddingBottom: "max(24px, env(safe-area-inset-bottom, 0px))",
+        zIndex: theme.zIndex.snackbar,
+        pointerEvents: "none",
+        boxSizing: "border-box",
+      }}
+    >
+      <AppToast snackbar={snackbar} onClose={onClose} />
+    </div>,
+    document.body
   );
 }
 
@@ -101,6 +153,10 @@ export function SnackbarProvider({ children }: SnackbarProviderProps) {
     setMounted(true);
   }, []);
 
+  const handleClose = useCallback(() => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  }, []);
+
   const showMessage = useCallback((message: string, severity: SnackbarSeverity) => {
     setSnackbar({ open: true, message, severity });
   }, []);
@@ -114,19 +170,10 @@ export function SnackbarProvider({ children }: SnackbarProviderProps) {
     [showMessage]
   );
 
-  const handleClose = (reason?: string) => {
-    if (reason === "clickaway") return;
-    setSnackbar((prev) => ({ ...prev, open: false }));
-  };
-
-  const snackbarElement = <AppSnackbar snackbar={snackbar} onClose={handleClose} />;
-
   return (
     <SnackbarContext.Provider value={value}>
       {children}
-      {mounted && typeof document !== "undefined"
-        ? createPortal(snackbarElement, document.body)
-        : null}
+      {mounted ? <ToastPortal snackbar={snackbar} onClose={handleClose} /> : null}
     </SnackbarContext.Provider>
   );
 }

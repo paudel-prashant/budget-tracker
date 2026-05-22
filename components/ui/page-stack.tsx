@@ -1,8 +1,9 @@
 "use client";
 
 import { Stack, type StackProps } from "@mui/material";
+import { PAGE_STACK_SPACING } from "@/lib/layout-constants";
 
-export const PAGE_STACK_SPACING = 2.5;
+export { PAGE_STACK_SPACING };
 
 type PageStackProps = StackProps;
 

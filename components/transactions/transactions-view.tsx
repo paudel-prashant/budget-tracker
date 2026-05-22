@@ -6,7 +6,6 @@ import {
   Button,
   Chip,
   IconButton,
-  Paper,
   Stack,
   Table,
   TableBody,
@@ -24,6 +23,7 @@ import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import { PageHeader } from "@/components/ui/page-header";
+import { SectionPanel } from "@/components/ui/section-panel";
 import { PageStack } from "@/components/ui/page-stack";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TransactionsTableSkeleton } from "@/components/ui/transactions-table-skeleton";
@@ -165,14 +165,10 @@ export function TransactionsView() {
         </Alert>
       )}
 
-      <Paper
-        elevation={0}
+      <SectionPanel
         sx={{
-          border: 1,
-          borderColor: "divider",
           opacity: refreshing ? 0.7 : 1,
           transition: "opacity 0.2s ease",
-          overflow: "hidden",
         }}
       >
         {loading ? (
@@ -186,7 +182,7 @@ export function TransactionsView() {
             onAction={openCreateDialog}
           />
         ) : isMobile ? (
-          <Stack spacing={1.5} sx={{ p: 2 }}>
+          <Stack spacing={1.75} sx={{ p: { xs: 2, sm: 2.5 } }}>
             {transactions.map((transaction) => (
               <TransactionMobileCard
                 key={transaction.id}
@@ -212,7 +208,14 @@ export function TransactionsView() {
               </TableHead>
               <TableBody>
                 {transactions.map((transaction) => (
-                  <TableRow key={transaction.id} hover>
+                  <TableRow
+                    key={transaction.id}
+                    hover
+                    sx={{
+                      "&:hover": { bgcolor: "action.hover" },
+                      "&:last-child td": { borderBottom: 0 },
+                    }}
+                  >
                     <TableCell>
                       <Typography variant="body2" fontWeight={500}>
                         {transaction.title}
@@ -275,7 +278,7 @@ export function TransactionsView() {
             </Table>
           </TableContainer>
         )}
-      </Paper>
+      </SectionPanel>
 
       <TransactionFormDialog
         open={formOpen}

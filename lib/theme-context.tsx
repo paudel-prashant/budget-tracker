@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -39,6 +40,10 @@ export function AppThemeProvider({ children }: AppThemeProviderProps) {
   }, []);
 
   const theme = useMemo(() => createAppTheme(mode), [mode]);
+
+  useEffect(() => {
+    document.body.setAttribute("data-mui-color-scheme", mode);
+  }, [mode]);
 
   const value = useMemo(
     () => ({ mode, toggleColorMode }),
