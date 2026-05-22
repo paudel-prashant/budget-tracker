@@ -13,8 +13,8 @@ import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import { useThemeMode } from "@/lib/theme-context";
-
-const DRAWER_WIDTH = 260;
+import { APP_BAR_HEIGHT, DRAWER_WIDTH } from "@/lib/layout-constants";
+import { UserMenu } from "@/components/layout/user-menu";
 
 type TopNavProps = {
   drawerWidth?: number;
@@ -33,43 +33,54 @@ export function TopNav({
     <AppBar
       position="fixed"
       color="inherit"
+      elevation={0}
       sx={{
         width: { xs: "100%", sm: `calc(100% - ${drawerWidth}px)` },
         ml: { xs: 0, sm: `${drawerWidth}px` },
         bgcolor: "background.paper",
+        borderBottom: 1,
+        borderColor: "divider",
       }}
     >
-      <Toolbar sx={{ gap: 1, minHeight: { xs: 56, sm: 64 } }}>
-        {isMobile && (
-          <IconButton
-            edge="start"
-            onClick={onMenuClick}
-            aria-label="open navigation menu"
-            color="inherit"
-          >
-            <MenuOutlinedIcon />
-          </IconButton>
-        )}
-        <AccountBalanceWalletOutlinedIcon color="primary" />
-        <Typography
-          variant="h6"
-          component="div"
-          sx={{
-            flexGrow: 1,
-            fontWeight: 600,
-            fontSize: { xs: "1rem", sm: "1.125rem" },
-          }}
-          noWrap
-        >
-          Finance Tracker
-        </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-          <Tooltip title={mode === "light" ? "Switch to dark mode" : "Switch to light mode"}>
-            <IconButton onClick={toggleColorMode} aria-label="toggle color mode" color="inherit">
-              {mode === "light" ? <DarkModeOutlinedIcon /> : <LightModeOutlinedIcon />}
+      <Toolbar
+        sx={{
+          minHeight: `${APP_BAR_HEIGHT}px !important`,
+          height: APP_BAR_HEIGHT,
+          px: { xs: 2, sm: 3 },
+          gap: 1,
+        }}
+      >
+        {isMobile ? (
+          <>
+            <IconButton
+              edge="start"
+              onClick={onMenuClick}
+              aria-label="open navigation menu"
+              color="inherit"
+              sx={{ mr: 0.5 }}
+            >
+              <MenuOutlinedIcon />
             </IconButton>
-          </Tooltip>
-        </Box>
+            <AccountBalanceWalletOutlinedIcon color="primary" sx={{ fontSize: 22 }} />
+            <Typography
+              variant="subtitle1"
+              component="div"
+              fontWeight={700}
+              noWrap
+              sx={{ flexGrow: 1 }}
+            >
+              Finance Tracker
+            </Typography>
+          </>
+        ) : (
+          <Box sx={{ flexGrow: 1 }} />
+        )}
+        <UserMenu />
+        <Tooltip title={mode === "light" ? "Switch to dark mode" : "Switch to light mode"}>
+          <IconButton onClick={toggleColorMode} aria-label="toggle color mode" color="inherit">
+            {mode === "light" ? <DarkModeOutlinedIcon /> : <LightModeOutlinedIcon />}
+          </IconButton>
+        </Tooltip>
       </Toolbar>
     </AppBar>
   );

@@ -1,4 +1,6 @@
 import { TransactionType } from "@prisma/client";
+import { getDashboardBudgetData } from "@/lib/budget-data";
+import { processRecurringTransactions } from "@/lib/recurring-processor";
 import { assertDatabaseUrl } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import {
@@ -27,19 +29,24 @@ function serializeTransaction(transaction: {
   };
 }
 
-export async function getDashboardData(): Promise<DashboardData> {
+export async function getDashboardData(userId: string): Promise<DashboardData> {
   assertDatabaseUrl();
 
-  const [transactions, incomeResult, expenseResult] = await Promise.all([
-    prisma.transaction.findMany({ orderBy: { date: "asc" } }),
+  await processRecurringTransactions(userId);
+
+  const userWhere = { userId };
+
+  const [transactions, incomeResult, expenseResult, budgetData] = await Promise.all([
+    prisma.transaction.findMany({ where: userWhere, orderBy: { date: "asc" } }),
     prisma.transaction.aggregate({
-      where: { type: TransactionType.INCOME },
+      where: { ...userWhere, type: TransactionType.INCOME },
       _sum: { amount: true },
     }),
     prisma.transaction.aggregate({
-      where: { type: TransactionType.EXPENSE },
+      where: { ...userWhere, type: TransactionType.EXPENSE },
       _sum: { amount: true },
     }),
+    getDashboardBudgetData(userId),
   ]);
 
   const serialized = transactions.map(serializeTransaction);
@@ -54,5 +61,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     },
     balanceChartData: buildBalanceOverTimeData(serialized),
     monthlyChartData: buildMonthlyIncomeExpenseData(serialized),
+    budgetHealth: budgetData.health,
+    budgetWarnings: budgetData.warnings,
   };
 }

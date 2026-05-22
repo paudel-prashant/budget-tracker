@@ -8,7 +8,10 @@ export function jsonError(message: string, status: number) {
 export function handleApiError(error: unknown) {
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     if (error.code === "P2025") {
-      return jsonError("Transaction not found", 404);
+      return jsonError("Record not found", 404);
+    }
+    if (error.code === "P2002") {
+      return jsonError("A budget already exists for this category and month", 409);
     }
   }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useTheme } from "@mui/material";
+import { Skeleton, useTheme } from "@mui/material";
 import {
   CartesianGrid,
   Line,
@@ -12,13 +12,15 @@ import {
 } from "recharts";
 import { ChartCard } from "@/components/dashboard/chart-card";
 import { formatChartDate, formatCurrency } from "@/lib/format";
+import { CHART_AREA_HEIGHT } from "@/lib/layout-constants";
 import type { BalanceChartPoint } from "@/lib/types";
 
 type BalanceLineChartProps = {
   data: BalanceChartPoint[];
+  chartReady?: boolean;
 };
 
-export function BalanceLineChart({ data }: BalanceLineChartProps) {
+export function BalanceLineChart({ data, chartReady = true }: BalanceLineChartProps) {
   const theme = useTheme();
 
   const chartData = data.map((point) => ({
@@ -26,12 +28,17 @@ export function BalanceLineChart({ data }: BalanceLineChartProps) {
     label: formatChartDate(point.date),
   }));
 
+  const isEmpty = chartData.length === 0;
+
   return (
     <ChartCard
       title="Balance Over Time"
       subtitle="Cumulative net balance by day"
-      isEmpty={chartData.length === 0}
+      isEmpty={isEmpty}
     >
+      {!chartReady && !isEmpty ? (
+        <Skeleton variant="rounded" sx={{ width: "100%", height: CHART_AREA_HEIGHT }} />
+      ) : (
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={chartData} margin={{ top: 8, right: 12, left: 4, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
@@ -69,6 +76,7 @@ export function BalanceLineChart({ data }: BalanceLineChartProps) {
           />
         </LineChart>
       </ResponsiveContainer>
+      )}
     </ChartCard>
   );
 }

@@ -30,3 +30,15 @@ export function formatMonth(monthKey: string): string {
     year: "numeric",
   }).format(value);
 }
+
+export function formatMonthYear(month: number, year: number): string {
+  const value = new Date(year, month - 1, 1);
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    year: "numeric",
+  }).format(value);
+}
+
+export function formatPercent(value: number): string {
+  return `${value.toFixed(1)}%`;
+}

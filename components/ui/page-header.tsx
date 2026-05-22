@@ -10,7 +10,6 @@ export function PageHeader({ title, description, action }: PageHeaderProps) {
   return (
     <Box
       sx={{
-        mb: { xs: 2.5, sm: 3.5 },
         display: "flex",
         flexDirection: { xs: "column", sm: "row" },
         alignItems: { xs: "stretch", sm: "flex-start" },

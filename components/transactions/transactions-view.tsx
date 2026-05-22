@@ -23,6 +23,7 @@ import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import { PageHeader } from "@/components/ui/page-header";
+import { PageStack } from "@/components/ui/page-stack";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TransactionsTableSkeleton } from "@/components/ui/transactions-table-skeleton";
 import { AddTransactionDialog } from "@/components/transactions/add-transaction-dialog";
@@ -113,7 +114,7 @@ export function TransactionsView() {
   };
 
   return (
-    <>
+    <PageStack>
       <PageHeader
         title="Transactions"
         description="View and manage your income and expenses."
@@ -143,6 +144,7 @@ export function TransactionsView() {
           borderColor: "divider",
           opacity: refreshing ? 0.7 : 1,
           transition: "opacity 0.2s ease",
+          overflow: "hidden",
         }}
       >
         {loading ? (
@@ -167,7 +169,7 @@ export function TransactionsView() {
             ))}
           </Stack>
         ) : (
-          <TableContainer sx={{ overflowX: "auto" }}>
+          <TableContainer sx={{ width: "100%", overflowX: "auto" }}>
             <Table size="medium">
               <TableHead>
                 <TableRow>
@@ -246,6 +248,6 @@ export function TransactionsView() {
         onClose={() => !deleting && setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}
       />
-    </>
+    </PageStack>
   );
 }

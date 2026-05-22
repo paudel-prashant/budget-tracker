@@ -77,6 +77,7 @@ const getDesignTokens = (mode: PaletteMode) => ({
       styleOverrides: {
         body: {
           scrollBehavior: "smooth",
+          overflowX: "hidden",
         },
       },
     },
@@ -100,10 +101,7 @@ const getDesignTokens = (mode: PaletteMode) => ({
     MuiListItemButton: {
       styleOverrides: {
         root: {
-          borderRadius: 10,
-          margin: "3px 10px",
-          paddingTop: 10,
-          paddingBottom: 10,
+          borderRadius: 8,
         },
       },
     },
@@ -124,6 +122,11 @@ const getDesignTokens = (mode: PaletteMode) => ({
     MuiPaper: {
       defaultProps: {
         elevation: 0,
+      },
+      styleOverrides: {
+        root: {
+          backgroundImage: "none",
+        },
       },
     },
     MuiTableCell: {

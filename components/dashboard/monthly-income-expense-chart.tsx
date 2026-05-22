@@ -1,6 +1,6 @@
 "use client";
 
-import { useTheme } from "@mui/material";
+import { Skeleton, useTheme } from "@mui/material";
 import {
   Bar,
   BarChart,
@@ -13,13 +13,18 @@ import {
 } from "recharts";
 import { ChartCard } from "@/components/dashboard/chart-card";
 import { formatCurrency, formatMonth } from "@/lib/format";
+import { CHART_AREA_HEIGHT } from "@/lib/layout-constants";
 import type { MonthlyChartPoint } from "@/lib/types";
 
 type MonthlyIncomeExpenseChartProps = {
   data: MonthlyChartPoint[];
+  chartReady?: boolean;
 };
 
-export function MonthlyIncomeExpenseChart({ data }: MonthlyIncomeExpenseChartProps) {
+export function MonthlyIncomeExpenseChart({
+  data,
+  chartReady = true,
+}: MonthlyIncomeExpenseChartProps) {
   const theme = useTheme();
 
   const chartData = data.map((point) => ({
@@ -27,12 +32,17 @@ export function MonthlyIncomeExpenseChart({ data }: MonthlyIncomeExpenseChartPro
     label: formatMonth(point.month),
   }));
 
+  const isEmpty = chartData.length === 0;
+
   return (
     <ChartCard
       title="Monthly Income vs Expenses"
       subtitle="Totals grouped by calendar month"
-      isEmpty={chartData.length === 0}
+      isEmpty={isEmpty}
     >
+      {!chartReady && !isEmpty ? (
+        <Skeleton variant="rounded" sx={{ width: "100%", height: CHART_AREA_HEIGHT }} />
+      ) : (
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData} margin={{ top: 8, right: 12, left: 4, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
@@ -75,6 +85,7 @@ export function MonthlyIncomeExpenseChart({ data }: MonthlyIncomeExpenseChartPro
           />
         </BarChart>
       </ResponsiveContainer>
+      )}
     </ChartCard>
   );
 }

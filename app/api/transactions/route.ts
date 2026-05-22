@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { assertDatabaseUrl } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
+import { requireApiUserId } from "@/lib/api-auth";
 import { handleApiError, jsonError } from "@/lib/api-utils";
+import { processRecurringTransactions } from "@/lib/recurring-processor";
 import { validateCreateTransactionBody } from "@/lib/transaction-validation";
 
 export const runtime = "nodejs";
@@ -9,7 +11,12 @@ export const runtime = "nodejs";
 export async function GET() {
   try {
     assertDatabaseUrl();
+    const auth = await requireApiUserId();
+    if (auth.unauthorized) return auth.unauthorized;
+
+    await processRecurringTransactions(auth.userId);
     const transactions = await prisma.transaction.findMany({
+      where: { userId: auth.userId },
       orderBy: { date: "desc" },
     });
 
@@ -22,6 +29,9 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     assertDatabaseUrl();
+    const auth = await requireApiUserId();
+    if (auth.unauthorized) return auth.unauthorized;
+
     let body: unknown;
 
     try {
@@ -37,7 +47,7 @@ export async function POST(request: NextRequest) {
     }
 
     const transaction = await prisma.transaction.create({
-      data: validation.data,
+      data: { ...validation.data, userId: auth.userId },
     });
 
     return NextResponse.json(transaction, { status: 201 });

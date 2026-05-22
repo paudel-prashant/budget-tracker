@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { MuiProvider } from "@/components/providers/mui-provider";
-import { AppShell } from "@/components/layout/app-shell";
+import { SessionProvider } from "@/components/providers/session-provider";
+import { AuthLayout } from "@/components/layout/auth-layout";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
@@ -17,7 +18,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
         <MuiProvider>
-          <AppShell>{children}</AppShell>
+          <SessionProvider>
+            <AuthLayout>{children}</AuthLayout>
+          </SessionProvider>
         </MuiProvider>
       </body>
     </html>

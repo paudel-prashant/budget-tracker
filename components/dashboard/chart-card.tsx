@@ -1,4 +1,8 @@
+"use client";
+
 import { Box, Paper, Typography } from "@mui/material";
+import { ChartEmptyState } from "@/components/ui/chart-empty-state";
+import { CARD_SHADOW, CHART_AREA_HEIGHT, CHART_CARD_MIN_HEIGHT } from "@/lib/layout-constants";
 
 type ChartCardProps = {
   title: string;
@@ -12,40 +16,37 @@ export function ChartCard({
   title,
   subtitle,
   isEmpty = false,
-  emptyMessage = "No data to display yet.",
+  emptyMessage,
   children,
 }: ChartCardProps) {
   return (
     <Paper
       elevation={0}
       sx={{
-        p: { xs: 2.5, sm: 3 },
+        p: { xs: 2, sm: 2.5 },
         border: 1,
         borderColor: "divider",
         height: "100%",
+        minHeight: isEmpty ? undefined : CHART_CARD_MIN_HEIGHT,
         display: "flex",
         flexDirection: "column",
+        boxShadow: CARD_SHADOW,
       }}
     >
-      <Typography variant="h6" fontWeight={600}>
-        {title}
-      </Typography>
-      {subtitle && (
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 2 }}>
-          {subtitle}
+      <Box sx={{ mb: isEmpty ? 1.5 : 2 }}>
+        <Typography variant="subtitle1" fontWeight={600}>
+          {title}
         </Typography>
-      )}
-      {!subtitle && <Box sx={{ mb: 2 }} />}
+        {subtitle && (
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.25 }}>
+            {subtitle}
+          </Typography>
+        )}
+      </Box>
       {isEmpty ? (
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ py: 6, textAlign: "center", flex: 1 }}
-        >
-          {emptyMessage}
-        </Typography>
+        <ChartEmptyState message={emptyMessage} compact />
       ) : (
-        <Box sx={{ width: "100%", height: { xs: 260, sm: 300 }, flex: 1 }}>{children}</Box>
+        <Box sx={{ width: "100%", height: CHART_AREA_HEIGHT, flexShrink: 0 }}>{children}</Box>
       )}
     </Paper>
   );

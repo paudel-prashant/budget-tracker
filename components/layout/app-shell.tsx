@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { Box, Container, Toolbar, useMediaQuery, useTheme } from "@mui/material";
 import { TopNav } from "@/components/layout/top-nav";
-import { Sidebar, DRAWER_WIDTH } from "@/components/layout/sidebar";
+import { Sidebar } from "@/components/layout/sidebar";
+import { APP_BAR_HEIGHT, DRAWER_WIDTH } from "@/lib/layout-constants";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -15,34 +16,51 @@ export function AppShell({ children }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh" }}>
-      <TopNav
-        drawerWidth={DRAWER_WIDTH}
-        isMobile={isMobile}
-        onMenuClick={() => setMobileOpen(true)}
-      />
-      <Sidebar
-        mobileOpen={mobileOpen}
-        onMobileClose={() => setMobileOpen(false)}
-      />
+    <Box sx={{ display: "flex", minHeight: "100dvh", bgcolor: "background.default" }}>
+      <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
+
       <Box
-        component="main"
         sx={{
-          flexGrow: 1,
+          flex: 1,
+          minWidth: 0,
+          display: "flex",
+          flexDirection: "column",
           width: { xs: "100%", sm: `calc(100% - ${DRAWER_WIDTH}px)` },
-          bgcolor: "background.default",
         }}
       >
-        <Toolbar />
-        <Container
-          maxWidth="lg"
+        <TopNav
+          drawerWidth={DRAWER_WIDTH}
+          isMobile={isMobile}
+          onMenuClick={() => setMobileOpen(true)}
+        />
+
+        <Toolbar
+          sx={{ minHeight: `${APP_BAR_HEIGHT}px !important`, height: APP_BAR_HEIGHT, flexShrink: 0 }}
+        />
+
+        <Box
+          component="main"
           sx={{
-            py: { xs: 2.5, sm: 3.5 },
-            px: { xs: 2, sm: 3 },
+            flex: 1,
+            width: "100%",
+            display: "flex",
+            justifyContent: "center",
           }}
         >
-          {children}
-        </Container>
+          <Container
+            maxWidth="lg"
+            disableGutters={false}
+            sx={{
+              width: "100%",
+              mx: "auto",
+              py: { xs: 2, sm: 3 },
+              pb: { xs: 3, sm: 4 },
+              px: { xs: 2, sm: 3 },
+            }}
+          >
+            {children}
+          </Container>
+        </Box>
       </Box>
     </Box>
   );
