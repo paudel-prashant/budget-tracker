@@ -15,10 +15,10 @@ import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined
 import {
   getProgressBarColor,
   getProgressBarValue,
-} from "@/lib/budget-calculations";
-import { SurfaceCard } from "@/components/ui/surface-card";
-import { CARD_PADDING } from "@/lib/layout-constants";
-import { formatCurrency, formatPercent } from "@/lib/format";
+} from "@/lib/domain/budget-calculations";
+import { SurfaceCard } from "@/components/shared/ui/surface-card";
+import { CARD_PADDING } from "@/lib/config/layout-constants";
+import { formatCurrency, formatPercent } from "@/lib/utils/format";
 import type { BudgetWithProgress } from "@/lib/types";
 
 type BudgetCardProps = {

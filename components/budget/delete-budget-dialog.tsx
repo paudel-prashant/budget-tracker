@@ -9,7 +9,7 @@ import {
   DialogContentText,
   DialogTitle,
 } from "@mui/material";
-import { formatCurrency, formatMonthYear } from "@/lib/format";
+import { formatCurrency, formatMonthYear } from "@/lib/utils/format";
 import type { BudgetWithProgress } from "@/lib/types";
 
 type DeleteBudgetDialogProps = {

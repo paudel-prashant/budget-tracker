@@ -15,9 +15,10 @@ import {
   alpha,
   useTheme,
 } from "@mui/material";
-import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
 import GoogleIcon from "@mui/icons-material/Google";
-import { CARD_SHADOW } from "@/lib/layout-constants";
+import { BrandLogo } from "@/components/shared/brand-logo";
+import { APP_NAME } from "@/lib/config/app";
+import { CARD_SHADOW } from "@/lib/config/layout-constants";
 
 function LoginForm() {
   const theme = useTheme();
@@ -46,24 +47,18 @@ function LoginForm() {
           borderColor: "divider",
         }}
       >
-        <Box
+        <BrandLogo
+          size={72}
+          priority
           sx={{
-            width: 64,
-            height: 64,
-            borderRadius: 3,
             display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
             mb: 2,
-            background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-            color: "primary.contrastText",
-            boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.45)}`,
+            borderRadius: 3,
+            boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.35)}`,
           }}
-        >
-          <AccountBalanceWalletOutlinedIcon sx={{ fontSize: 32 }} />
-        </Box>
+        />
         <Typography variant="h5" component="h1">
-          Finance Tracker
+          {APP_NAME}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1.25, maxWidth: 300, mx: "auto" }}>
           Sign in with Google to manage budgets, transactions, and insights securely.

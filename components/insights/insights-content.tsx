@@ -1,20 +1,20 @@
 import { Box, Typography } from "@mui/material";
-import { SurfaceCard } from "@/components/ui/surface-card";
-import { PageStack } from "@/components/ui/page-stack";
-import { ResponsiveColumns } from "@/components/ui/responsive-columns";
+import { SurfaceCard } from "@/components/shared/ui/surface-card";
+import { PageStack } from "@/components/shared/ui/page-stack";
+import { ResponsiveColumns } from "@/components/shared/ui/responsive-columns";
 import CategoryOutlinedIcon from "@mui/icons-material/CategoryOutlined";
 import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
 import CompareArrowsOutlinedIcon from "@mui/icons-material/CompareArrowsOutlined";
 import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
 import PaymentsOutlinedIcon from "@mui/icons-material/PaymentsOutlined";
 import SavingsOutlinedIcon from "@mui/icons-material/SavingsOutlined";
-import { PageHeader } from "@/components/ui/page-header";
-import { CARD_PADDING } from "@/lib/layout-constants";
+import { PageHeader } from "@/components/shared/ui/page-header";
+import { CARD_PADDING } from "@/lib/config/layout-constants";
 import { InsightCard } from "@/components/insights/insight-card";
 import { SavingsTrendChart } from "@/components/insights/savings-trend-chart";
 import { CategorySpendingChart } from "@/components/insights/category-spending-chart";
 import { SpendingSpikesPanel } from "@/components/insights/spending-spikes-panel";
-import { formatCurrency, formatMonth, formatPercent } from "@/lib/format";
+import { formatCurrency, formatMonth, formatPercent } from "@/lib/utils/format";
 import type { FinancialInsights } from "@/lib/types";
 
 type InsightsContentProps = {

@@ -21,15 +21,15 @@ import {
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import AutorenewOutlinedIcon from "@mui/icons-material/AutorenewOutlined";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
-import { PageHeader } from "@/components/ui/page-header";
-import { PageStack } from "@/components/ui/page-stack";
-import { EmptyState } from "@/components/ui/empty-state";
-import { TransactionsTableSkeleton } from "@/components/ui/transactions-table-skeleton";
+import { PageHeader } from "@/components/shared/ui/page-header";
+import { PageStack } from "@/components/shared/ui/page-stack";
+import { EmptyState } from "@/components/shared/ui/empty-state";
+import { TransactionsTableSkeleton } from "@/components/shared/ui/transactions-table-skeleton";
 import { AddRecurringDialog } from "@/components/recurring/add-recurring-dialog";
 import { DeleteRecurringDialog } from "@/components/recurring/delete-recurring-dialog";
 import { FrequencyBadge } from "@/components/recurring/frequency-badge";
-import { useSnackbar } from "@/components/providers/snackbar-provider";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { useSnackbar } from "@/components/shared/providers/snackbar-provider";
+import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { RecurringTransaction } from "@/lib/types";
 
 export function RecurringView() {

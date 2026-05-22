@@ -9,15 +9,15 @@ import {
   Typography,
   alpha,
 } from "@mui/material";
-import { ResponsiveColumns } from "@/components/ui/responsive-columns";
-import { CARD_PADDING } from "@/lib/layout-constants";
+import { ResponsiveColumns } from "@/components/shared/ui/responsive-columns";
+import { CARD_PADDING } from "@/lib/config/layout-constants";
 import SavingsOutlinedIcon from "@mui/icons-material/SavingsOutlined";
 import {
   getProgressBarColor,
   getProgressBarValue,
-} from "@/lib/budget-calculations";
-import { formatCurrency, formatMonthYear, formatPercent } from "@/lib/format";
-import { SurfaceCard } from "@/components/ui/surface-card";
+} from "@/lib/domain/budget-calculations";
+import { formatCurrency, formatMonthYear, formatPercent } from "@/lib/utils/format";
+import { SurfaceCard } from "@/components/shared/ui/surface-card";
 import type { BudgetHealth } from "@/lib/types";
 
 type BudgetHealthWidgetProps = {

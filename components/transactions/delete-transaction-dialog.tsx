@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@mui/material";
 import type { Transaction } from "@/lib/types";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency } from "@/lib/utils/format";
 
 type DeleteTransactionDialogProps = {
   transaction: Transaction | null;

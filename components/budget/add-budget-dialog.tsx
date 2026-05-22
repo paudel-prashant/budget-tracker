@@ -13,10 +13,10 @@ import {
   Stack,
   TextField,
 } from "@mui/material";
-import { CategorySelectField } from "@/components/ui/category-select-field";
-import { formTextFieldProps } from "@/lib/form-field";
-import { getCurrentMonthYear } from "@/lib/budget-calculations";
-import { FORM_STACK_SPACING } from "@/lib/layout-constants";
+import { CategorySelectField } from "@/components/shared/ui/category-select-field";
+import { formTextFieldProps } from "@/lib/theme/form-field";
+import { getCurrentMonthYear } from "@/lib/domain/budget-calculations";
+import { FORM_STACK_SPACING } from "@/lib/config/layout-constants";
 
 type AddBudgetDialogProps = {
   open: boolean;

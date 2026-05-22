@@ -4,7 +4,7 @@ import NextLink from "next/link";
 import { Box, Button, Paper, Stack, Typography, useTheme } from "@mui/material";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
-import { CARD_PADDING, CARD_SHADOW } from "@/lib/layout-constants";
+import { CARD_PADDING, CARD_SHADOW } from "@/lib/config/layout-constants";
 
 export function DashboardGettingStarted() {
   const theme = useTheme();
@@ -31,7 +31,7 @@ export function DashboardGettingStarted() {
       >
         <Box>
           <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-            Get started with Finance Tracker
+            Get started with Bugetrax
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 520 }}>
             Add your first transaction to populate summaries, charts, budgets, and insights.

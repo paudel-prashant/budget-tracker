@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { assertDatabaseUrl } from "@/lib/env";
-import { requireApiUserId } from "@/lib/api-auth";
-import { handleApiError, jsonError } from "@/lib/api-utils";
-import { suggestCategoryForUser } from "@/lib/category-mapping-service";
+import { assertDatabaseUrl } from "@/lib/config/env";
+import { requireApiUserId } from "@/lib/auth/api-auth";
+import { handleApiError, jsonError } from "@/lib/utils/api-utils";
+import { suggestCategoryForUser } from "@/lib/domain/category-mapping-service";
 import type { TransactionType } from "@/lib/types";
 
 export const runtime = "nodejs";

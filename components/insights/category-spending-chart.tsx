@@ -13,9 +13,9 @@ import {
   YAxis,
 } from "recharts";
 import { ChartCard } from "@/components/dashboard/chart-card";
-import { CHART_PALETTE, getChartGridStroke, getChartTooltipStyle } from "@/lib/chart-styles";
-import { formatCurrency } from "@/lib/format";
-import { CHART_AREA_HEIGHT } from "@/lib/layout-constants";
+import { CHART_PALETTE, getChartGridStroke, getChartTooltipStyle } from "@/lib/theme/chart-styles";
+import { formatCurrency } from "@/lib/utils/format";
+import { CHART_AREA_HEIGHT } from "@/lib/config/layout-constants";
 
 type CategorySpendingChartProps = {
   data: Array<{ category: string; amount: number }>;

@@ -25,6 +25,76 @@ export type Transaction = {
   createdAt: string;
 };
 
+export type TransactionFilters = {
+  search?: string;
+  category?: string;
+  type?: TransactionType;
+  dateFrom?: string;
+  dateTo?: string;
+  minAmount?: number;
+  maxAmount?: number;
+};
+
+export type TransactionListPagination = {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
+export type TransactionListResponse = {
+  data: Transaction[];
+  pagination: TransactionListPagination;
+  meta: { categories: string[]; totalUnfiltered: number };
+};
+
+export type MonthlyReportCategoryRow = {
+  category: string;
+  amount: number;
+  percentOfTotal: number;
+  transactionCount: number;
+};
+
+export type MonthlyReportComparison = {
+  previousMonth: string;
+  previousMonthLabel: string;
+  incomeChangePercent: number | null;
+  expenseChangePercent: number | null;
+  savingsChangePercent: number | null;
+};
+
+export type MonthlyReportDailyPoint = {
+  date: string;
+  amount: number;
+};
+
+export type MonthlyReport = {
+  month: string;
+  monthLabel: string;
+  monthLabelLong: string;
+  generatedAt: string;
+  summary: {
+    totalIncome: number;
+    totalExpenses: number;
+    savings: number;
+    savingsRate: number | null;
+    transactionCount: number;
+  };
+  comparison: MonthlyReportComparison;
+  topExpenseCategories: MonthlyReportCategoryRow[];
+  topIncomeCategories: MonthlyReportCategoryRow[];
+  charts: {
+    incomeVsExpenses: { month: string; income: number; expenses: number };
+    expenseByCategory: Array<{ category: string; amount: number }>;
+    dailyExpenses: MonthlyReportDailyPoint[];
+  };
+};
+
+export type MonthlyReportResponse = {
+  report: MonthlyReport;
+  availableMonths: string[];
+};
+
 export type Summary = {
   totalIncome: number;
   totalExpenses: number;
@@ -152,6 +222,55 @@ export type FinancialInsights = {
   categoryBreakdown: Array<{ category: string; amount: number }>;
 };
 
+export type Asset = {
+  id: string;
+  name: string;
+  category: string;
+  value: number;
+  asOfDate: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Liability = {
+  id: string;
+  name: string;
+  category: string;
+  value: number;
+  asOfDate: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type NetWorthHistoryPoint = {
+  month: string;
+  netWorth: number;
+  totalAssets: number;
+  totalLiabilities: number;
+  savings: number;
+  savingsRate: number | null;
+};
+
+export type NetWorthSummary = {
+  totalAssets: number;
+  totalLiabilities: number;
+  netWorth: number;
+  savingsRate: number | null;
+  monthlyIncome: number;
+  monthlyExpenses: number;
+  monthlySavings: number;
+  netWorthChangePercent: number | null;
+};
+
+export type NetWorthDashboardData = {
+  current: NetWorthSummary;
+  assets: Asset[];
+  liabilities: Liability[];
+  history: NetWorthHistoryPoint[];
+};
+
 export type DashboardData = {
   summary: Summary;
   balanceChartData: BalanceChartPoint[];
@@ -159,4 +278,5 @@ export type DashboardData = {
   budgetHealth: BudgetHealth;
   budgetWarnings: BudgetWithProgress[];
   insights: DashboardInsights | null;
+  netWorth: NetWorthDashboardData;
 };

@@ -10,16 +10,16 @@ import {
 } from "@mui/material";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
-import { PageHeader } from "@/components/ui/page-header";
-import { PageStack } from "@/components/ui/page-stack";
-import { ResponsiveColumns } from "@/components/ui/responsive-columns";
-import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/shared/ui/page-header";
+import { PageStack } from "@/components/shared/ui/page-stack";
+import { ResponsiveColumns } from "@/components/shared/ui/responsive-columns";
+import { EmptyState } from "@/components/shared/ui/empty-state";
 import { BudgetCard } from "@/components/budget/budget-card";
 import { AddBudgetDialog } from "@/components/budget/add-budget-dialog";
 import { DeleteBudgetDialog } from "@/components/budget/delete-budget-dialog";
-import { useSnackbar } from "@/components/providers/snackbar-provider";
-import { getCurrentMonthYear } from "@/lib/budget-calculations";
-import { formatMonthYear } from "@/lib/format";
+import { useSnackbar } from "@/components/shared/providers/snackbar-provider";
+import { getCurrentMonthYear } from "@/lib/domain/budget-calculations";
+import { formatMonthYear } from "@/lib/utils/format";
 import type { BudgetWithProgress } from "@/lib/types";
 
 type BudgetsResponse = {

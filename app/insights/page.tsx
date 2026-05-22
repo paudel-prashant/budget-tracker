@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { InsightsContent } from "@/components/insights/insights-content";
-import { getFinancialInsights } from "@/lib/insights-data";
+import { getFinancialInsights } from "@/lib/data/insights-data";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

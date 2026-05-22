@@ -10,8 +10,8 @@ import {
 } from "@mui/material";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
-import { SurfaceCard } from "@/components/ui/surface-card";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { SurfaceCard } from "@/components/shared/ui/surface-card";
+import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { Transaction } from "@/lib/types";
 
 type TransactionMobileCardProps = {

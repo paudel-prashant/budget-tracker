@@ -16,12 +16,12 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { type Dayjs } from "dayjs";
-import { CategorySelectField } from "@/components/ui/category-select-field";
+import { CategorySelectField } from "@/components/shared/ui/category-select-field";
 import { CategorySuggestionBanner } from "@/components/transactions/category-suggestion-banner";
-import { DialogShell } from "@/components/ui/dialog-shell";
+import { DialogShell } from "@/components/shared/ui/dialog-shell";
 import { useCategorySuggestion } from "@/hooks/use-category-suggestion";
-import { formFieldSx, formTextFieldProps } from "@/lib/form-field";
-import { FORM_STACK_SPACING } from "@/lib/layout-constants";
+import { formFieldSx, formTextFieldProps } from "@/lib/theme/form-field";
+import { FORM_STACK_SPACING } from "@/lib/config/layout-constants";
 import type { Transaction, TransactionType } from "@/lib/types";
 
 type TransactionFormDialogProps = {

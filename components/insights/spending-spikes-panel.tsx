@@ -9,8 +9,8 @@ import {
   Typography,
 } from "@mui/material";
 import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
-import { formatCurrency, formatMonth, formatPercent } from "@/lib/format";
-import { CARD_PADDING } from "@/lib/layout-constants";
+import { formatCurrency, formatMonth, formatPercent } from "@/lib/utils/format";
+import { CARD_PADDING } from "@/lib/config/layout-constants";
 import type { SpendingSpike } from "@/lib/types";
 
 type SpendingSpikesPanelProps = {

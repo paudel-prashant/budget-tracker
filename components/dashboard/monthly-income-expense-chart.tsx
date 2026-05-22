@@ -12,9 +12,9 @@ import {
   YAxis,
 } from "recharts";
 import { ChartCard } from "@/components/dashboard/chart-card";
-import { getChartGridStroke, getChartTooltipStyle } from "@/lib/chart-styles";
-import { formatCurrency, formatMonth } from "@/lib/format";
-import { CHART_AREA_HEIGHT } from "@/lib/layout-constants";
+import { getChartGridStroke, getChartTooltipStyle } from "@/lib/theme/chart-styles";
+import { formatCurrency, formatMonth } from "@/lib/utils/format";
+import { CHART_AREA_HEIGHT } from "@/lib/config/layout-constants";
 import type { MonthlyChartPoint } from "@/lib/types";
 
 type MonthlyIncomeExpenseChartProps = {

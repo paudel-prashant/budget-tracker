@@ -9,7 +9,7 @@ import {
   DialogContentText,
   DialogTitle,
 } from "@mui/material";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency } from "@/lib/utils/format";
 import type { RecurringTransaction } from "@/lib/types";
 
 type DeleteRecurringDialogProps = {

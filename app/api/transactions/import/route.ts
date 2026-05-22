@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { TransactionType } from "@prisma/client";
-import { assertDatabaseUrl } from "@/lib/env";
-import { prisma } from "@/lib/prisma";
-import { requireApiUserId } from "@/lib/api-auth";
-import { handleApiError, jsonError } from "@/lib/api-utils";
-import { computeTransactionImportHash } from "@/lib/transaction-import-hash";
-import { upsertLearnedCategoryMapping } from "@/lib/category-mapping-service";
-import { normalizeTitleKey } from "@/lib/category-suggestion-engine";
-import { revalidateFinancePages } from "@/lib/revalidate-pages";
-import { startOfUtcDay } from "@/lib/recurrence-dates";
+import { assertDatabaseUrl } from "@/lib/config/env";
+import { prisma } from "@/lib/db/prisma";
+import { requireApiUserId } from "@/lib/auth/api-auth";
+import { handleApiError, jsonError } from "@/lib/utils/api-utils";
+import { computeTransactionImportHash } from "@/lib/domain/transaction-import-hash";
+import { upsertLearnedCategoryMapping } from "@/lib/domain/category-mapping-service";
+import { normalizeTitleKey } from "@/lib/domain/category-suggestion-engine";
+import { revalidateFinancePages } from "@/lib/utils/revalidate-pages";
+import { startOfUtcDay } from "@/lib/domain/recurrence-dates";
 
 export const runtime = "nodejs";
 

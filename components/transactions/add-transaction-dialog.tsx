@@ -1,1 +1,1 @@
-export { TransactionFormDialog as AddTransactionDialog } from "@/components/transactions/transaction-form-dialog";
+export { TransactionFormDialog as AddTransactionDialog } from "./transaction-form-dialog";

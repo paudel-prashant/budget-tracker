@@ -1,7 +1,7 @@
 import NextLink from "next/link";
 import { Alert, AlertTitle, Box, Button, Stack, Typography } from "@mui/material";
 import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
-import { formatCurrency, formatMonthYear } from "@/lib/format";
+import { formatCurrency, formatMonthYear } from "@/lib/utils/format";
 import type { BudgetWithProgress } from "@/lib/types";
 
 type BudgetWarningsProps = {

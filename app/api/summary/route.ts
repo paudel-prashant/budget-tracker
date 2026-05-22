@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { TransactionType } from "@prisma/client";
-import { assertDatabaseUrl } from "@/lib/env";
-import { prisma } from "@/lib/prisma";
-import { requireApiUserId } from "@/lib/api-auth";
-import { handleApiError } from "@/lib/api-utils";
+import { assertDatabaseUrl } from "@/lib/config/env";
+import { prisma } from "@/lib/db/prisma";
+import { requireApiUserId } from "@/lib/auth/api-auth";
+import { handleApiError } from "@/lib/utils/api-utils";
 
 export const runtime = "nodejs";
 

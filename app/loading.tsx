@@ -1,7 +1,7 @@
 import { Box, Skeleton } from "@mui/material";
-import { PageHeader } from "@/components/ui/page-header";
-import { PageStack } from "@/components/ui/page-stack";
-import { ResponsiveColumns } from "@/components/ui/responsive-columns";
+import { PageHeader } from "@/components/shared/ui/page-header";
+import { PageStack } from "@/components/shared/ui/page-stack";
+import { ResponsiveColumns } from "@/components/shared/ui/responsive-columns";
 
 export default function DashboardLoading() {
   return (

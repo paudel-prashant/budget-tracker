@@ -2,7 +2,7 @@
 
 import { Alert, Box, Button, Chip, Typography } from "@mui/material";
 import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
-import type { CategorySuggestion } from "@/lib/category-suggestion-engine";
+import type { CategorySuggestion } from "@/lib/domain/category-suggestion-engine";
 
 type CategorySuggestionBannerProps = {
   suggestion: CategorySuggestion | null;

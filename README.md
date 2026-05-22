@@ -1,4 +1,4 @@
-# Finance Tracker
+# Bugetrax
 
 A personal finance app built with Next.js App Router, TypeScript, Material UI, Prisma, and PostgreSQL.
 
@@ -14,8 +14,9 @@ A personal finance app built with Next.js App Router, TypeScript, Material UI, P
 
 ```
 app/          # App Router pages and API routes
-components/   # UI, layout, dashboard, transactions
-lib/          # Prisma client, theme, utilities, data access
+components/   # Feature modules + shared/ui, shared/layout, shared/providers
+lib/          # Grouped by auth, config, db, data, domain, services, validation, utils, theme, types
+auth/         # NextAuth configuration
 prisma/       # Schema and migrations
 styles/       # Global CSS
 ```
@@ -113,7 +114,7 @@ Open [http://localhost:3000](http://localhost:3000).
 ```bash
 git init
 git add .
-git commit -m "Prepare Finance Tracker for Vercel"
+git commit -m "Prepare Bugetrax for Vercel"
 git remote add origin <your-repo-url>
 git push -u origin main
 ```
@@ -184,7 +185,7 @@ Or run seed once from your machine with production `DATABASE_URL` (use with caut
 - **`serverExternalPackages`** in `next.config.ts` keeps Prisma on the Node.js runtime (required for serverless).
 - **Dashboard** uses `force-dynamic` so analytics always reflect live data (not stale static HTML).
 - **Charts** mount client-side only to avoid Recharts SSR layout warnings and reduce build noise.
-- **Prisma singleton** in `lib/prisma.ts` reuses one client per serverless instance to limit connection churn.
+- **Prisma singleton** in `lib/db/prisma.ts` reuses one client per serverless instance to limit connection churn.
 - Use **`POSTGRES_PRISMA_URL`** (pooled) for `DATABASE_URL` on Vercel; use **`POSTGRES_URL_NON_POOLING`** for `DIRECT_URL` during migrations only.
 
 ### Avoiding server-side runtime errors

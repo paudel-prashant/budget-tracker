@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   suggestFromBuiltinKeywords,
   type CategorySuggestion,
-} from "@/lib/category-suggestion-engine";
+} from "@/lib/domain/category-suggestion-engine";
 import type { TransactionType } from "@/lib/types";
 
 type UseCategorySuggestionOptions = {

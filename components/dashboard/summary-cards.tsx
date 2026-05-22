@@ -3,9 +3,9 @@
 import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
 import TrendingDownOutlinedIcon from "@mui/icons-material/TrendingDownOutlined";
 import AccountBalanceOutlinedIcon from "@mui/icons-material/AccountBalanceOutlined";
-import { StatCard } from "@/components/ui/stat-card";
-import { ResponsiveColumns } from "@/components/ui/responsive-columns";
-import { formatCurrency } from "@/lib/format";
+import { StatCard } from "@/components/shared/ui/stat-card";
+import { ResponsiveColumns } from "@/components/shared/ui/responsive-columns";
+import { formatCurrency } from "@/lib/utils/format";
 import type { Summary } from "@/lib/types";
 
 type SummaryCardsProps = {

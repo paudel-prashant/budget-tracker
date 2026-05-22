@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { DashboardContent } from "@/components/dashboard/dashboard-content";
 import { RefreshDashboardOnReturn } from "@/components/dashboard/refresh-dashboard-on-return";
-import { getDashboardData } from "@/lib/dashboard-data";
+import { getDashboardData } from "@/lib/data/dashboard-data";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

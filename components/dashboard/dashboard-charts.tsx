@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { BalanceLineChart } from "@/components/dashboard/balance-line-chart";
 import { MonthlyIncomeExpenseChart } from "@/components/dashboard/monthly-income-expense-chart";
-import { ResponsiveColumns } from "@/components/ui/responsive-columns";
-import { SurfaceCard } from "@/components/ui/surface-card";
-import { CARD_PADDING } from "@/lib/layout-constants";
+import { ResponsiveColumns } from "@/components/shared/ui/responsive-columns";
+import { SurfaceCard } from "@/components/shared/ui/surface-card";
+import { CARD_PADDING } from "@/lib/config/layout-constants";
 import type { BalanceChartPoint, MonthlyChartPoint } from "@/lib/types";
 
 type DashboardChartsProps = {

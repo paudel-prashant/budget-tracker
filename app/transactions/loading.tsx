@@ -1,6 +1,6 @@
 import { Paper, Skeleton } from "@mui/material";
-import { PageHeader } from "@/components/ui/page-header";
-import { TransactionsTableSkeleton } from "@/components/ui/transactions-table-skeleton";
+import { PageHeader } from "@/components/shared/ui/page-header";
+import { TransactionsTableSkeleton } from "@/components/shared/ui/transactions-table-skeleton";
 
 export default function TransactionsLoading() {
   return (

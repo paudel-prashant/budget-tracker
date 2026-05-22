@@ -16,9 +16,9 @@ import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
 import TrendingDownOutlinedIcon from "@mui/icons-material/TrendingDownOutlined";
 import TrendingFlatOutlinedIcon from "@mui/icons-material/TrendingFlatOutlined";
 import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
-import { SurfaceCard } from "@/components/ui/surface-card";
-import { CARD_PADDING } from "@/lib/layout-constants";
-import { formatCurrency, formatPercent } from "@/lib/format";
+import { SurfaceCard } from "@/components/shared/ui/surface-card";
+import { CARD_PADDING } from "@/lib/config/layout-constants";
+import { formatCurrency, formatPercent } from "@/lib/utils/format";
 import type { DashboardInsightTone, DashboardInsights } from "@/lib/types";
 
 type DashboardInsightsWidgetProps = {

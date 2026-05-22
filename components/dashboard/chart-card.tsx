@@ -1,9 +1,9 @@
 "use client";
 
 import { Box, Typography } from "@mui/material";
-import { ChartEmptyState } from "@/components/ui/chart-empty-state";
-import { SurfaceCard } from "@/components/ui/surface-card";
-import { CARD_PADDING, CHART_AREA_HEIGHT, CHART_CARD_MIN_HEIGHT } from "@/lib/layout-constants";
+import { ChartEmptyState } from "@/components/shared/ui/chart-empty-state";
+import { SurfaceCard } from "@/components/shared/ui/surface-card";
+import { CARD_PADDING, CHART_AREA_HEIGHT, CHART_CARD_MIN_HEIGHT } from "@/lib/config/layout-constants";
 
 type ChartCardProps = {
   title: string;

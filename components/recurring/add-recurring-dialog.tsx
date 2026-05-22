@@ -18,9 +18,9 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { type Dayjs } from "dayjs";
-import { CategorySelectField } from "@/components/ui/category-select-field";
-import { formFieldSx, formTextFieldProps } from "@/lib/form-field";
-import { FORM_STACK_SPACING } from "@/lib/layout-constants";
+import { CategorySelectField } from "@/components/shared/ui/category-select-field";
+import { formFieldSx, formTextFieldProps } from "@/lib/theme/form-field";
+import { FORM_STACK_SPACING } from "@/lib/config/layout-constants";
 import type { RecurrenceFrequency, TransactionType } from "@/lib/types";
 
 type AddRecurringDialogProps = {

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
+  Box,
   Button,
   Chip,
   IconButton,
@@ -12,6 +13,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   Tooltip,
   Typography,
@@ -22,17 +24,33 @@ import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
-import { PageHeader } from "@/components/ui/page-header";
-import { SectionPanel } from "@/components/ui/section-panel";
-import { PageStack } from "@/components/ui/page-stack";
-import { EmptyState } from "@/components/ui/empty-state";
-import { TransactionsTableSkeleton } from "@/components/ui/transactions-table-skeleton";
+import SearchOffOutlinedIcon from "@mui/icons-material/SearchOffOutlined";
+import { PageHeader } from "@/components/shared/ui/page-header";
+import { SectionPanel } from "@/components/shared/ui/section-panel";
+import { PageStack } from "@/components/shared/ui/page-stack";
+import { EmptyState } from "@/components/shared/ui/empty-state";
+import { TransactionsTableSkeleton } from "@/components/shared/ui/transactions-table-skeleton";
 import { TransactionFormDialog } from "@/components/transactions/transaction-form-dialog";
 import { DeleteTransactionDialog } from "@/components/transactions/delete-transaction-dialog";
 import { TransactionMobileCard } from "@/components/transactions/transaction-mobile-card";
-import { useSnackbar } from "@/components/providers/snackbar-provider";
-import { formatCurrency, formatDate } from "@/lib/format";
-import type { Transaction } from "@/lib/types";
+import { TransactionFiltersDrawer } from "@/components/transactions/transaction-filters-drawer";
+import { TransactionFiltersToolbar } from "@/components/transactions/transaction-filters-toolbar";
+import { useSnackbar } from "@/components/shared/providers/snackbar-provider";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import {
+  buildTransactionListQuery,
+  countActiveFilters,
+  EMPTY_TRANSACTION_FILTERS,
+} from "@/lib/domain/transaction-filters";
+import { formatCurrency, formatDate } from "@/lib/utils/format";
+import type {
+  Transaction,
+  TransactionFilters,
+  TransactionListPagination,
+  TransactionListResponse,
+} from "@/lib/types";
+
+const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
 
 export function TransactionsView() {
   const theme = useTheme();
@@ -40,44 +58,90 @@ export function TransactionsView() {
   const { showSuccess, showError } = useSnackbar();
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [pagination, setPagination] = useState<TransactionListPagination>({
+    page: 1,
+    pageSize: 25,
+    total: 0,
+    totalPages: 0,
+  });
+  const [categories, setCategories] = useState<string[]>([]);
+  const [totalUnfiltered, setTotalUnfiltered] = useState(0);
+
+  const [searchInput, setSearchInput] = useState("");
+  const debouncedSearch = useDebouncedValue(searchInput, 350);
+  const [filters, setFilters] = useState<TransactionFilters>(EMPTY_TRANSACTION_FILTERS);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Transaction | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const loadTransactions = useCallback(async (options?: { silent?: boolean }) => {
-    if (options?.silent) {
-      setRefreshing(true);
-    } else {
-      setLoading(true);
-    }
-    setError(null);
+  const listQuery = useMemo(
+    () =>
+      buildTransactionListQuery({
+        ...filters,
+        search: debouncedSearch.trim() || undefined,
+        page,
+        pageSize,
+      }),
+    [filters, debouncedSearch, page, pageSize]
+  );
 
-    try {
-      const response = await fetch("/api/transactions");
+  const hasActiveFilters = useMemo(() => {
+    return (
+      Boolean(debouncedSearch.trim()) ||
+      countActiveFilters(filters) > 0
+    );
+  }, [debouncedSearch, filters]);
 
-      if (!response.ok) {
-        throw new Error("Failed to load transactions");
+  const loadTransactions = useCallback(
+    async (options?: { silent?: boolean }) => {
+      if (options?.silent) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
       }
+      setError(null);
 
-      const data: Transaction[] = await response.json();
-      setTransactions(data);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Something went wrong";
-      setError(message);
-      showError(message);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [showError]);
+      try {
+        const response = await fetch(`/api/transactions?${listQuery}`);
+
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.error ?? "Failed to load transactions");
+        }
+
+        const payload: TransactionListResponse = await response.json();
+        setTransactions(payload.data);
+        setPagination(payload.pagination);
+        setCategories(payload.meta.categories);
+        setTotalUnfiltered(payload.meta.totalUnfiltered);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Something went wrong";
+        setError(message);
+        showError(message);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [listQuery, showError]
+  );
 
   useEffect(() => {
     loadTransactions();
   }, [loadTransactions]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, filters, pageSize]);
 
   const handleFormSuccess = async (mode: "create" | "edit") => {
     await loadTransactions({ silent: true });
@@ -120,9 +184,9 @@ export function TransactionsView() {
         throw new Error(data.error ?? "Failed to delete transaction");
       }
 
-      setTransactions((prev) => prev.filter((t) => t.id !== deleteTarget.id));
       setDeleteTarget(null);
       showSuccess("Transaction deleted successfully");
+      await loadTransactions({ silent: true });
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to delete transaction";
@@ -136,10 +200,33 @@ export function TransactionsView() {
     setDeleteTarget(transaction);
   };
 
-  const knownCategories = useMemo(
-    () => transactions.map((transaction) => transaction.category),
-    [transactions]
-  );
+  const handleClearFilters = () => {
+    setSearchInput("");
+    setFilters(EMPTY_TRANSACTION_FILTERS);
+    setPage(1);
+  };
+
+  const handleRemoveFilter = (key: keyof TransactionFilters) => {
+    setFilters((prev) => {
+      const next = { ...prev };
+      if (key === "dateFrom" || key === "dateTo") {
+        delete next.dateFrom;
+        delete next.dateTo;
+      } else {
+        delete next[key];
+      }
+      return next;
+    });
+    setPage(1);
+  };
+
+  const handleApplyFilters = (next: TransactionFilters) => {
+    setFilters(next);
+    setPage(1);
+  };
+
+  const showEmptyLedger = !loading && totalUnfiltered === 0;
+  const showNoResults = !loading && pagination.total === 0 && totalUnfiltered > 0;
 
   return (
     <PageStack>
@@ -171,9 +258,20 @@ export function TransactionsView() {
           transition: "opacity 0.2s ease",
         }}
       >
+        {!showEmptyLedger && (
+          <TransactionFiltersToolbar
+            search={searchInput}
+            filters={filters}
+            onSearchChange={setSearchInput}
+            onOpenFilters={() => setFiltersOpen(true)}
+            onClearFilters={handleClearFilters}
+            onRemoveFilter={handleRemoveFilter}
+          />
+        )}
+
         {loading ? (
           <TransactionsTableSkeleton />
-        ) : transactions.length === 0 ? (
+        ) : showEmptyLedger ? (
           <EmptyState
             icon={ReceiptLongOutlinedIcon}
             title="No transactions yet"
@@ -181,8 +279,16 @@ export function TransactionsView() {
             actionLabel="Add Transaction"
             onAction={openCreateDialog}
           />
+        ) : showNoResults ? (
+          <EmptyState
+            icon={SearchOffOutlinedIcon}
+            title="No matching transactions"
+            description="Try adjusting your search or filters to find what you're looking for."
+            actionLabel="Clear filters"
+            onAction={handleClearFilters}
+          />
         ) : isMobile ? (
-          <Stack spacing={1.75} sx={{ p: { xs: 2, sm: 2.5 } }}>
+          <Stack spacing={1.75} sx={{ px: { xs: 2, sm: 2.5 }, pb: 2 }}>
             {transactions.map((transaction) => (
               <TransactionMobileCard
                 key={transaction.id}
@@ -278,12 +384,51 @@ export function TransactionsView() {
             </Table>
           </TableContainer>
         )}
+
+        {!loading && pagination.total > 0 && (
+          <TablePagination
+            component="div"
+            count={pagination.total}
+            page={Math.max(0, pagination.page - 1)}
+            onPageChange={(_event, newPage) => setPage(newPage + 1)}
+            rowsPerPage={pageSize}
+            onRowsPerPageChange={(event) => {
+              setPageSize(Number.parseInt(event.target.value, 10));
+            }}
+            rowsPerPageOptions={[...PAGE_SIZE_OPTIONS]}
+            labelDisplayedRows={({ from, to, count }) =>
+              `${from}–${to} of ${count !== -1 ? count : `more than ${to}`}`
+            }
+            sx={{
+              borderTop: 1,
+              borderColor: "divider",
+              px: { xs: 1, sm: 2 },
+            }}
+          />
+        )}
       </SectionPanel>
+
+      {hasActiveFilters && !loading && pagination.total > 0 && (
+        <Typography variant="caption" color="text.secondary" sx={{ px: 0.5 }}>
+          Showing {pagination.total} filtered transaction{pagination.total === 1 ? "" : "s"}
+          {totalUnfiltered > pagination.total
+            ? ` of ${totalUnfiltered} total`
+            : ""}
+        </Typography>
+      )}
+
+      <TransactionFiltersDrawer
+        open={filtersOpen}
+        filters={filters}
+        categories={categories}
+        onClose={() => setFiltersOpen(false)}
+        onApply={handleApplyFilters}
+      />
 
       <TransactionFormDialog
         open={formOpen}
         transaction={editTarget}
-        extraCategories={knownCategories}
+        extraCategories={categories}
         onClose={closeFormDialog}
         onSuccess={() => handleFormSuccess(editTarget ? "edit" : "create")}
       />

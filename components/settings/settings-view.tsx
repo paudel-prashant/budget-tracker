@@ -1,9 +1,9 @@
 import { Typography, Stack, Divider } from "@mui/material";
-import { PageHeader } from "@/components/ui/page-header";
-import { PageStack } from "@/components/ui/page-stack";
-import { SurfaceCard } from "@/components/ui/surface-card";
+import { PageHeader } from "@/components/shared/ui/page-header";
+import { PageStack } from "@/components/shared/ui/page-stack";
+import { SurfaceCard } from "@/components/shared/ui/surface-card";
 import { ImportExportSection } from "@/components/settings/import-export-section";
-import { CARD_PADDING } from "@/lib/layout-constants";
+import { CARD_PADDING } from "@/lib/config/layout-constants";
 
 export function SettingsView() {
   return (

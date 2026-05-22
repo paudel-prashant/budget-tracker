@@ -1,12 +1,17 @@
 import type { Metadata } from "next";
-import { MuiProvider } from "@/components/providers/mui-provider";
-import { SessionProvider } from "@/components/providers/session-provider";
-import { AuthLayout } from "@/components/layout/auth-layout";
+import { MuiProvider } from "@/components/shared/providers/mui-provider";
+import { SessionProvider } from "@/components/shared/providers/session-provider";
+import { AuthLayout } from "@/components/shared/layout/auth-layout";
+import { APP_DESCRIPTION, APP_NAME } from "@/lib/config/app";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
-  title: "Finance Tracker",
-  description: "Track your finances with a clean, modern dashboard",
+  title: {
+    default: APP_NAME,
+    template: `%s | ${APP_NAME}`,
+  },
+  description: APP_DESCRIPTION,
+  applicationName: APP_NAME,
 };
 
 export default function RootLayout({

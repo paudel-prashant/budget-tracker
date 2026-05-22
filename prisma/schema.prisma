@@ -32,6 +32,9 @@ model User {
   budgets               Budget[]
   recurringTransactions RecurringTransaction[]
   categoryMappings      CategoryMapping[]
+  assets                Asset[]
+  liabilities           Liability[]
+  netWorthSnapshots     NetWorthSnapshot[]
 }
 
 model Account {
@@ -86,6 +89,9 @@ model Transaction {
 
   @@unique([recurringTransactionId, occurrenceDate])
   @@unique([userId, importHash])
+  @@index([userId, date(sort: Desc)])
+  @@index([userId, type])
+  @@index([userId, category])
 }
 
 model RecurringTransaction {
@@ -128,4 +134,52 @@ model CategoryMapping {
   user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, titleKey, type])
+}
+
+model Asset {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  category  String
+  value     Float
+  asOfDate  DateTime
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, asOfDate(sort: Desc)])
+}
+
+model Liability {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  category  String
+  value     Float
+  asOfDate  DateTime
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, asOfDate(sort: Desc)])
+}
+
+model NetWorthSnapshot {
+  id               String   @id @default(cuid())
+  userId           String
+  month            String
+  totalAssets      Float
+  totalLiabilities Float
+  netWorth         Float
+  monthlyIncome    Float    @default(0)
+  monthlyExpenses  Float    @default(0)
+  monthlySavings   Float    @default(0)
+  savingsRate      Float?
+  recordedAt       DateTime @default(now())
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, month])
+  @@index([userId, month])
 }

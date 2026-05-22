@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { assertDatabaseUrl } from "@/lib/env";
-import { prisma } from "@/lib/prisma";
-import { requireApiUserId } from "@/lib/api-auth";
-import { handleApiError, jsonError } from "@/lib/api-utils";
-import { getBudgetsWithProgress } from "@/lib/budget-data";
-import { revalidateFinancePages } from "@/lib/revalidate-pages";
+import { assertDatabaseUrl } from "@/lib/config/env";
+import { prisma } from "@/lib/db/prisma";
+import { requireApiUserId } from "@/lib/auth/api-auth";
+import { handleApiError, jsonError } from "@/lib/utils/api-utils";
+import { getBudgetsWithProgress } from "@/lib/data/budget-data";
+import { revalidateFinancePages } from "@/lib/utils/revalidate-pages";
 import {
   parseMonthYearSearchParams,
   validateCreateBudgetBody,
-} from "@/lib/budget-validation";
+} from "@/lib/validation/budget-validation";
 
 export const runtime = "nodejs";
 

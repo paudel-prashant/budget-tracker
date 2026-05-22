@@ -5,8 +5,8 @@ import type { SvgIconComponent } from "@mui/icons-material";
 import TrendingDownOutlinedIcon from "@mui/icons-material/TrendingDownOutlined";
 import TrendingFlatOutlinedIcon from "@mui/icons-material/TrendingFlatOutlined";
 import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
-import { SurfaceCard } from "@/components/ui/surface-card";
-import { CARD_PADDING } from "@/lib/layout-constants";
+import { SurfaceCard } from "@/components/shared/ui/surface-card";
+import { CARD_PADDING } from "@/lib/config/layout-constants";
 import type { TrendDirection } from "@/lib/types";
 
 function resolveThemeColor(theme: Theme, color: string) {
