@@ -7,6 +7,7 @@ import {
   listRecurringTransactions,
   serializeRecurringTransaction,
 } from "@/lib/recurring-processor";
+import { revalidateFinancePages } from "@/lib/revalidate-pages";
 import { validateCreateRecurringTransactionBody } from "@/lib/recurring-validation";
 
 export const runtime = "nodejs";
@@ -47,6 +48,8 @@ export async function POST(request: NextRequest) {
     const recurring = await prisma.recurringTransaction.create({
       data: { ...validation.data, userId: auth.userId },
     });
+
+    revalidateFinancePages();
 
     return NextResponse.json(serializeRecurringTransaction(recurring), {
       status: 201,

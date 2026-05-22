@@ -20,49 +20,69 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { type Dayjs } from "dayjs";
 import { CategorySelectField } from "@/components/ui/category-select-field";
 import { formFieldSx, formTextFieldProps } from "@/lib/form-field";
-import type { RecurrenceFrequency, TransactionType } from "@/lib/types";
+import type { Transaction, TransactionType } from "@/lib/types";
 
-type AddRecurringDialogProps = {
+type TransactionFormDialogProps = {
   open: boolean;
+  transaction?: Transaction | null;
   extraCategories?: string[];
   onClose: () => void;
   onSuccess: () => void | Promise<void>;
 };
 
-const initialForm = {
+type FormState = {
+  title: string;
+  amount: string;
+  type: TransactionType;
+  category: string;
+  date: Dayjs;
+};
+
+const emptyForm = (): FormState => ({
   title: "",
   amount: "",
-  type: "EXPENSE" as TransactionType,
+  type: "EXPENSE",
   category: "",
-  frequency: "MONTHLY" as RecurrenceFrequency,
-  startDate: dayjs(),
-  endDate: null as Dayjs | null,
-};
+  date: dayjs(),
+});
+
+function formFromTransaction(transaction: Transaction): FormState {
+  return {
+    title: transaction.title,
+    amount: String(transaction.amount),
+    type: transaction.type,
+    category: transaction.category,
+    date: dayjs(transaction.date),
+  };
+}
 
 const datePickerFieldProps = {
   ...formTextFieldProps,
+  required: true,
 };
 
-export function AddRecurringDialog({
+export function TransactionFormDialog({
   open,
+  transaction,
   extraCategories = [],
   onClose,
   onSuccess,
-}: AddRecurringDialogProps) {
-  const [form, setForm] = useState(initialForm);
+}: TransactionFormDialogProps) {
+  const isEdit = Boolean(transaction);
+  const [form, setForm] = useState<FormState>(emptyForm);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (open) {
-      setForm({ ...initialForm, startDate: dayjs() });
-      setError(null);
-    }
-  }, [open]);
+    if (!open) return;
+
+    setForm(transaction ? formFromTransaction(transaction) : emptyForm());
+    setError(null);
+  }, [open, transaction]);
 
   const handleClose = () => {
     if (submitting) return;
-    setForm(initialForm);
+    setForm(emptyForm());
     setError(null);
     onClose();
   };
@@ -74,44 +94,49 @@ export function AddRecurringDialog({
 
     const amount = Number(form.amount);
 
-    if (
-      !form.title.trim() ||
-      !form.category.trim() ||
-      !Number.isFinite(amount) ||
-      amount <= 0
-    ) {
-      setError("Please fill in all required fields with valid values.");
+    if (!form.title.trim() || !form.category.trim() || !Number.isFinite(amount) || amount <= 0) {
+      setError("Please fill in all fields with valid values.");
       setSubmitting(false);
       return;
     }
 
+    const payload = {
+      title: form.title.trim(),
+      amount,
+      type: form.type,
+      category: form.category.trim(),
+      date: form.date.toISOString(),
+    };
+
     try {
-      const response = await fetch("/api/recurring-transactions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: form.title.trim(),
-          amount,
-          type: form.type,
-          category: form.category.trim(),
-          frequency: form.frequency,
-          startDate: form.startDate.startOf("day").toISOString(),
-          endDate: form.endDate ? form.endDate.startOf("day").toISOString() : null,
-        }),
-      });
+      const response = await fetch(
+        isEdit ? `/api/transactions/${transaction!.id}` : "/api/transactions",
+        {
+          method: isEdit ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error ?? "Failed to create recurring transaction");
+        throw new Error(
+          data.error ??
+            (isEdit ? "Failed to update transaction" : "Failed to create transaction")
+        );
       }
 
-      setForm(initialForm);
+      setForm(emptyForm());
       await onSuccess();
       onClose();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to create recurring transaction"
+        err instanceof Error
+          ? err.message
+          : isEdit
+            ? "Failed to update transaction"
+            : "Failed to create transaction"
       );
     } finally {
       setSubmitting(false);
@@ -128,7 +153,7 @@ export function AddRecurringDialog({
       sx={{ "& .MuiDialog-paper": { m: { xs: 2, sm: 3 } } }}
     >
       <form onSubmit={handleSubmit}>
-        <DialogTitle>Add Recurring Transaction</DialogTitle>
+        <DialogTitle>{isEdit ? "Edit Transaction" : "Add Transaction"}</DialogTitle>
         <DialogContent dividers sx={{ overflow: "visible" }}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <Stack spacing={3} sx={{ py: 1 }}>
@@ -178,46 +203,18 @@ export function AddRecurringDialog({
                 transactionType={form.type}
               />
 
-              <TextField
-                {...formTextFieldProps}
-                select
-                label="Frequency"
-                value={form.frequency}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    frequency: e.target.value as RecurrenceFrequency,
-                  }))
-                }
-              >
-                <MenuItem value="DAILY">Daily</MenuItem>
-                <MenuItem value="WEEKLY">Weekly</MenuItem>
-                <MenuItem value="MONTHLY">Monthly</MenuItem>
-                <MenuItem value="YEARLY">Yearly</MenuItem>
-              </TextField>
-
               <Box sx={formFieldSx}>
                 <DatePicker
-                  label="Start date"
-                  value={form.startDate}
+                  label="Date"
+                  value={form.date}
                   onChange={(value: Dayjs | null) => {
                     if (value) {
-                      setForm((prev) => ({ ...prev, startDate: value }));
+                      setForm((prev) => ({ ...prev, date: value }));
                     }
                   }}
-                  slotProps={{ textField: { ...datePickerFieldProps, required: true } }}
-                />
-              </Box>
-
-              <Box sx={formFieldSx}>
-                <DatePicker
-                  label="End date (optional)"
-                  value={form.endDate}
-                  onChange={(value: Dayjs | null) => {
-                    setForm((prev) => ({ ...prev, endDate: value }));
+                  slotProps={{
+                    textField: datePickerFieldProps,
                   }}
-                  minDate={form.startDate}
-                  slotProps={{ textField: datePickerFieldProps }}
                 />
               </Box>
             </Stack>
@@ -247,7 +244,7 @@ export function AddRecurringDialog({
               ) : undefined
             }
           >
-            {submitting ? "Saving..." : "Add Recurring"}
+            {submitting ? "Saving..." : isEdit ? "Save Changes" : "Add Transaction"}
           </Button>
         </DialogActions>
       </form>

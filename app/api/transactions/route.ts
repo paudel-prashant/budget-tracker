@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireApiUserId } from "@/lib/api-auth";
 import { handleApiError, jsonError } from "@/lib/api-utils";
 import { processRecurringTransactions } from "@/lib/recurring-processor";
+import { revalidateFinancePages } from "@/lib/revalidate-pages";
 import { validateCreateTransactionBody } from "@/lib/transaction-validation";
 
 export const runtime = "nodejs";
@@ -49,6 +50,8 @@ export async function POST(request: NextRequest) {
     const transaction = await prisma.transaction.create({
       data: { ...validation.data, userId: auth.userId },
     });
+
+    revalidateFinancePages();
 
     return NextResponse.json(transaction, { status: 201 });
   } catch (error) {

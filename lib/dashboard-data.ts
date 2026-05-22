@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { TransactionType } from "@prisma/client";
 import { getDashboardBudgetData } from "@/lib/budget-data";
 import { processRecurringTransactions } from "@/lib/recurring-processor";
@@ -30,6 +31,7 @@ function serializeTransaction(transaction: {
 }
 
 export async function getDashboardData(userId: string): Promise<DashboardData> {
+  await connection();
   assertDatabaseUrl();
 
   await processRecurringTransactions(userId);

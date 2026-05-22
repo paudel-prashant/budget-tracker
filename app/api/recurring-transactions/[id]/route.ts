@@ -3,6 +3,7 @@ import { assertDatabaseUrl } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { requireApiUserId } from "@/lib/api-auth";
 import { handleApiError, jsonError } from "@/lib/api-utils";
+import { revalidateFinancePages } from "@/lib/revalidate-pages";
 
 export const runtime = "nodejs";
 
@@ -33,6 +34,8 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
     await prisma.recurringTransaction.delete({
       where: { id },
     });
+
+    revalidateFinancePages();
 
     return NextResponse.json({ success: true, id });
   } catch (error) {

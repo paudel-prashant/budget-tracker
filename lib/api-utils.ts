@@ -11,6 +11,15 @@ export function handleApiError(error: unknown) {
       return jsonError("Record not found", 404);
     }
     if (error.code === "P2002") {
+      const target = error.meta?.target;
+
+      if (Array.isArray(target) && target.includes("importHash")) {
+        return jsonError(
+          "Another transaction with the same details already exists",
+          409
+        );
+      }
+
       return jsonError("A budget already exists for this category and month", 409);
     }
   }

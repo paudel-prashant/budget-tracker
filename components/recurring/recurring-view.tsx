@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Button,
@@ -102,6 +102,11 @@ export function RecurringView() {
       setDeleting(false);
     }
   };
+
+  const knownCategories = useMemo(
+    () => recurring.map((item) => item.category),
+    [recurring]
+  );
 
   return (
     <PageStack>
@@ -219,6 +224,7 @@ export function RecurringView() {
 
       <AddRecurringDialog
         open={dialogOpen}
+        extraCategories={knownCategories}
         onClose={() => setDialogOpen(false)}
         onSuccess={handleCreateSuccess}
       />

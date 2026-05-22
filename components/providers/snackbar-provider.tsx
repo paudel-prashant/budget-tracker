@@ -4,13 +4,21 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
-import { Alert, Snackbar } from "@mui/material";
+import { createPortal } from "react-dom";
+import { Alert, Snackbar, useTheme } from "@mui/material";
 
 type SnackbarSeverity = "success" | "error" | "info";
+
+const AUTO_HIDE_MS: Record<SnackbarSeverity, number> = {
+  success: 2500,
+  info: 3000,
+  error: 5000,
+};
 
 type SnackbarState = {
   open: boolean;
@@ -38,12 +46,60 @@ type SnackbarProviderProps = {
   children: ReactNode;
 };
 
+function AppSnackbar({
+  snackbar,
+  onClose,
+}: {
+  snackbar: SnackbarState;
+  onClose: (reason?: string) => void;
+}) {
+  const theme = useTheme();
+
+  return (
+    <Snackbar
+      open={snackbar.open}
+      autoHideDuration={AUTO_HIDE_MS[snackbar.severity]}
+      onClose={(_event, reason) => onClose(reason)}
+      anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      disablePortal
+      sx={{
+        position: "fixed",
+        left: "50%",
+        right: "auto",
+        top: "auto",
+        bottom: { xs: 20, sm: 28 },
+        transform: "translateX(-50%)",
+        zIndex: theme.zIndex.snackbar,
+      }}
+    >
+      <Alert
+        onClose={() => onClose()}
+        severity={snackbar.severity}
+        variant="filled"
+        sx={{
+          width: "100%",
+          maxWidth: { xs: "calc(100vw - 32px)", sm: 420 },
+          borderRadius: 2,
+          boxShadow: theme.shadows[6],
+        }}
+      >
+        {snackbar.message}
+      </Alert>
+    </Snackbar>
+  );
+}
+
 export function SnackbarProvider({ children }: SnackbarProviderProps) {
+  const [mounted, setMounted] = useState(false);
   const [snackbar, setSnackbar] = useState<SnackbarState>({
     open: false,
     message: "",
     severity: "success",
   });
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const showMessage = useCallback((message: string, severity: SnackbarSeverity) => {
     setSnackbar({ open: true, message, severity });
@@ -58,29 +114,19 @@ export function SnackbarProvider({ children }: SnackbarProviderProps) {
     [showMessage]
   );
 
-  const handleClose = (_event?: React.SyntheticEvent | Event, reason?: string) => {
+  const handleClose = (reason?: string) => {
     if (reason === "clickaway") return;
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
+  const snackbarElement = <AppSnackbar snackbar={snackbar} onClose={handleClose} />;
+
   return (
     <SnackbarContext.Provider value={value}>
       {children}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={handleClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
-          onClose={handleClose}
-          severity={snackbar.severity}
-          variant="filled"
-          sx={{ width: "100%", borderRadius: 2 }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+      {mounted && typeof document !== "undefined"
+        ? createPortal(snackbarElement, document.body)
+        : null}
     </SnackbarContext.Provider>
   );
 }

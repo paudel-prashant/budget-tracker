@@ -12,9 +12,7 @@ type ValidationResult =
   | { success: true; data: CreateTransactionInput }
   | { success: false; error: string };
 
-export function validateCreateTransactionBody(
-  body: unknown
-): ValidationResult {
+export function validateTransactionBody(body: unknown): ValidationResult {
   if (!body || typeof body !== "object") {
     return { success: false, error: "Request body must be a JSON object" };
   }
@@ -61,3 +59,6 @@ export function validateCreateTransactionBody(
     },
   };
 }
+
+/** @deprecated Use validateTransactionBody */
+export const validateCreateTransactionBody = validateTransactionBody;

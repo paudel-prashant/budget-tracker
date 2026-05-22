@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireApiUserId } from "@/lib/api-auth";
 import { handleApiError, jsonError } from "@/lib/api-utils";
 import { computeTransactionImportHash } from "@/lib/transaction-import-hash";
+import { revalidateFinancePages } from "@/lib/revalidate-pages";
 import { startOfUtcDay } from "@/lib/recurrence-dates";
 
 export const runtime = "nodejs";
@@ -159,6 +160,10 @@ export async function POST(request: NextRequest) {
       })),
       skipDuplicates: true,
     });
+
+    if (result.count > 0) {
+      revalidateFinancePages();
+    }
 
     return NextResponse.json({
       imported: result.count,

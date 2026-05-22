@@ -76,6 +76,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
             <ListItemButton
               component={Link}
               href={item.href}
+              prefetch={false}
               selected={isActive}
               onClick={onNavigate}
               sx={{

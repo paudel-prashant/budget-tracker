@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Button,
@@ -21,12 +21,13 @@ import {
 } from "@mui/material";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageStack } from "@/components/ui/page-stack";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TransactionsTableSkeleton } from "@/components/ui/transactions-table-skeleton";
-import { AddTransactionDialog } from "@/components/transactions/add-transaction-dialog";
+import { TransactionFormDialog } from "@/components/transactions/transaction-form-dialog";
 import { DeleteTransactionDialog } from "@/components/transactions/delete-transaction-dialog";
 import { TransactionMobileCard } from "@/components/transactions/transaction-mobile-card";
 import { useSnackbar } from "@/components/providers/snackbar-provider";
@@ -42,7 +43,8 @@ export function TransactionsView() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<Transaction | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -77,9 +79,30 @@ export function TransactionsView() {
     loadTransactions();
   }, [loadTransactions]);
 
-  const handleCreateSuccess = async () => {
+  const handleFormSuccess = async (mode: "create" | "edit") => {
     await loadTransactions({ silent: true });
-    showSuccess("Transaction created successfully");
+    showSuccess(
+      mode === "edit"
+        ? "Transaction updated successfully"
+        : "Transaction created successfully"
+    );
+  };
+
+  const openCreateDialog = () => {
+    setEditTarget(null);
+    setFormOpen(true);
+  };
+
+  const openEditDialog = (transaction: Transaction) => {
+    setEditTarget(transaction);
+    setFormOpen(true);
+  };
+
+  const closeFormDialog = () => {
+    if (formOpen) {
+      setFormOpen(false);
+      setEditTarget(null);
+    }
   };
 
   const handleConfirmDelete = async () => {
@@ -113,6 +136,11 @@ export function TransactionsView() {
     setDeleteTarget(transaction);
   };
 
+  const knownCategories = useMemo(
+    () => transactions.map((transaction) => transaction.category),
+    [transactions]
+  );
+
   return (
     <PageStack>
       <PageHeader
@@ -122,7 +150,7 @@ export function TransactionsView() {
           <Button
             variant="contained"
             startIcon={<AddOutlinedIcon />}
-            onClick={() => setDialogOpen(true)}
+            onClick={openCreateDialog}
             fullWidth={isMobile}
             sx={{ minWidth: { sm: 180 } }}
           >
@@ -155,7 +183,7 @@ export function TransactionsView() {
             title="No transactions yet"
             description="Start tracking your finances by adding your first income or expense."
             actionLabel="Add Transaction"
-            onAction={() => setDialogOpen(true)}
+            onAction={openCreateDialog}
           />
         ) : isMobile ? (
           <Stack spacing={1.5} sx={{ p: 2 }}>
@@ -164,6 +192,7 @@ export function TransactionsView() {
                 key={transaction.id}
                 transaction={transaction}
                 deleting={deleting && deleteTarget?.id === transaction.id}
+                onEdit={openEditDialog}
                 onDelete={openDeleteDialog}
               />
             ))}
@@ -213,19 +242,32 @@ export function TransactionsView() {
                     <TableCell>{transaction.category}</TableCell>
                     <TableCell>{formatDate(transaction.date)}</TableCell>
                     <TableCell align="right">
-                      <Tooltip title="Delete transaction">
-                        <span>
+                      <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                        <Tooltip title="Edit transaction">
                           <IconButton
                             size="small"
-                            color="error"
+                            color="primary"
                             disabled={deleting && deleteTarget?.id === transaction.id}
-                            onClick={() => openDeleteDialog(transaction)}
-                            aria-label={`Delete ${transaction.title}`}
+                            onClick={() => openEditDialog(transaction)}
+                            aria-label={`Edit ${transaction.title}`}
                           >
-                            <DeleteOutlineOutlinedIcon fontSize="small" />
+                            <EditOutlinedIcon fontSize="small" />
                           </IconButton>
-                        </span>
-                      </Tooltip>
+                        </Tooltip>
+                        <Tooltip title="Delete transaction">
+                          <span>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              disabled={deleting && deleteTarget?.id === transaction.id}
+                              onClick={() => openDeleteDialog(transaction)}
+                              aria-label={`Delete ${transaction.title}`}
+                            >
+                              <DeleteOutlineOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                      </Stack>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -235,10 +277,12 @@ export function TransactionsView() {
         )}
       </Paper>
 
-      <AddTransactionDialog
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        onSuccess={handleCreateSuccess}
+      <TransactionFormDialog
+        open={formOpen}
+        transaction={editTarget}
+        extraCategories={knownCategories}
+        onClose={closeFormDialog}
+        onSuccess={() => handleFormSuccess(editTarget ? "edit" : "create")}
       />
 
       <DeleteTransactionDialog

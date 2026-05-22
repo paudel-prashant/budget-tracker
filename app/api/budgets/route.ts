@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireApiUserId } from "@/lib/api-auth";
 import { handleApiError, jsonError } from "@/lib/api-utils";
 import { getBudgetsWithProgress } from "@/lib/budget-data";
+import { revalidateFinancePages } from "@/lib/revalidate-pages";
 import {
   parseMonthYearSearchParams,
   validateCreateBudgetBody,
@@ -62,6 +63,8 @@ export async function POST(request: NextRequest) {
     const budget = await prisma.budget.create({
       data: { ...validation.data, userId: auth.userId },
     });
+
+    revalidateFinancePages();
 
     return NextResponse.json(budget, { status: 201 });
   } catch (error) {

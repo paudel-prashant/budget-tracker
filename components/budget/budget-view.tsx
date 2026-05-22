@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Box,
@@ -96,6 +96,11 @@ export function BudgetView() {
     }
   };
 
+  const knownCategories = useMemo(
+    () => budgets.map((budget) => budget.category),
+    [budgets]
+  );
+
   return (
     <PageStack>
       <PageHeader
@@ -150,6 +155,7 @@ export function BudgetView() {
 
       <AddBudgetDialog
         open={dialogOpen}
+        extraCategories={knownCategories}
         onClose={() => setDialogOpen(false)}
         onSuccess={handleCreateSuccess}
       />

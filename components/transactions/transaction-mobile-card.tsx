@@ -10,18 +10,21 @@ import {
   Typography,
 } from "@mui/material";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { formatCurrency, formatDate } from "@/lib/format";
 import type { Transaction } from "@/lib/types";
 
 type TransactionMobileCardProps = {
   transaction: Transaction;
   deleting: boolean;
+  onEdit: (transaction: Transaction) => void;
   onDelete: (transaction: Transaction) => void;
 };
 
 export function TransactionMobileCard({
   transaction,
   deleting,
+  onEdit,
   onDelete,
 }: TransactionMobileCardProps) {
   const isIncome = transaction.type === "INCOME";
@@ -45,19 +48,32 @@ export function TransactionMobileCard({
               {transaction.category} · {formatDate(transaction.date)}
             </Typography>
           </Box>
-          <Tooltip title="Delete transaction">
-            <span>
+          <Stack direction="row" spacing={0.5} flexShrink={0}>
+            <Tooltip title="Edit transaction">
               <IconButton
                 size="small"
-                color="error"
+                color="primary"
                 disabled={deleting}
-                onClick={() => onDelete(transaction)}
-                aria-label={`Delete ${transaction.title}`}
+                onClick={() => onEdit(transaction)}
+                aria-label={`Edit ${transaction.title}`}
               >
-                <DeleteOutlineOutlinedIcon fontSize="small" />
+                <EditOutlinedIcon fontSize="small" />
               </IconButton>
-            </span>
-          </Tooltip>
+            </Tooltip>
+            <Tooltip title="Delete transaction">
+              <span>
+                <IconButton
+                  size="small"
+                  color="error"
+                  disabled={deleting}
+                  onClick={() => onDelete(transaction)}
+                  aria-label={`Delete ${transaction.title}`}
+                >
+                  <DeleteOutlineOutlinedIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+          </Stack>
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <Chip

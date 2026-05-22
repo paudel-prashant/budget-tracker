@@ -13,11 +13,13 @@ import {
   Stack,
   TextField,
 } from "@mui/material";
+import { CategorySelectField } from "@/components/ui/category-select-field";
 import { formTextFieldProps } from "@/lib/form-field";
 import { getCurrentMonthYear } from "@/lib/budget-calculations";
 
 type AddBudgetDialogProps = {
   open: boolean;
+  extraCategories?: string[];
   onClose: () => void;
   onSuccess: () => void | Promise<void>;
 };
@@ -29,7 +31,12 @@ const initialForm = {
   monthlyLimit: "",
 };
 
-export function AddBudgetDialog({ open, onClose, onSuccess }: AddBudgetDialogProps) {
+export function AddBudgetDialog({
+  open,
+  extraCategories = [],
+  onClose,
+  onSuccess,
+}: AddBudgetDialogProps) {
   const [form, setForm] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -104,13 +111,11 @@ export function AddBudgetDialog({ open, onClose, onSuccess }: AddBudgetDialogPro
           <Stack spacing={3} sx={{ py: 1 }}>
             {error && <Alert severity="error">{error}</Alert>}
 
-            <TextField
-              {...formTextFieldProps}
-              label="Category"
+            <CategorySelectField
               value={form.category}
-              onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value }))}
-              placeholder="e.g. Food, Transport"
-              required
+              onChange={(category) => setForm((prev) => ({ ...prev, category }))}
+              extraCategories={extraCategories}
+              transactionType="EXPENSE"
             />
 
             <TextField

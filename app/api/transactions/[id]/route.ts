@@ -3,12 +3,83 @@ import { assertDatabaseUrl } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 import { requireApiUserId } from "@/lib/api-auth";
 import { handleApiError, jsonError } from "@/lib/api-utils";
+import { revalidateFinancePages } from "@/lib/revalidate-pages";
+import { computeTransactionImportHash } from "@/lib/transaction-import-hash";
+import { validateTransactionBody } from "@/lib/transaction-validation";
 
 export const runtime = "nodejs";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
+
+async function getOwnedTransaction(userId: string, id: string) {
+  if (!id || typeof id !== "string" || id.trim().length === 0) {
+    return { error: jsonError("Transaction id is required", 400) as Response };
+  }
+
+  const existing = await prisma.transaction.findFirst({
+    where: { id, userId },
+  });
+
+  if (!existing) {
+    return { error: jsonError("Transaction not found", 404) as Response };
+  }
+
+  return { transaction: existing };
+}
+
+export async function PATCH(request: NextRequest, context: RouteContext) {
+  try {
+    assertDatabaseUrl();
+    const auth = await requireApiUserId();
+    if (auth.unauthorized) return auth.unauthorized;
+
+    const { id } = await context.params;
+    const owned = await getOwnedTransaction(auth.userId, id);
+    if ("error" in owned && owned.error) return owned.error;
+
+    let body: unknown;
+
+    try {
+      body = await request.json();
+    } catch {
+      return jsonError("Invalid JSON body", 400);
+    }
+
+    const validation = validateTransactionBody(body);
+
+    if (!validation.success) {
+      return jsonError(validation.error, 400);
+    }
+
+    const importHash = computeTransactionImportHash({
+      title: validation.data.title,
+      amount: validation.data.amount,
+      type: validation.data.type,
+      category: validation.data.category,
+      date: validation.data.date,
+    });
+
+    const transaction = await prisma.transaction.update({
+      where: { id },
+      data: {
+        title: validation.data.title,
+        amount: validation.data.amount,
+        type: validation.data.type,
+        category: validation.data.category,
+        date: validation.data.date,
+        importHash,
+      },
+    });
+
+    revalidateFinancePages();
+
+    return NextResponse.json(transaction);
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
 
 export async function DELETE(_request: NextRequest, context: RouteContext) {
   try {
@@ -17,22 +88,14 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
     if (auth.unauthorized) return auth.unauthorized;
 
     const { id } = await context.params;
-
-    if (!id || typeof id !== "string" || id.trim().length === 0) {
-      return jsonError("Transaction id is required", 400);
-    }
-
-    const existing = await prisma.transaction.findFirst({
-      where: { id, userId: auth.userId },
-    });
-
-    if (!existing) {
-      return jsonError("Transaction not found", 404);
-    }
+    const owned = await getOwnedTransaction(auth.userId, id);
+    if ("error" in owned && owned.error) return owned.error;
 
     await prisma.transaction.delete({
       where: { id },
     });
+
+    revalidateFinancePages();
 
     return NextResponse.json({ success: true, id });
   } catch (error) {
