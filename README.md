@@ -147,7 +147,7 @@ git push -u origin main
 }
 ```
 
-**`DIRECT_URL` is required on Vercel.** If it is missing or points at a pooler host (`-pooler`), `prisma migrate deploy` fails with **P1002** (advisory lock timeout). The build log will show a pooled hostname like `ep-xxx-pooler....neon.tech` — fix by setting `DIRECT_URL` to the **direct** Neon/Vercel URL (no `-pooler`).
+**`DIRECT_URL` on Vercel:** Use the **direct** Neon/Vercel URL (host without `-pooler`). If you only set the pooler URL, the build script auto-derives a direct URL for migrations, but you should still configure `DIRECT_URL` correctly. A pooler-only setup can cause **P1002** (advisory lock timeout) in some cases.
 
 For **Neon** (not Vercel Postgres storage):
 

@@ -1,52 +1,90 @@
 /**
  * Runs `prisma migrate deploy` for Vercel builds.
- * Requires DIRECT_URL (non-pooled). Pooled URLs cannot acquire advisory locks (P1002).
+ * Uses DIRECT_URL (non-pooled). Neon pooler URLs are auto-converted for migrations only.
  */
 import { spawnSync } from "node:child_process";
 
+function normalizeUrl(url) {
+  return url.replace(/^postgres:/, "postgresql:");
+}
+
 function looksLikePooledUrl(url) {
   try {
-    const host = new URL(url.replace(/^postgres:/, "postgresql:")).hostname.toLowerCase();
-    return host.includes("-pooler") || host.includes("pooler.");
+    const parsed = new URL(normalizeUrl(url));
+    const host = parsed.hostname.toLowerCase();
+    return (
+      host.includes("-pooler") ||
+      host.includes("pooler.") ||
+      parsed.searchParams.get("pgbouncer") === "true"
+    );
   } catch {
     return url.includes("-pooler") || url.includes("pgbouncer=true");
   }
 }
 
-const databaseUrl = process.env.DATABASE_URL;
-const directUrl = process.env.DIRECT_URL;
+/** Neon pooled host: ep-xxx-pooler.region... → ep-xxx.region... */
+function toDirectConnectionUrl(url) {
+  const normalized = normalizeUrl(url);
+  const parsed = new URL(normalized);
 
-if (!databaseUrl) {
-  console.error(
-    "\n[vercel-migrate] DATABASE_URL is not set. Link Postgres in Vercel and map DATABASE_URL.\n"
-  );
-  process.exit(1);
+  if (parsed.hostname.includes("-pooler")) {
+    parsed.hostname = parsed.hostname.replace("-pooler", "");
+  }
+
+  parsed.searchParams.delete("pgbouncer");
+  parsed.searchParams.delete("connection_limit");
+
+  return parsed.toString();
 }
 
-if (!directUrl) {
-  console.error(`
-[vercel-migrate] DIRECT_URL is not set.
+function resolveDirectUrl() {
+  const databaseUrl = process.env.DATABASE_URL;
+  let directUrl = process.env.DIRECT_URL;
 
-Prisma migrations need a direct (non-pooled) connection. On Vercel Postgres / Neon:
+  if (!databaseUrl) {
+    console.error(
+      "\n[vercel-migrate] DATABASE_URL is not set. Link Postgres in Vercel and map DATABASE_URL.\n"
+    );
+    process.exit(1);
+  }
 
-  DATABASE_URL  → pooled URL (e.g. POSTGRES_PRISMA_URL or Neon -pooler host)
-  DIRECT_URL    → direct URL  (e.g. POSTGRES_URL_NON_POOLING or Neon host WITHOUT -pooler)
+  if (!directUrl) {
+    console.warn(
+      "[vercel-migrate] DIRECT_URL is not set; deriving a direct URL from DATABASE_URL for migrations."
+    );
+    directUrl = databaseUrl;
+  }
 
-See .env.example and README.md (Deploy → Step 3).
+  if (looksLikePooledUrl(directUrl)) {
+    const derived = toDirectConnectionUrl(directUrl);
+    if (!looksLikePooledUrl(derived)) {
+      console.warn(
+        "[vercel-migrate] DIRECT_URL uses a pooler; using direct Neon host for migrations only."
+      );
+      console.warn(
+        "[vercel-migrate] Set DIRECT_URL in Vercel to the non-pooling connection string (host without -pooler)."
+      );
+      return derived;
+    }
+
+    console.error(`
+[vercel-migrate] Could not derive a direct database URL from DIRECT_URL.
+
+For Neon, set DIRECT_URL to the connection string whose host does NOT include "-pooler".
+Example:
+  DATABASE_URL  → ...@ep-xxx-pooler.us-east-1.aws.neon.tech/...
+  DIRECT_URL    → ...@ep-xxx.us-east-1.aws.neon.tech/...
 `);
-  process.exit(1);
+    process.exit(1);
+  }
+
+  return directUrl;
 }
 
-if (looksLikePooledUrl(directUrl)) {
-  console.error(`
-[vercel-migrate] DIRECT_URL appears to use a connection pooler (${directUrl.includes("-pooler") ? "hostname contains -pooler" : "pooler detected"}).
+const migrationDirectUrl = resolveDirectUrl();
+process.env.DIRECT_URL = migrationDirectUrl;
 
-Use the non-pooling URL for DIRECT_URL. For Neon, copy the connection string whose host does NOT include "-pooler".
-`);
-  process.exit(1);
-}
-
-console.log("[vercel-migrate] Applying migrations via DIRECT_URL...");
+console.log("[vercel-migrate] Applying migrations via direct connection...");
 
 const result = spawnSync("npx", ["prisma", "migrate", "deploy"], {
   stdio: "inherit",
@@ -59,9 +97,8 @@ if (result.status !== 0) {
 [vercel-migrate] migrate deploy failed.
 
 If you see P1002 (advisory lock timeout):
-  • Ensure DIRECT_URL is the direct Neon/Vercel URL, not the pooler.
   • Cancel other in-flight deploys or local "prisma migrate" runs, then redeploy.
-  • Or run migrations once locally: vercel env pull && npm run db:migrate:deploy
+  • Or run once locally: vercel env pull && npm run db:migrate:deploy
 `);
   process.exit(result.status ?? 1);
 }
