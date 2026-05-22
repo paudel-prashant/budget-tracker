@@ -5,6 +5,7 @@ import { requireApiUserId } from "@/lib/api-auth";
 import { handleApiError, jsonError } from "@/lib/api-utils";
 import { revalidateFinancePages } from "@/lib/revalidate-pages";
 import { computeTransactionImportHash } from "@/lib/transaction-import-hash";
+import { upsertLearnedCategoryMapping } from "@/lib/category-mapping-service";
 import { validateTransactionBody } from "@/lib/transaction-validation";
 
 export const runtime = "nodejs";
@@ -72,6 +73,13 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         importHash,
       },
     });
+
+    await upsertLearnedCategoryMapping(
+      auth.userId,
+      validation.data.title,
+      validation.data.category,
+      validation.data.type
+    );
 
     revalidateFinancePages();
 

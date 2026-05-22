@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { requireApiUserId } from "@/lib/api-auth";
 import { handleApiError, jsonError } from "@/lib/api-utils";
 import { computeTransactionImportHash } from "@/lib/transaction-import-hash";
+import { upsertLearnedCategoryMapping } from "@/lib/category-mapping-service";
+import { normalizeTitleKey } from "@/lib/category-suggestion-engine";
 import { revalidateFinancePages } from "@/lib/revalidate-pages";
 import { startOfUtcDay } from "@/lib/recurrence-dates";
 
@@ -162,6 +164,22 @@ export async function POST(request: NextRequest) {
     });
 
     if (result.count > 0) {
+      const mappingKeys = new Set<string>();
+
+      await Promise.all(
+        toInsert.map((row) => {
+          const key = `${normalizeTitleKey(row.title)}|${row.type}`;
+          if (mappingKeys.has(key)) return Promise.resolve();
+          mappingKeys.add(key);
+          return upsertLearnedCategoryMapping(
+            auth.userId,
+            row.title,
+            row.category,
+            row.type
+          );
+        })
+      );
+
       revalidateFinancePages();
     }
 

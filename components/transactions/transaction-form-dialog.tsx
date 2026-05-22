@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Box,
@@ -17,7 +17,9 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { type Dayjs } from "dayjs";
 import { CategorySelectField } from "@/components/ui/category-select-field";
+import { CategorySuggestionBanner } from "@/components/transactions/category-suggestion-banner";
 import { DialogShell } from "@/components/ui/dialog-shell";
+import { useCategorySuggestion } from "@/hooks/use-category-suggestion";
 import { formFieldSx, formTextFieldProps } from "@/lib/form-field";
 import { FORM_STACK_SPACING } from "@/lib/layout-constants";
 import type { Transaction, TransactionType } from "@/lib/types";
@@ -72,13 +74,38 @@ export function TransactionFormDialog({
   const [form, setForm] = useState<FormState>(emptyForm);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const categoryTouchedRef = useRef(false);
+  const applyingSuggestionRef = useRef(false);
+
+  const { suggestion, loading: suggestionLoading } = useCategorySuggestion({
+    title: form.title,
+    type: form.type,
+    enabled: open,
+  });
 
   useEffect(() => {
     if (!open) return;
 
     setForm(transaction ? formFromTransaction(transaction) : emptyForm());
     setError(null);
+    categoryTouchedRef.current = Boolean(transaction?.category);
   }, [open, transaction]);
+
+  const applySuggestion = useCallback(
+    (category: string) => {
+      applyingSuggestionRef.current = true;
+      setForm((prev) => ({ ...prev, category }));
+      applyingSuggestionRef.current = false;
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (!open || isEdit || categoryTouchedRef.current || !suggestion?.category) return;
+    if (form.category.trim()) return;
+
+    applySuggestion(suggestion.category);
+  }, [open, isEdit, suggestion, form.category, applySuggestion]);
 
   const handleClose = () => {
     if (submitting) return;
@@ -188,20 +215,38 @@ export function TransactionFormDialog({
                 select
                 label="Type"
                 value={form.type}
-                onChange={(e) =>
+                onChange={(e) => {
+                  categoryTouchedRef.current = false;
                   setForm((prev) => ({
                     ...prev,
                     type: e.target.value as TransactionType,
-                  }))
-                }
+                    category: "",
+                  }));
+                }}
               >
                 <MenuItem value="INCOME">Income</MenuItem>
                 <MenuItem value="EXPENSE">Expense</MenuItem>
               </TextField>
 
+              <CategorySuggestionBanner
+                suggestion={suggestion}
+                currentCategory={form.category}
+                loading={suggestionLoading}
+                onApply={() => {
+                  if (suggestion?.category) {
+                    applySuggestion(suggestion.category);
+                  }
+                }}
+              />
+
               <CategorySelectField
                 value={form.category}
-                onChange={(category) => setForm((prev) => ({ ...prev, category }))}
+                onChange={(category) => {
+                  if (!applyingSuggestionRef.current) {
+                    categoryTouchedRef.current = true;
+                  }
+                  setForm((prev) => ({ ...prev, category }));
+                }}
                 extraCategories={extraCategories}
                 transactionType={form.type}
               />
