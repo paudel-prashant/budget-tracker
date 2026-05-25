@@ -22,6 +22,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { type Dayjs } from "dayjs";
+import { dialogDatePickerSlotProps } from "@/lib/theme/date-picker";
 import { formFieldSx, formTextFieldProps } from "@/lib/theme/form-field";
 import type { TransactionFilters, TransactionType } from "@/lib/types";
 
@@ -187,7 +188,7 @@ export function TransactionFiltersDrawer({
               label="From date"
               value={draft.dateFrom}
               onChange={(value) => setDraft((prev) => ({ ...prev, dateFrom: value }))}
-              slotProps={{ textField: formTextFieldProps }}
+              slotProps={dialogDatePickerSlotProps(formTextFieldProps)}
             />
           </Box>
 
@@ -197,7 +198,7 @@ export function TransactionFiltersDrawer({
               value={draft.dateTo}
               minDate={draft.dateFrom ?? undefined}
               onChange={(value) => setDraft((prev) => ({ ...prev, dateTo: value }))}
-              slotProps={{ textField: formTextFieldProps }}
+              slotProps={dialogDatePickerSlotProps(formTextFieldProps)}
             />
           </Box>
 

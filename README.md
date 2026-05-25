@@ -1,4 +1,4 @@
-# Bugetrax
+# Budgetrax
 
 A personal finance app built with Next.js App Router, TypeScript, Material UI, Prisma, and PostgreSQL.
 
@@ -114,7 +114,7 @@ Open [http://localhost:3000](http://localhost:3000).
 ```bash
 git init
 git add .
-git commit -m "Prepare Bugetrax for Vercel"
+git commit -m "Prepare Budgetrax for Vercel"
 git remote add origin <your-repo-url>
 git push -u origin main
 ```

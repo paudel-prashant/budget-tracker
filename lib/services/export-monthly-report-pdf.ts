@@ -129,6 +129,6 @@ export async function downloadMonthlyReportPdf(report: MonthlyReport): Promise<v
   addCategoryTable("Top expense categories", report.topExpenseCategories);
   addCategoryTable("Top income categories", report.topIncomeCategories);
 
-  const filename = `bugetrax-report-${report.month}.pdf`;
+  const filename = `budgetrax-report-${report.month}.pdf`;
   doc.save(filename);
 }

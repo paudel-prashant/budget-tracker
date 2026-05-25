@@ -19,6 +19,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { type Dayjs } from "dayjs";
 import { CategorySelectField } from "@/components/shared/ui/category-select-field";
+import { dialogDatePickerSlotProps } from "@/lib/theme/date-picker";
 import { formFieldSx, formTextFieldProps } from "@/lib/theme/form-field";
 import { FORM_STACK_SPACING } from "@/lib/config/layout-constants";
 import type { RecurrenceFrequency, TransactionType } from "@/lib/types";
@@ -206,7 +207,10 @@ export function AddRecurringDialog({
                       setForm((prev) => ({ ...prev, startDate: value }));
                     }
                   }}
-                  slotProps={{ textField: { ...datePickerFieldProps, required: true } }}
+                  slotProps={dialogDatePickerSlotProps({
+                    ...datePickerFieldProps,
+                    required: true,
+                  })}
                 />
               </Box>
 
@@ -218,7 +222,7 @@ export function AddRecurringDialog({
                     setForm((prev) => ({ ...prev, endDate: value }));
                   }}
                   minDate={form.startDate}
-                  slotProps={{ textField: datePickerFieldProps }}
+                  slotProps={dialogDatePickerSlotProps(datePickerFieldProps)}
                 />
               </Box>
             </Stack>

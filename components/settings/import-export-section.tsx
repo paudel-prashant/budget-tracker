@@ -25,6 +25,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { type Dayjs } from "dayjs";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import FileUploadOutlinedIcon from "@mui/icons-material/FileUploadOutlined";
+import { dialogDatePickerSlotProps } from "@/lib/theme/date-picker";
 import { formFieldSx, formTextFieldProps } from "@/lib/theme/form-field";
 import { CARD_PADDING, FORM_STACK_SPACING } from "@/lib/config/layout-constants";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
@@ -253,7 +254,7 @@ export function ImportExportSection() {
                   label="Start date (optional)"
                   value={exportStart}
                   onChange={setExportStart}
-                  slotProps={{ textField: datePickerFieldProps }}
+                  slotProps={dialogDatePickerSlotProps(datePickerFieldProps)}
                 />
               </Box>
               <Box sx={formFieldSx}>
@@ -262,7 +263,7 @@ export function ImportExportSection() {
                   value={exportEnd}
                   onChange={setExportEnd}
                   minDate={exportStart ?? undefined}
-                  slotProps={{ textField: datePickerFieldProps }}
+                  slotProps={dialogDatePickerSlotProps(datePickerFieldProps)}
                 />
               </Box>
             </Stack>

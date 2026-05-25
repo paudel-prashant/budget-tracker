@@ -20,6 +20,7 @@ import { CategorySelectField } from "@/components/shared/ui/category-select-fiel
 import { CategorySuggestionBanner } from "@/components/transactions/category-suggestion-banner";
 import { DialogShell } from "@/components/shared/ui/dialog-shell";
 import { useCategorySuggestion } from "@/hooks/use-category-suggestion";
+import { dialogDatePickerSlotProps } from "@/lib/theme/date-picker";
 import { formFieldSx, formTextFieldProps } from "@/lib/theme/form-field";
 import { FORM_STACK_SPACING } from "@/lib/config/layout-constants";
 import type { Transaction, TransactionType } from "@/lib/types";
@@ -260,9 +261,7 @@ export function TransactionFormDialog({
                       setForm((prev) => ({ ...prev, date: value }));
                     }
                   }}
-                  slotProps={{
-                    textField: datePickerFieldProps,
-                  }}
+                  slotProps={dialogDatePickerSlotProps(datePickerFieldProps)}
                 />
               </Box>
             </Stack>
