@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Box, Container, Toolbar, useMediaQuery, useTheme } from "@mui/material";
+import { AssistantWidget } from "@/components/assistant/assistant-widget";
 import { TopNav } from "@/components/shared/layout/top-nav";
 import { Sidebar } from "@/components/shared/layout/sidebar";
 import {
@@ -67,6 +68,8 @@ export function AppShell({ children }: AppShellProps) {
           </Container>
         </Box>
       </Box>
+
+      <AssistantWidget />
     </Box>
   );
 }
