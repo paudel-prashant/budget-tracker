@@ -20,9 +20,8 @@ import {
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { DialogDatePicker } from "@/components/shared/ui/dialog-date-picker";
 import dayjs, { type Dayjs } from "dayjs";
-import { dialogDatePickerSlotProps } from "@/lib/theme/date-picker";
 import { formFieldSx, formTextFieldProps } from "@/lib/theme/form-field";
 import type { TransactionFilters, TransactionType } from "@/lib/types";
 
@@ -184,21 +183,21 @@ export function TransactionFiltersDrawer({
           </FormControl>
 
           <Box sx={formFieldSx}>
-            <DatePicker
+            <DialogDatePicker
               label="From date"
               value={draft.dateFrom}
               onChange={(value) => setDraft((prev) => ({ ...prev, dateFrom: value }))}
-              slotProps={dialogDatePickerSlotProps(formTextFieldProps)}
+              textFieldProps={formTextFieldProps}
             />
           </Box>
 
           <Box sx={formFieldSx}>
-            <DatePicker
+            <DialogDatePicker
               label="To date"
               value={draft.dateTo}
               minDate={draft.dateFrom ?? undefined}
               onChange={(value) => setDraft((prev) => ({ ...prev, dateTo: value }))}
-              slotProps={dialogDatePickerSlotProps(formTextFieldProps)}
+              textFieldProps={formTextFieldProps}
             />
           </Box>
 

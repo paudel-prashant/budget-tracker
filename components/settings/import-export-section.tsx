@@ -21,11 +21,10 @@ import {
 } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { DialogDatePicker } from "@/components/shared/ui/dialog-date-picker";
 import dayjs, { type Dayjs } from "dayjs";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import FileUploadOutlinedIcon from "@mui/icons-material/FileUploadOutlined";
-import { dialogDatePickerSlotProps } from "@/lib/theme/date-picker";
 import { formFieldSx, formTextFieldProps } from "@/lib/theme/form-field";
 import { CARD_PADDING, FORM_STACK_SPACING } from "@/lib/config/layout-constants";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
@@ -250,20 +249,20 @@ export function ImportExportSection() {
                 the range are included.
               </Alert>
               <Box sx={formFieldSx}>
-                <DatePicker
+                <DialogDatePicker
                   label="Start date (optional)"
                   value={exportStart}
                   onChange={setExportStart}
-                  slotProps={dialogDatePickerSlotProps(datePickerFieldProps)}
+                  textFieldProps={datePickerFieldProps}
                 />
               </Box>
               <Box sx={formFieldSx}>
-                <DatePicker
+                <DialogDatePicker
                   label="End date (optional)"
                   value={exportEnd}
                   onChange={setExportEnd}
                   minDate={exportStart ?? undefined}
-                  slotProps={dialogDatePickerSlotProps(datePickerFieldProps)}
+                  textFieldProps={datePickerFieldProps}
                 />
               </Box>
             </Stack>

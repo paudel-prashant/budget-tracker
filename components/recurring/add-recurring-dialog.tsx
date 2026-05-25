@@ -16,10 +16,9 @@ import {
 } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { DialogDatePicker } from "@/components/shared/ui/dialog-date-picker";
 import dayjs, { type Dayjs } from "dayjs";
 import { CategorySelectField } from "@/components/shared/ui/category-select-field";
-import { dialogDatePickerSlotProps } from "@/lib/theme/date-picker";
 import { formFieldSx, formTextFieldProps } from "@/lib/theme/form-field";
 import { FORM_STACK_SPACING } from "@/lib/config/layout-constants";
 import type { RecurrenceFrequency, TransactionType } from "@/lib/types";
@@ -199,7 +198,7 @@ export function AddRecurringDialog({
               </TextField>
 
               <Box sx={formFieldSx}>
-                <DatePicker
+                <DialogDatePicker
                   label="Start date"
                   value={form.startDate}
                   onChange={(value: Dayjs | null) => {
@@ -207,22 +206,19 @@ export function AddRecurringDialog({
                       setForm((prev) => ({ ...prev, startDate: value }));
                     }
                   }}
-                  slotProps={dialogDatePickerSlotProps({
-                    ...datePickerFieldProps,
-                    required: true,
-                  })}
+                  textFieldProps={{ ...datePickerFieldProps, required: true }}
                 />
               </Box>
 
               <Box sx={formFieldSx}>
-                <DatePicker
+                <DialogDatePicker
                   label="End date (optional)"
                   value={form.endDate}
                   onChange={(value: Dayjs | null) => {
                     setForm((prev) => ({ ...prev, endDate: value }));
                   }}
                   minDate={form.startDate}
-                  slotProps={dialogDatePickerSlotProps(datePickerFieldProps)}
+                  textFieldProps={datePickerFieldProps}
                 />
               </Box>
             </Stack>
