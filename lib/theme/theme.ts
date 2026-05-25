@@ -8,8 +8,9 @@ import {
   PAGE_PADDING_Y,
   SECTION_GAP,
 } from "@/lib/config/layout-constants";
+import { fontFamilyStack } from "@/lib/theme/fonts";
 
-const fontStack = '"Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+const fontStack = fontFamilyStack;
 
 const getDesignTokens = (mode: PaletteMode) => ({
   palette: {

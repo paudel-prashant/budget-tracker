@@ -23,6 +23,7 @@ import type { DashboardInsightTone, DashboardInsights } from "@/lib/types";
 
 type DashboardInsightsWidgetProps = {
   insights: DashboardInsights;
+  embedded?: boolean;
 };
 
 const toneAccent: Record<DashboardInsightTone, string> = {
@@ -62,7 +63,10 @@ function TrendChip({
   );
 }
 
-export function DashboardInsightsWidget({ insights }: DashboardInsightsWidgetProps) {
+export function DashboardInsightsWidget({
+  insights,
+  embedded = false,
+}: DashboardInsightsWidgetProps) {
   const theme = useTheme();
   const accent = toneAccent[insights.tone];
   const totalFlow = insights.totalIncome + insights.totalExpenses;
@@ -76,40 +80,36 @@ export function DashboardInsightsWidget({ insights }: DashboardInsightsWidgetPro
         ? `Latest: ${insights.latestMonthLabel}`
         : null;
 
-  return (
-    <SurfaceCard
-      accentColor={accent}
-      sx={{
-        p: CARD_PADDING,
-        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.06)} 0%, transparent 50%)`,
-      }}
-    >
+  const inner = (
+    <>
       <Stack
-        direction={{ xs: "column", md: "row" }}
+        direction={{ xs: "column", lg: "row" }}
         spacing={3}
-        alignItems={{ md: "stretch" }}
+        alignItems={{ lg: "stretch" }}
         justifyContent="space-between"
       >
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 1.5 }}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: 2,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                bgcolor: alpha(theme.palette.primary.main, 0.12),
-                color: "primary.main",
-              }}
-            >
-              <InsightsOutlinedIcon />
-            </Box>
-            <Typography variant="overline" color="text.secondary" fontWeight={700}>
-              Insight highlight
-            </Typography>
-          </Stack>
+          {!embedded && (
+            <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  bgcolor: alpha(theme.palette.primary.main, 0.12),
+                  color: "primary.main",
+                }}
+              >
+                <InsightsOutlinedIcon />
+              </Box>
+              <Typography variant="overline" color="text.secondary" fontWeight={700}>
+                Insight highlight
+              </Typography>
+            </Stack>
+          )}
 
           <Typography variant="h6" fontWeight={700} sx={{ mb: 0.75, letterSpacing: "-0.02em" }}>
             {insights.headline}
@@ -140,7 +140,8 @@ export function DashboardInsightsWidget({ insights }: DashboardInsightsWidgetPro
 
         <Box
           sx={{
-            width: { xs: "100%", md: 280 },
+            width: { xs: "100%", lg: 280 },
+            maxWidth: "100%",
             flexShrink: 0,
             p: 2,
             borderRadius: 2.5,
@@ -219,6 +220,33 @@ export function DashboardInsightsWidget({ insights }: DashboardInsightsWidgetPro
           View full insights
         </Button>
       </Box>
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <Box
+        sx={{
+          width: "100%",
+          minWidth: 0,
+          borderRadius: 2,
+          background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.06)} 0%, transparent 50%)`,
+        }}
+      >
+        {inner}
+      </Box>
+    );
+  }
+
+  return (
+    <SurfaceCard
+      accentColor={accent}
+      sx={{
+        p: CARD_PADDING,
+        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.06)} 0%, transparent 50%)`,
+      }}
+    >
+      {inner}
     </SurfaceCard>
   );
 }

@@ -20,7 +20,7 @@ export default async function DashboardPage() {
   return (
     <>
       <RefreshDashboardOnReturn />
-      <DashboardContent data={data} />
+      <DashboardContent data={data} userId={userId} />
     </>
   );
 }

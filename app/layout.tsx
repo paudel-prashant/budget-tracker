@@ -3,6 +3,7 @@ import { MuiProvider } from "@/components/shared/providers/mui-provider";
 import { SessionProvider } from "@/components/shared/providers/session-provider";
 import { AuthLayout } from "@/components/shared/layout/auth-layout";
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/config/app";
+import { appFont } from "@/lib/theme/fonts";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
@@ -20,8 +21,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning>
+    <html lang="en" className={appFont.variable} suppressHydrationWarning>
+      <body className={appFont.className} suppressHydrationWarning>
         <MuiProvider>
           <SessionProvider>
             <AuthLayout>{children}</AuthLayout>

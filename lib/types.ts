@@ -280,3 +280,9 @@ export type DashboardData = {
   insights: DashboardInsights | null;
   netWorth: NetWorthDashboardData;
 };
+
+export type {
+  DashboardLayoutPreferences,
+  DashboardWidgetConfig,
+  DashboardWidgetId,
+} from "@/lib/domain/dashboard-layout";

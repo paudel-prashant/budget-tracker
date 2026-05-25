@@ -13,6 +13,7 @@ import {
 import { ChartCard } from "@/components/dashboard/chart-card";
 import { getChartGridStroke, getChartTooltipStyle } from "@/lib/theme/chart-styles";
 import { formatChartDate, formatCurrency } from "@/lib/utils/format";
+import { useChartPlotHeight } from "@/hooks/use-chart-plot-height";
 import { CHART_AREA_HEIGHT } from "@/lib/config/layout-constants";
 import type { BalanceChartPoint } from "@/lib/types";
 
@@ -23,6 +24,7 @@ type BalanceLineChartProps = {
 
 export function BalanceLineChart({ data, chartReady = true }: BalanceLineChartProps) {
   const theme = useTheme();
+  const plotHeight = useChartPlotHeight();
   const gradientId = "balanceAreaGradient";
 
   const chartData = data.map((point) => ({
@@ -41,7 +43,7 @@ export function BalanceLineChart({ data, chartReady = true }: BalanceLineChartPr
       {!chartReady && !isEmpty ? (
         <Skeleton variant="rounded" sx={{ width: "100%", height: CHART_AREA_HEIGHT, borderRadius: 2 }} />
       ) : (
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height={plotHeight}>
           <AreaChart data={chartData} margin={{ top: 12, right: 16, left: 4, bottom: 4 }}>
             <defs>
               <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">

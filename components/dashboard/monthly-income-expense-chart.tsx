@@ -14,6 +14,7 @@ import {
 import { ChartCard } from "@/components/dashboard/chart-card";
 import { getChartGridStroke, getChartTooltipStyle } from "@/lib/theme/chart-styles";
 import { formatCurrency, formatMonth } from "@/lib/utils/format";
+import { useChartPlotHeight } from "@/hooks/use-chart-plot-height";
 import { CHART_AREA_HEIGHT } from "@/lib/config/layout-constants";
 import type { MonthlyChartPoint } from "@/lib/types";
 
@@ -27,6 +28,7 @@ export function MonthlyIncomeExpenseChart({
   chartReady = true,
 }: MonthlyIncomeExpenseChartProps) {
   const theme = useTheme();
+  const plotHeight = useChartPlotHeight();
 
   const chartData = data.map((point) => ({
     ...point,
@@ -44,7 +46,7 @@ export function MonthlyIncomeExpenseChart({
       {!chartReady && !isEmpty ? (
         <Skeleton variant="rounded" sx={{ width: "100%", height: CHART_AREA_HEIGHT, borderRadius: 2 }} />
       ) : (
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height={plotHeight}>
           <BarChart data={chartData} margin={{ top: 12, right: 16, left: 4, bottom: 4 }} barGap={6}>
             <CartesianGrid strokeDasharray="4 4" stroke={getChartGridStroke(theme)} vertical={false} />
             <XAxis

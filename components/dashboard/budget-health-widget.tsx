@@ -22,9 +22,10 @@ import type { BudgetHealth } from "@/lib/types";
 
 type BudgetHealthWidgetProps = {
   health: BudgetHealth;
+  embedded?: boolean;
 };
 
-export function BudgetHealthWidget({ health }: BudgetHealthWidgetProps) {
+export function BudgetHealthWidget({ health, embedded = false }: BudgetHealthWidgetProps) {
   const hasBudgets = health.totalBudgets > 0;
   const progressColor = getProgressBarColor(health.overallPercentUsed, health.overBudget > 0);
   const progressValue = getProgressBarValue(health.overallPercentUsed);
@@ -35,8 +36,8 @@ export function BudgetHealthWidget({ health }: BudgetHealthWidgetProps) {
     { label: "Over budget", value: health.overBudget, color: "error.main" },
   ];
 
-  return (
-    <SurfaceCard sx={{ p: CARD_PADDING, width: "100%" }}>
+  const content = (
+    <>
       <Stack
         direction={{ xs: "column", sm: "row" }}
         alignItems={{ xs: "flex-start", sm: "center" }}
@@ -128,6 +129,12 @@ export function BudgetHealthWidget({ health }: BudgetHealthWidgetProps) {
           </Typography>
         </>
       )}
-    </SurfaceCard>
+    </>
   );
+
+  if (embedded) {
+    return <Box sx={{ width: "100%", minWidth: 0 }}>{content}</Box>;
+  }
+
+  return <SurfaceCard sx={{ p: CARD_PADDING, width: "100%" }}>{content}</SurfaceCard>;
 }
