@@ -13,12 +13,13 @@ A personal finance app built with Next.js App Router, TypeScript, Material UI, P
 
 ## Progressive Web App (PWA)
 
-Budgetrax ships as an installable PWA powered by [`@ducanh2912/next-pwa`](https://github.com/DuCanhGH/next-pwa) (Workbox).
+Budgetrax ships as an installable PWA with a hand-written service worker (Vercel-safe, no Workbox runtime issues).
 
 | Capability | Implementation |
 |------------|----------------|
 | Web app manifest | `app/manifest.ts` → `/manifest.webmanifest` |
-| Service worker | Generated at `npm run build` → `public/sw.js` |
+| Service worker | `public/sw.js` (committed; precaches offline shell + caches API/static) |
+| PWA icons | `npm run pwa:icons` → `public/icons/` (runs automatically on `npm run build`) |
 | Install prompt | `components/pwa/install-prompt.tsx` |
 | Offline pages | Dashboard & transactions via `localStorage` + SW cache |
 | API cache | Network-first Workbox cache + client `fetchWithCache` |
