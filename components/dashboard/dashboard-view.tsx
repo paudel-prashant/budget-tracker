@@ -12,6 +12,7 @@ import {
 import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined";
 import { PageHeader } from "@/components/shared/ui/page-header";
 import { PageStack } from "@/components/shared/ui/page-stack";
+import { DashboardKpiCards } from "@/components/dashboard/dashboard-kpi-cards";
 import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { BudgetHealthWidget } from "@/components/dashboard/budget-health-widget";
 import { BudgetWarnings } from "@/components/dashboard/budget-warnings";
@@ -45,6 +46,7 @@ function metricsFromDashboardData(data: DashboardData): DashboardMetrics {
     balanceChartData: data.balanceChartData,
     monthlyChartData: data.monthlyChartData,
     insights: data.insights,
+    kpis: data.kpis,
     dateRange: data.dateRange,
   };
 }
@@ -80,6 +82,10 @@ export function DashboardView({ data, initialLayout }: DashboardViewProps) {
         case "balance":
           return metricsContent(
             <SummaryCards summary={metrics.summary} dimmed={metricsLoading} />
+          );
+        case "kpis":
+          return metricsContent(
+            <DashboardKpiCards kpis={metrics.kpis} dimmed={metricsLoading} />
           );
         case "charts":
           return metricsContent(

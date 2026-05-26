@@ -284,11 +284,34 @@ export type DashboardDateRange = {
   dateTo: string;
 };
 
+export type KpiTrendComparison = {
+  direction: TrendDirection;
+  changePercent: number | null;
+  label: string;
+  positiveIsGood: boolean;
+};
+
+export type DashboardKpis = {
+  savingsRate: number | null;
+  savingsRateTrend: KpiTrendComparison;
+  projectedMonthlySpending: number;
+  projectedMonthlySpendingTrend: KpiTrendComparison;
+  averageDailySpending: number;
+  averageDailySpendingTrend: KpiTrendComparison;
+  largestExpenseCategory: CategorySpendingInsight | null;
+  largestExpenseCategoryTrend: KpiTrendComparison;
+  monthlyBurnRate: number;
+  monthlyBurnRateTrend: KpiTrendComparison;
+  expenseDaysCount: number;
+  rangeDayCount: number;
+};
+
 export type DashboardMetrics = {
   summary: Summary;
   balanceChartData: BalanceChartPoint[];
   monthlyChartData: MonthlyChartPoint[];
   insights: DashboardInsights | null;
+  kpis: DashboardKpis;
   dateRange: DashboardDateRange;
 };
 

@@ -226,5 +226,7 @@ export type {
   DashboardData,
   DashboardDatePreset,
   DashboardDateRange,
+  DashboardKpis,
   DashboardMetrics,
+  KpiTrendComparison,
 } from "@/lib/types";

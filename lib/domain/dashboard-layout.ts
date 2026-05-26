@@ -1,5 +1,6 @@
 export const DASHBOARD_WIDGET_IDS = [
   "balance",
+  "kpis",
   "charts",
   "budgets",
   "goals",
@@ -25,6 +26,11 @@ export const DASHBOARD_WIDGET_META: Record<
   balance: {
     label: "Balance",
     description: "Income, expenses, and net balance summary",
+    fullWidth: true,
+  },
+  kpis: {
+    label: "Financial KPIs",
+    description: "Savings rate, burn rate, spending projections, and category leaders",
     fullWidth: true,
   },
   charts: {

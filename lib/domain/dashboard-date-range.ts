@@ -149,3 +149,16 @@ export function parseDashboardMetricsSearchParams(
 export function getRangeStartDateKey(range: ResolvedDashboardDateRange): string {
   return range.dateFrom.slice(0, 10);
 }
+
+/** Same-length period immediately before the current range (for KPI comparisons). */
+export function getPreviousDashboardDateRange(
+  range: ResolvedDashboardDateRange
+): ResolvedDashboardDateRange {
+  const start = dayjs(range.dateFrom).startOf("day");
+  const end = dayjs(range.dateTo).startOf("day");
+  const dayCount = Math.max(1, end.diff(start, "day") + 1);
+  const previousEnd = start.subtract(1, "day");
+  const previousStart = previousEnd.subtract(dayCount - 1, "day");
+
+  return toRange("custom", previousStart, previousEnd);
+}
