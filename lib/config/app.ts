@@ -4,3 +4,6 @@ export const APP_DESCRIPTION =
   "Track budgets, transactions, and insights with Budgetrax — your personal finance dashboard.";
 /** UI logo path (favicon uses `app/icon.png` via Next.js metadata). */
 export const APP_ICON_PATH = "/brand-icon.png?v=2";
+
+/** Desktop login / marketing hero (dashboard mockup + value props). */
+export const LOGIN_HERO_IMAGE_PATH = "/images/budgetrax-login-hero.png";

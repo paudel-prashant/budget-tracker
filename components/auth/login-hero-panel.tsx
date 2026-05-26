@@ -1,110 +1,174 @@
 "use client";
 
+import Image from "next/image";
+import { Box, Stack, Typography, alpha, useTheme } from "@mui/material";
 import {
-  Box,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Stack,
-  Typography,
-  alpha,
-  useTheme,
-} from "@mui/material";
-import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
-import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
-import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
-import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
+  APP_DESCRIPTION,
+  APP_NAME,
+  APP_TAGLINE,
+  LOGIN_HERO_IMAGE_PATH,
+} from "@/lib/config/app";
+import { LOGIN_FEATURES } from "@/lib/config/login-features";
 import { BrandLogo } from "@/components/shared/brand-logo";
-import { APP_DESCRIPTION, APP_NAME, APP_TAGLINE } from "@/lib/config/app";
 
-const FEATURES = [
-  {
-    icon: DashboardOutlinedIcon,
-    title: "Dashboard at a glance",
-    description: "See spending, income, and cash flow in one place.",
-  },
-  {
-    icon: ReceiptLongOutlinedIcon,
-    title: "Transactions & imports",
-    description: "Log expenses quickly or bring in history from CSV.",
-  },
-  {
-    icon: AccountBalanceWalletOutlinedIcon,
-    title: "Budgets that stick",
-    description: "Set category limits and track progress through the month.",
-  },
-  {
-    icon: InsightsOutlinedIcon,
-    title: "Insights & reports",
-    description: "Spot trends, recurring charges, and monthly summaries.",
-  },
-] as const;
+/** Intrinsic size of `public/images/budgetrax-login-hero.png` for Next.js Image. */
+const HERO_WIDTH = 1024;
+const HERO_HEIGHT = 512;
 
+/**
+ * Desktop login marketing — copy + hero artwork, theme typography only.
+ */
 export function LoginHeroPanel() {
   const theme = useTheme();
+  const isLight = theme.palette.mode === "light";
+
+  const featureColors = [
+    theme.palette.primary.main,
+    theme.palette.success.main,
+    theme.palette.warning.main,
+    theme.palette.info.main,
+  ];
 
   return (
-    <Stack spacing={4} sx={{ maxWidth: 480, width: "100%" }}>
-      <Stack direction="row" spacing={2} alignItems="center">
-        <BrandLogo
-          size={56}
-          priority
-          sx={{
-            borderRadius: 2.5,
-            boxShadow: `0 8px 24px ${alpha(theme.palette.primary.main, 0.3)}`,
-          }}
-        />
+    <Box
+      sx={{
+        width: "100%",
+        maxWidth: { md: 440, lg: 920, xl: 1020 },
+        minHeight: "100%",
+        my: "auto",
+        display: "flex",
+        flexDirection: { md: "column", lg: "row" },
+        alignItems: "center",
+        justifyContent: "center",
+        gap: { md: 3, lg: 4 },
+      }}
+    >
+      <Stack
+        spacing={3}
+        sx={{
+          flex: { lg: "0 0 42%" },
+          minWidth: 0,
+          justifyContent: "center",
+        }}
+      >
+        <Stack direction="row" spacing={1.5} alignItems="center">
+          <BrandLogo
+            size={48}
+            priority
+            sx={{
+              borderRadius: 2.5,
+              boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.28)}`,
+            }}
+          />
+          <Box>
+            <Typography variant="subtitle1" fontWeight={700}>
+              {APP_NAME}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {APP_TAGLINE}
+            </Typography>
+          </Box>
+        </Stack>
+
         <Box>
-          <Typography variant="h5" component="p" fontWeight={700} lineHeight={1.2}>
-            {APP_NAME}
+          <Typography variant="h3" component="h1" color="text.primary">
+            Plan smarter. Spend better.{" "}
+            <Box component="span" sx={{ color: "primary.main" }}>
+              Achieve more.
+            </Box>
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
-            {APP_TAGLINE}
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
+            {APP_DESCRIPTION}
           </Typography>
         </Box>
-      </Stack>
 
-      <Box>
-        <Typography variant="h4" component="h1" fontWeight={700} sx={{ letterSpacing: "-0.02em" }}>
-          Personal finance,{" "}
-          <Box component="span" sx={{ color: "primary.main" }}>
-            organized
-          </Box>
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mt: 1.5, lineHeight: 1.7 }}>
-          {APP_DESCRIPTION}
-        </Typography>
-      </Box>
-
-      <List disablePadding sx={{ "& .MuiListItem-root": { alignItems: "flex-start", py: 1.25 } }}>
-        {FEATURES.map(({ icon: Icon, title, description }) => (
-          <ListItem key={title} disableGutters>
-            <ListItemIcon sx={{ minWidth: 44, mt: 0.25 }}>
+        <Stack spacing={1.5} component="ul" sx={{ listStyle: "none", m: 0, p: 0 }}>
+          {LOGIN_FEATURES.map(({ icon: Icon, title, description }, index) => (
+            <Stack
+              key={title}
+              component="li"
+              direction="row"
+              spacing={1.5}
+              alignItems="flex-start"
+            >
               <Box
                 sx={{
                   width: 40,
                   height: 40,
+                  flexShrink: 0,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   borderRadius: 2,
-                  bgcolor: alpha(theme.palette.primary.main, 0.1),
-                  color: "primary.main",
+                  bgcolor: alpha(featureColors[index], 0.14),
+                  color: featureColors[index],
                 }}
               >
-                <Icon fontSize="small" />
+                <Icon sx={{ fontSize: 22 }} />
               </Box>
-            </ListItemIcon>
-            <ListItemText
-              primary={title}
-              secondary={description}
-              primaryTypographyProps={{ fontWeight: 600, variant: "subtitle2" }}
-              secondaryTypographyProps={{ variant: "body2", sx: { mt: 0.25 } }}
-            />
-          </ListItem>
-        ))}
-      </List>
-    </Stack>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="body1" fontWeight={700}>
+                  {title}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                  {description}
+                </Typography>
+              </Box>
+            </Stack>
+          ))}
+        </Stack>
+      </Stack>
+
+      <Box
+        sx={{
+          flex: 1,
+          minWidth: 0,
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Box
+          sx={{
+            position: "relative",
+            width: "100%",
+            borderRadius: { md: 3, lg: 4 },
+            overflow: "hidden",
+            lineHeight: 0,
+            bgcolor: isLight
+              ? alpha(theme.palette.primary.main, 0.06)
+              : alpha(theme.palette.primary.main, 0.12),
+            border: 1,
+            borderColor: alpha(theme.palette.primary.main, isLight ? 0.14 : 0.28),
+            boxShadow: isLight
+              ? `0 20px 56px ${alpha(theme.palette.primary.main, 0.16)}, 0 4px 16px ${alpha(theme.palette.common.black, 0.06)}`
+              : `0 24px 64px ${alpha(theme.palette.common.black, 0.45)}`,
+            "&::after": {
+              content: '""',
+              position: "absolute",
+              inset: 0,
+              borderRadius: "inherit",
+              pointerEvents: "none",
+              boxShadow: `inset 0 1px 0 ${alpha(theme.palette.common.white, isLight ? 0.65 : 0.12)}`,
+            },
+          }}
+        >
+          <Image
+            src={LOGIN_HERO_IMAGE_PATH}
+            alt={`${APP_NAME} dashboard preview with income, expenses, budgets, and category insights`}
+            width={HERO_WIDTH}
+            height={HERO_HEIGHT}
+            priority
+            sizes="(max-width: 1200px) 50vw, 560px"
+            style={{
+              width: "100%",
+              height: "auto",
+              display: "block",
+            }}
+          />
+        </Box>
+      </Box>
+    </Box>
   );
 }

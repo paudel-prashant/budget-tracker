@@ -17,10 +17,11 @@ import {
 import GoogleIcon from "@mui/icons-material/Google";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { LoginHeroPanel } from "@/components/auth/login-hero-panel";
+import { LoginMobileScreen } from "@/components/auth/login-mobile-screen";
 import { APP_NAME } from "@/lib/config/app";
 import { CARD_SHADOW } from "@/lib/config/layout-constants";
 
-function LoginForm() {
+function DesktopLoginForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/";
 
@@ -96,45 +97,70 @@ export default function LoginPage() {
         background: pageBackground,
       }}
     >
+      {/* Marketing — desktop: copy + hero image */}
       <Box
         component="section"
         aria-label={`About ${APP_NAME}`}
         sx={{
-          flex: 1,
-          display: "flex",
+          flex: { md: 1.2, lg: 1.35, xl: 1.4 },
+          display: { xs: "none", md: "flex" },
+          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          px: { xs: 3, sm: 4, md: 5, lg: 7 },
-          py: { xs: 5, sm: 6, md: 4 },
+          minHeight: "100dvh",
+          px: { md: 3, lg: 4, xl: 5 },
+          py: { md: 3, lg: 4 },
+          overflow: "auto",
         }}
       >
         <LoginHeroPanel />
       </Box>
 
+      {/* Sign-in */}
       <Box
         component="section"
         aria-label="Sign in"
         sx={{
-          flex: 1,
+          flex: { md: 0.85, lg: 0.8 },
           display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          px: { xs: 3, sm: 4, md: 5, lg: 7 },
-          py: { xs: 5, sm: 6, md: 4 },
-          bgcolor: alpha(theme.palette.background.paper, theme.palette.mode === "light" ? 0.65 : 0.4),
-          backdropFilter: "blur(12px)",
+          flexDirection: "column",
+          alignItems: { xs: "stretch", md: "center" },
+          justifyContent: { xs: "flex-start", md: "center" },
+          minHeight: "100dvh",
+          maxHeight: { xs: "100dvh", md: "none" },
+          px: { xs: 0, sm: 4, md: 5, lg: 7 },
+          pt: { xs: 0, md: 4 },
+          pb: { xs: 0, md: 4 },
+          bgcolor: {
+            xs: "transparent",
+            md: alpha(theme.palette.background.paper, theme.palette.mode === "light" ? 0.65 : 0.4),
+          },
+          backdropFilter: { xs: "none", md: "blur(12px)" },
+          overflow: { xs: "hidden", md: "visible" },
           ...panelDivider,
         }}
       >
-        <Suspense
-          fallback={
-            <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-              <CircularProgress />
-            </Box>
-          }
+        <Box sx={{ display: { xs: "block", md: "none" }, width: "100%" }}>
+          <LoginMobileScreen />
+        </Box>
+
+        <Box
+          sx={{
+            display: { xs: "none", md: "block" },
+            width: "100%",
+            maxWidth: 400,
+          }}
         >
-          <LoginForm />
-        </Suspense>
+          <Suspense
+            fallback={
+              <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
+                <CircularProgress />
+              </Box>
+            }
+          >
+            <DesktopLoginForm />
+          </Suspense>
+        </Box>
       </Box>
     </Box>
   );
