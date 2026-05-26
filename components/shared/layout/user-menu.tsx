@@ -70,7 +70,7 @@ export function UserMenu() {
         }}
       >
         <Box sx={{ px: 2, py: 1.5 }}>
-          <Typography variant="subtitle2" fontWeight={600} noWrap>
+          <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
             {displayName}
           </Typography>
           {email ? (

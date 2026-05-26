@@ -10,6 +10,7 @@ import {
 } from "@/lib/config/app";
 import { LOGIN_FEATURES } from "@/lib/config/login-features";
 import { BrandLogo } from "@/components/shared/brand-logo";
+import { brandTitleSx, cardTitleSx } from "@/lib/theme/typography";
 
 /** Intrinsic size of `public/images/budgetrax-login-hero.png` for Next.js Image. */
 const HERO_WIDTH = 1024;
@@ -61,7 +62,7 @@ export function LoginHeroPanel() {
             }}
           />
           <Box>
-            <Typography variant="subtitle1" fontWeight={700}>
+            <Typography variant="subtitle1" sx={brandTitleSx}>
               {APP_NAME}
             </Typography>
             <Typography variant="body2" color="text.secondary">
@@ -107,7 +108,7 @@ export function LoginHeroPanel() {
                 <Icon sx={{ fontSize: 22 }} />
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Typography variant="body1" fontWeight={700}>
+                <Typography variant="body1" sx={cardTitleSx}>
                   {title}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>

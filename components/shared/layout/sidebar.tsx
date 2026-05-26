@@ -16,6 +16,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BrandLogo } from "@/components/shared/brand-logo";
 import { APP_NAME, APP_TAGLINE } from "@/lib/config/app";
+import { brandTitleSx } from "@/lib/theme/typography";
 import { mainNavItems } from "@/lib/config/navigation";
 import {
   APP_BAR_HEIGHT,
@@ -44,7 +45,7 @@ function SidebarBrand() {
     >
       <BrandLogo size={40} />
       <Box sx={{ minWidth: 0 }}>
-        <Typography variant="subtitle1" fontWeight={700} noWrap letterSpacing="-0.02em">
+        <Typography variant="subtitle1" noWrap sx={brandTitleSx}>
           {APP_NAME}
         </Typography>
         <Typography variant="caption" color="text.secondary" noWrap>
@@ -116,8 +117,8 @@ function NavList() {
               <ListItemText
                 primary={item.label}
                 primaryTypographyProps={{
-                  fontSize: "0.9rem",
-                  fontWeight: isActive ? 600 : 500,
+                  variant: "body2",
+                  fontWeight: isActive ? 600 : 400,
                 }}
               />
             </ListItemButton>

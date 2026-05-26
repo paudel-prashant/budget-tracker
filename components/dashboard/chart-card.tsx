@@ -5,6 +5,7 @@ import { ChartEmptyState } from "@/components/shared/ui/chart-empty-state";
 import { SurfaceCard } from "@/components/shared/ui/surface-card";
 import { useChartPlotHeight } from "@/hooks/use-chart-plot-height";
 import { CARD_PADDING, CHART_CARD_MIN_HEIGHT } from "@/lib/config/layout-constants";
+import { chartTitleSx } from "@/lib/theme/typography";
 
 type ChartCardProps = {
   title: string;
@@ -35,11 +36,7 @@ export function ChartCard({
       }}
     >
       <Box sx={{ mb: isEmpty ? 1.5 : 2.25 }}>
-        <Typography
-          variant="h6"
-          component="h2"
-          sx={{ fontSize: { xs: "1rem", sm: "1.125rem" } }}
-        >
+        <Typography variant="h6" component="h2" sx={chartTitleSx}>
           {title}
         </Typography>
         {subtitle && (

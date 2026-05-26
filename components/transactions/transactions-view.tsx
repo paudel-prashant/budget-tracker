@@ -45,7 +45,9 @@ import { usePwa } from "@/components/pwa/pwa-provider";
 import { useQuickTransaction } from "@/components/transactions/quick-transaction-provider";
 import { MOBILE_NAV_BREAKPOINT } from "@/lib/config/layout-constants";
 import { useSnackbar } from "@/components/shared/providers/snackbar-provider";
+import { TRANSACTION_UNDO_DELETE_MS } from "@/lib/config/undo-delete";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { useSoftDeleteTransaction } from "@/hooks/use-soft-delete-transaction";
 import { useLoadMoreOnVisible } from "@/hooks/use-load-more-on-visible";
 import { useMounted } from "@/hooks/use-mounted";
 import { fetchWithCache, OfflineFetchError } from "@/lib/pwa/fetch-with-cache";
@@ -78,7 +80,7 @@ export function TransactionsView() {
 
   const { isOnline } = usePwa();
   const { openQuickAdd } = useQuickTransaction();
-  const { showSuccess, showError } = useSnackbar();
+  const { showSuccess, showError, showInfo } = useSnackbar();
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [pagination, setPagination] = useState<TransactionListPagination>({
@@ -108,11 +110,12 @@ export function TransactionsView() {
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Transaction | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
-  const [deleting, setDeleting] = useState(false);
   const [showSwipeHint, setShowSwipeHint] = useState(false);
   const [filterVersion, setFilterVersion] = useState(0);
   const appliedFilterVersionRef = useRef(filterVersion);
   const silentNextListFetchRef = useRef(false);
+  const pendingDeleteIdsRef = useRef<ReadonlySet<string>>(new Set());
+  const refreshTransactionsRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     setShowSwipeHint(sessionStorage.getItem(SWIPE_HINT_STORAGE_KEY) !== "1");
@@ -183,7 +186,8 @@ export function TransactionsView() {
             setHasMore(false);
           }
 
-          return merged;
+          const hidden = pendingDeleteIdsRef.current;
+          return merged.filter((t) => !hidden.has(t.id));
         });
       } catch (err) {
         const message =
@@ -211,6 +215,46 @@ export function TransactionsView() {
     setMobilePage(1);
     setFilterVersion((v) => v + 1);
   }, []);
+
+  refreshTransactionsRef.current = refreshTransactions;
+
+  const showUndoToast = useCallback(
+    (message: string, onUndo: () => void) => {
+      showInfo(message, {
+        autoHideMs: TRANSACTION_UNDO_DELETE_MS,
+        action: { label: "Undo", onClick: onUndo },
+      });
+    },
+    [showInfo]
+  );
+
+  const commitDelete = useCallback(
+    async (id: string) => {
+      try {
+        const response = await fetch(`/api/transactions/${id}`, { method: "DELETE" });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error ?? "Failed to delete transaction");
+        }
+
+        window.dispatchEvent(new CustomEvent("budgetrax:transactions-changed"));
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Failed to delete transaction";
+        showError(message);
+        refreshTransactionsRef.current();
+      }
+    },
+    [showError]
+  );
+
+  const { scheduleDelete, pendingIds } = useSoftDeleteTransaction({
+    onCommit: commitDelete,
+    showUndoToast,
+  });
+
+  pendingDeleteIdsRef.current = pendingIds;
 
   useEffect(() => {
     const filtersJustChanged = appliedFilterVersionRef.current !== filterVersion;
@@ -296,31 +340,48 @@ export function TransactionsView() {
     }
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = () => {
     if (!deleteTarget) return;
 
-    setDeleting(true);
+    const transaction = deleteTarget;
+    const index = transactions.findIndex((t) => t.id === transaction.id);
+    setDeleteTarget(null);
 
-    try {
-      const response = await fetch(`/api/transactions/${deleteTarget.id}`, {
-        method: "DELETE",
-      });
+    if (index < 0) return;
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error ?? "Failed to delete transaction");
+    void scheduleDelete(
+      transaction,
+      index,
+      () => {
+        setTransactions((prev) => prev.filter((t) => t.id !== transaction.id));
+        setPagination((prev) => {
+          const total = Math.max(0, prev.total - 1);
+          return {
+            ...prev,
+            total,
+            totalPages: Math.max(1, Math.ceil(total / prev.pageSize)),
+          };
+        });
+        setTotalUnfiltered((prev) => Math.max(0, prev - 1));
+      },
+      (tx, atIndex) => {
+        setTransactions((prev) => {
+          if (prev.some((t) => t.id === tx.id)) return prev;
+          const next = [...prev];
+          next.splice(Math.min(atIndex, next.length), 0, tx);
+          return next;
+        });
+        setPagination((prev) => {
+          const total = prev.total + 1;
+          return {
+            ...prev,
+            total,
+            totalPages: Math.max(1, Math.ceil(total / prev.pageSize)),
+          };
+        });
+        setTotalUnfiltered((prev) => prev + 1);
       }
-
-      setDeleteTarget(null);
-      showSuccess("Transaction deleted successfully");
-      refreshTransactions();
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to delete transaction";
-      showError(message);
-    } finally {
-      setDeleting(false);
-    }
+    );
   };
 
   const openDeleteDialog = (transaction: Transaction) => {
@@ -465,7 +526,6 @@ export function TransactionsView() {
                   <TransactionSwipeableCard
                     key={`mobile-${transaction.id}`}
                     transaction={transaction}
-                    deleting={deleting && deleteTarget?.id === transaction.id}
                     onEdit={openEditDialog}
                     onDelete={openDeleteDialog}
                     showSwipeHint={showSwipeHint && index === 0}
@@ -537,7 +597,6 @@ export function TransactionsView() {
                           <Tooltip title="Edit transaction">
                             <IconButton
                               color="primary"
-                              disabled={deleting && deleteTarget?.id === transaction.id}
                               onClick={() => openEditDialog(transaction)}
                               aria-label={`Edit ${transaction.title}`}
                             >
@@ -548,7 +607,6 @@ export function TransactionsView() {
                             <span>
                               <IconButton
                                 color="error"
-                                disabled={deleting && deleteTarget?.id === transaction.id}
                                 onClick={() => openDeleteDialog(transaction)}
                                 aria-label={`Delete ${transaction.title}`}
                               >
@@ -588,12 +646,6 @@ export function TransactionsView() {
               "& .MuiTablePagination-toolbar": {
                 minHeight: { xs: 48, md: 52 },
               },
-              "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": {
-                fontSize: { xs: "0.75rem", sm: "0.875rem" },
-              },
-              "& .MuiInputBase-root": {
-                fontSize: { xs: "0.8125rem", md: "0.875rem" },
-              },
             }}
           />
         )}
@@ -627,8 +679,7 @@ export function TransactionsView() {
       <DeleteTransactionDialog
         transaction={deleteTarget}
         open={Boolean(deleteTarget)}
-        deleting={deleting}
-        onClose={() => !deleting && setDeleteTarget(null)}
+        onClose={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}
       />
     </PageStack>

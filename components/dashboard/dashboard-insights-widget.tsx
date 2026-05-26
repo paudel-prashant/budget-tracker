@@ -105,13 +105,13 @@ export function DashboardInsightsWidget({
               >
                 <InsightsOutlinedIcon />
               </Box>
-              <Typography variant="overline" color="text.secondary" fontWeight={700}>
+              <Typography variant="overline" color="text.secondary">
                 Insight highlight
               </Typography>
             </Stack>
           )}
 
-          <Typography variant="h6" fontWeight={700} sx={{ mb: 0.75, letterSpacing: "-0.02em" }}>
+          <Typography variant="h6" sx={{ mb: 0.75 }}>
             {insights.headline}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2, lineHeight: 1.65, maxWidth: 560 }}>

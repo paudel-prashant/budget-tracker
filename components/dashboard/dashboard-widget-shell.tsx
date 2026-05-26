@@ -112,7 +112,7 @@ export function DashboardWidgetShell({
             <Typography
               variant="overline"
               color="text.secondary"
-              sx={{ display: "block", lineHeight: 1.4, letterSpacing: "0.08em" }}
+              sx={{ display: "block", lineHeight: 1.4 }}
             >
               {meta.label}
             </Typography>

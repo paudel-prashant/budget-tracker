@@ -13,6 +13,7 @@ import {
   Typography,
 } from "@mui/material";
 import { MOTION_DURATION_MS, MOTION_EASE_OUT } from "@/lib/theme/motion";
+import { brandTitleSx } from "@/lib/theme/typography";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { moreNavItems } from "@/lib/config/navigation";
@@ -58,7 +59,7 @@ export function MobileNavMoreSheet({ open, onClose }: MobileNavMoreSheetProps) {
             mb: 1.5,
           }}
         />
-        <Typography variant="subtitle1" fontWeight={700}>
+        <Typography variant="subtitle1" sx={brandTitleSx}>
           More
         </Typography>
       </Box>

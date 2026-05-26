@@ -57,7 +57,7 @@ export function NetWorthWidget({ data }: NetWorthWidgetProps) {
                 Net worth & savings
               </Typography>
             </Stack>
-            <Typography variant="h4" sx={{ letterSpacing: "-0.02em" }}>
+            <Typography variant="h4">
               {formatCurrency(current.netWorth)}
             </Typography>
             {current.netWorthChangePercent !== null && (

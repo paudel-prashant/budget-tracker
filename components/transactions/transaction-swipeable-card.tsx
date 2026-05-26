@@ -15,13 +15,13 @@ import { SwipeableRow } from "@/components/shared/ui/swipeable-row";
 import { SurfaceCard } from "@/components/shared/ui/surface-card";
 import { touchIconButtonSx } from "@/lib/theme/touch-targets";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
+import { cardTitleSx } from "@/lib/theme/typography";
 import type { Transaction } from "@/lib/types";
 
 export const SWIPE_HINT_STORAGE_KEY = "budgetrax-swipe-hint-seen";
 
 type TransactionSwipeableCardProps = {
   transaction: Transaction;
-  deleting: boolean;
   onEdit: (transaction: Transaction) => void;
   onDelete: (transaction: Transaction) => void;
   showSwipeHint?: boolean;
@@ -30,7 +30,6 @@ type TransactionSwipeableCardProps = {
 
 export function TransactionSwipeableCard({
   transaction,
-  deleting,
   onEdit,
   onDelete,
   showSwipeHint: showSwipeHintProp,
@@ -54,7 +53,6 @@ export function TransactionSwipeableCard({
 
   return (
     <SwipeableRow
-      disabled={deleting}
       leadingAction={{
         id: "edit",
         label: "Edit",
@@ -89,7 +87,7 @@ export function TransactionSwipeableCard({
         <Stack spacing={1.5}>
           <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
             <Box sx={{ minWidth: 0 }}>
-              <Typography variant="subtitle1" fontWeight={700} noWrap>
+              <Typography variant="subtitle1" noWrap sx={cardTitleSx}>
                 {transaction.title}
               </Typography>
               <Typography variant="body2" color="text.secondary">
@@ -105,7 +103,6 @@ export function TransactionSwipeableCard({
               <Tooltip title="Edit transaction">
                 <IconButton
                   color="primary"
-                  disabled={deleting}
                   onClick={() => onEdit(transaction)}
                   aria-label={`Edit ${transaction.title}`}
                   sx={touchIconButtonSx}
@@ -117,7 +114,6 @@ export function TransactionSwipeableCard({
                 <span>
                   <IconButton
                     color="error"
-                    disabled={deleting}
                     onClick={() => onDelete(transaction)}
                     aria-label={`Delete ${transaction.title}`}
                     sx={touchIconButtonSx}
@@ -137,7 +133,7 @@ export function TransactionSwipeableCard({
             />
             <Typography
               variant="subtitle1"
-              fontWeight={700}
+              sx={cardTitleSx}
               color={isIncome ? "success.main" : "error.main"}
             >
               {isIncome ? "+" : "-"}

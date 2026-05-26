@@ -246,7 +246,7 @@ export function MonthlyReportContent({ initial }: MonthlyReportContentProps) {
           </ResponsiveColumns>
 
           <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
               Compared to {report.comparison.previousMonthLabel}
             </Typography>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2} flexWrap="wrap" useFlexGap>

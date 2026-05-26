@@ -119,13 +119,10 @@ export function InsightCard({
           <Icon sx={{ fontSize: 26 }} />
         </Box>
         <Box sx={{ minWidth: 0, flex: 1 }}>
-          <Typography
-            variant="overline"
-            sx={{ color: "text.secondary", fontWeight: 600, fontSize: "0.7rem", display: "block", mb: 0.5 }}
-          >
+          <Typography variant="overline" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
             {title}
           </Typography>
-          <Typography variant="h5" fontWeight={700} noWrap letterSpacing="-0.02em">
+          <Typography variant="h5" noWrap>
             {value}
           </Typography>
         </Box>

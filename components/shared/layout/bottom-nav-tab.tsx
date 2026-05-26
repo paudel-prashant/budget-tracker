@@ -42,11 +42,9 @@ function TabContent({
       <Typography
         variant="caption"
         noWrap
+        fontWeight={active ? 600 : undefined}
         sx={{
-          fontSize: "0.6875rem",
-          fontWeight: active ? 600 : 500,
           lineHeight: 1.15,
-          letterSpacing: "0.01em",
           color: active ? "primary.main" : "text.secondary",
           transition: "color 0.2s ease",
           maxWidth: "100%",

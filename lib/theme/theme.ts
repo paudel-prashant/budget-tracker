@@ -77,7 +77,7 @@ const getDesignTokens = (mode: PaletteMode) => ({
       letterSpacing: "-0.02em",
     },
     h6: {
-      fontWeight: 600,
+      fontWeight: 700,
       fontSize: "1.0625rem",
       lineHeight: 1.4,
       letterSpacing: "-0.015em",
@@ -88,12 +88,12 @@ const getDesignTokens = (mode: PaletteMode) => ({
       lineHeight: 1.5,
       letterSpacing: "-0.01em",
     },
+    /** Secondary titles and emphasized labels (not uppercase — use `overline` for section tags). */
     subtitle2: {
       fontWeight: 600,
-      fontSize: "0.6875rem",
-      lineHeight: 1.4,
-      letterSpacing: "0.08em",
-      textTransform: "uppercase" as const,
+      fontSize: "0.875rem",
+      lineHeight: 1.5,
+      letterSpacing: "-0.008em",
     },
     body1: {
       fontSize: "1rem",
@@ -164,6 +164,12 @@ const getDesignTokens = (mode: PaletteMode) => ({
         gutterBottom: {
           marginBottom: "0.6em",
         },
+        h1: { fontWeight: 700 },
+        h2: { fontWeight: 700 },
+        h3: { fontWeight: 700 },
+        h4: { fontWeight: 700 },
+        h5: { fontWeight: 700 },
+        h6: { fontWeight: 700 },
       },
     },
     MuiContainer: {

@@ -4,6 +4,7 @@ import { Box, Typography, alpha, useTheme } from "@mui/material";
 import type { SvgIconComponent } from "@mui/icons-material";
 import { SurfaceCard } from "@/components/shared/ui/surface-card";
 import { CARD_PADDING } from "@/lib/config/layout-constants";
+import { statValueSx } from "@/lib/theme/typography";
 
 type StatCardProps = {
   title: string;
@@ -31,12 +32,7 @@ export function StatCard({ title, value, icon: Icon, tint, accentGradient }: Sta
           <Typography variant="overline" color="text.secondary" sx={{ display: "block", mb: 1.25 }}>
             {title}
           </Typography>
-          <Typography
-            variant="h4"
-            sx={{
-              fontSize: { xs: "1.5rem", sm: "1.75rem" },
-            }}
-          >
+          <Typography variant="h4" sx={statValueSx}>
             {value}
           </Typography>
         </Box>

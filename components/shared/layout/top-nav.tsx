@@ -19,6 +19,7 @@ import {
   MOBILE_NAV_BREAKPOINT,
 } from "@/lib/config/layout-constants";
 import { touchIconButtonSx } from "@/lib/theme/touch-targets";
+import { brandTitleSx } from "@/lib/theme/typography";
 import { UserMenu } from "@/components/shared/layout/user-menu";
 
 type TopNavProps = {
@@ -62,7 +63,7 @@ export function TopNav({ drawerWidth = DRAWER_WIDTH }: TopNavProps) {
           }}
         >
           <BrandLogo size={32} priority />
-          <Typography variant="subtitle1" component="div" fontWeight={700} noWrap>
+          <Typography variant="subtitle1" component="div" noWrap sx={brandTitleSx}>
             {APP_NAME}
           </Typography>
         </Box>

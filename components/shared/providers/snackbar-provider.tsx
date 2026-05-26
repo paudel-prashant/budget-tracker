@@ -11,7 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
-import { Alert, Box, Fade, useTheme } from "@mui/material";
+import { Alert, Box, Button, Fade, useTheme } from "@mui/material";
 
 /** Fixed host id — also styled in globals.css so position never drifts. */
 export const APP_TOAST_HOST_ID = "app-toast-host";
@@ -25,16 +25,28 @@ const AUTO_HIDE_MS: Record<SnackbarSeverity, number> = {
   error: 4000,
 };
 
+export type SnackbarAction = {
+  label: string;
+  onClick: () => void;
+};
+
+export type SnackbarOptions = {
+  autoHideMs?: number;
+  action?: SnackbarAction;
+};
+
 type SnackbarState = {
   open: boolean;
   message: string;
   severity: SnackbarSeverity;
+  autoHideMs?: number;
+  action?: SnackbarAction;
 };
 
 type SnackbarContextValue = {
-  showSuccess: (message: string) => void;
-  showError: (message: string) => void;
-  showInfo: (message: string) => void;
+  showSuccess: (message: string, options?: SnackbarOptions) => void;
+  showError: (message: string, options?: SnackbarOptions) => void;
+  showInfo: (message: string, options?: SnackbarOptions) => void;
 };
 
 const SnackbarContext = createContext<SnackbarContextValue | undefined>(undefined);
@@ -74,12 +86,20 @@ function AppToast({ snackbar, onClose }: AppToastProps) {
     }
 
     clearHideTimer();
+    const duration = snackbar.autoHideMs ?? AUTO_HIDE_MS[snackbar.severity];
     hideTimerRef.current = setTimeout(() => {
       onClose();
-    }, AUTO_HIDE_MS[snackbar.severity]);
+    }, duration);
 
     return clearHideTimer;
-  }, [snackbar.open, snackbar.message, snackbar.severity, onClose, clearHideTimer]);
+  }, [
+    snackbar.open,
+    snackbar.message,
+    snackbar.severity,
+    snackbar.autoHideMs,
+    onClose,
+    clearHideTimer,
+  ]);
 
   return (
     <Fade in={snackbar.open} timeout={{ enter: 200, exit: 150 }}>
@@ -92,14 +112,30 @@ function AppToast({ snackbar, onClose }: AppToastProps) {
         }}
       >
         <Alert
-          onClose={onClose}
+          onClose={snackbar.action ? undefined : onClose}
           severity={snackbar.severity}
           variant="filled"
           elevation={6}
+          action={
+            snackbar.action ? (
+              <Button
+                color="inherit"
+                size="small"
+                onClick={() => {
+                  snackbar.action?.onClick();
+                  onClose();
+                }}
+                sx={{ fontWeight: 700, whiteSpace: "nowrap" }}
+              >
+                {snackbar.action.label}
+              </Button>
+            ) : undefined
+          }
           sx={{
             width: "100%",
             borderRadius: 2,
             boxShadow: theme.shadows[8],
+            alignItems: "center",
           }}
         >
           {snackbar.message}
@@ -157,15 +193,27 @@ export function SnackbarProvider({ children }: SnackbarProviderProps) {
     setSnackbar((prev) => ({ ...prev, open: false }));
   }, []);
 
-  const showMessage = useCallback((message: string, severity: SnackbarSeverity) => {
-    setSnackbar({ open: true, message, severity });
-  }, []);
+  const showMessage = useCallback(
+    (message: string, severity: SnackbarSeverity, options?: SnackbarOptions) => {
+      setSnackbar({
+        open: true,
+        message,
+        severity,
+        autoHideMs: options?.autoHideMs,
+        action: options?.action,
+      });
+    },
+    []
+  );
 
   const value = useMemo(
     () => ({
-      showSuccess: (message: string) => showMessage(message, "success"),
-      showError: (message: string) => showMessage(message, "error"),
-      showInfo: (message: string) => showMessage(message, "info"),
+      showSuccess: (message: string, options?: SnackbarOptions) =>
+        showMessage(message, "success", options),
+      showError: (message: string, options?: SnackbarOptions) =>
+        showMessage(message, "error", options),
+      showInfo: (message: string, options?: SnackbarOptions) =>
+        showMessage(message, "info", options),
     }),
     [showMessage]
   );

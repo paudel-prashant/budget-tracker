@@ -128,7 +128,7 @@ export function DashboardDateRangeSelector({
           <Stack direction="row" spacing={1} alignItems="center">
             <CalendarMonthOutlinedIcon fontSize="small" color="action" />
             <Box>
-              <Typography variant="subtitle2" fontWeight={600}>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
                 Date range
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -156,8 +156,8 @@ export function DashboardDateRangeSelector({
               flex: compact ? "1 1 calc(50% - 6px)" : "0 1 auto",
               minWidth: compact ? 0 : undefined,
               textTransform: "none",
+              typography: "body2",
               fontWeight: 600,
-              fontSize: "0.8125rem",
               px: 1.75,
               py: 0.75,
             },

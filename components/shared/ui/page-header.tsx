@@ -1,6 +1,7 @@
 "use client";
 
 import { Box, Typography, alpha, useTheme } from "@mui/material";
+import { pageDescriptionSx, pageTitleSx } from "@/lib/theme/typography";
 
 type PageHeaderProps = {
   title: string;
@@ -41,8 +42,7 @@ export function PageHeader({ title, description, action }: PageHeaderProps) {
           component="h1"
           sx={{
             mb: description ? 1 : 0,
-            fontSize: { xs: "1.375rem", sm: "1.75rem", md: "2.125rem" },
-            lineHeight: { xs: 1.3, md: 1.2 },
+            ...pageTitleSx,
           }}
         >
           {title}
@@ -51,7 +51,7 @@ export function PageHeader({ title, description, action }: PageHeaderProps) {
           <Typography
             variant="body1"
             color="text.secondary"
-            sx={{ maxWidth: 560, fontSize: { xs: "0.875rem", sm: "1rem" } }}
+            sx={{ maxWidth: 560, ...pageDescriptionSx }}
           >
             {description}
           </Typography>

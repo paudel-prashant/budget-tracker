@@ -104,7 +104,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
         }}
       >
         {isUser ? (
-          <Typography variant="body2" sx={{ lineHeight: 1.55, fontSize: "0.8125rem" }}>
+          <Typography variant="body2" sx={{ lineHeight: 1.55 }}>
             {message.content}
           </Typography>
         ) : (
@@ -168,7 +168,7 @@ function TypingIndicator() {
         }}
       >
         <CircularProgress size={14} thickness={5} />
-        <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.8125rem" }}>
+        <Typography variant="body2" color="text.secondary">
           Analyzing your transactions…
         </Typography>
       </Stack>
@@ -319,11 +319,7 @@ export function AssistantChatPanel({ onClose, compact = false }: AssistantChatPa
           <Stack direction="row" spacing={1.25} alignItems="center" sx={{ minWidth: 0 }}>
             <AutoAwesomeOutlinedIcon color="primary" sx={{ fontSize: 22 }} />
             <Box sx={{ minWidth: 0, flex: 1 }}>
-              <Typography
-                variant="subtitle2"
-                fontWeight={700}
-                sx={{ textTransform: "none", lineHeight: 1.3 }}
-              >
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, lineHeight: 1.3 }}>
                 Financial insights
               </Typography>
               <Typography
@@ -456,7 +452,6 @@ export function AssistantChatPanel({ onClose, compact = false }: AssistantChatPa
                     "& .MuiChip-label": {
                       whiteSpace: "normal",
                       py: 0.5,
-                      fontSize: "0.7rem",
                       lineHeight: 1.3,
                       textTransform: "none",
                     },
@@ -494,7 +489,6 @@ export function AssistantChatPanel({ onClose, compact = false }: AssistantChatPa
               sx: {
                 borderRadius: 2,
                 bgcolor: "background.paper",
-                fontSize: "0.8125rem",
                 py: 1.1,
               },
             }}

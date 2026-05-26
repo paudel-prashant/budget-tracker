@@ -145,7 +145,7 @@ export function SwipeableRow({
           }}
         >
           {leadingAction.icon}
-          <Typography variant="caption" fontWeight={600} sx={{ fontSize: "0.65rem" }}>
+          <Typography variant="overline" sx={{ lineHeight: 1.2 }}>
             {leadingAction.label}
           </Typography>
         </Box>
@@ -173,7 +173,7 @@ export function SwipeableRow({
           }}
         >
           {trailingAction.icon}
-          <Typography variant="caption" fontWeight={600} sx={{ fontSize: "0.65rem" }}>
+          <Typography variant="overline" sx={{ lineHeight: 1.2 }}>
             {trailingAction.label}
           </Typography>
         </Box>

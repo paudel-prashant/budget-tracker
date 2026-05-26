@@ -28,7 +28,7 @@ function DesktopLoginForm() {
   return (
     <Stack spacing={3} sx={{ width: "100%", maxWidth: 400 }}>
       <Box>
-        <Typography variant="h5" component="h2" fontWeight={700}>
+        <Typography variant="h5" component="h2">
           Welcome back
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
