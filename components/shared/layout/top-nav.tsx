@@ -20,7 +20,6 @@ import {
 } from "@/lib/config/layout-constants";
 import { touchIconButtonSx } from "@/lib/theme/touch-targets";
 import { UserMenu } from "@/components/shared/layout/user-menu";
-import { useIsMobileNav } from "@/hooks/use-is-mobile-nav";
 
 type TopNavProps = {
   drawerWidth?: number;
@@ -28,7 +27,6 @@ type TopNavProps = {
 
 export function TopNav({ drawerWidth = DRAWER_WIDTH }: TopNavProps) {
   const { mode, toggleColorMode } = useThemeMode();
-  const isMobileNav = useIsMobileNav();
 
   return (
     <AppBar
@@ -54,29 +52,32 @@ export function TopNav({ drawerWidth = DRAWER_WIDTH }: TopNavProps) {
           gap: 1,
         }}
       >
-        {isMobileNav ? (
-          <>
-            <BrandLogo size={32} />
-            <Typography
-              variant="subtitle1"
-              component="div"
-              fontWeight={700}
-              noWrap
-              sx={{ flexGrow: 1 }}
-            >
-              {APP_NAME}
-            </Typography>
-          </>
-        ) : (
-          <Box sx={{ flexGrow: 1 }} />
-        )}
+        <Box
+          sx={{
+            display: { xs: "flex", [MOBILE_NAV_BREAKPOINT]: "none" },
+            alignItems: "center",
+            gap: 1,
+            flexGrow: 1,
+            minWidth: 0,
+          }}
+        >
+          <BrandLogo size={32} priority />
+          <Typography variant="subtitle1" component="div" fontWeight={700} noWrap>
+            {APP_NAME}
+          </Typography>
+        </Box>
+        <Box sx={{ flexGrow: 1, display: { xs: "none", [MOBILE_NAV_BREAKPOINT]: "block" } }} />
         <UserMenu />
         <Tooltip title={mode === "light" ? "Switch to dark mode" : "Switch to light mode"}>
           <IconButton
             onClick={toggleColorMode}
             aria-label="toggle color mode"
             color="inherit"
-            sx={isMobileNav ? touchIconButtonSx : undefined}
+            sx={{
+              ...touchIconButtonSx,
+              minWidth: { xs: 44, [MOBILE_NAV_BREAKPOINT]: 40 },
+              minHeight: { xs: 44, [MOBILE_NAV_BREAKPOINT]: 40 },
+            }}
           >
             {mode === "light" ? <DarkModeOutlinedIcon /> : <LightModeOutlinedIcon />}
           </IconButton>

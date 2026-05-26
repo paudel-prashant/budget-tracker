@@ -78,9 +78,13 @@ export function MobileNavMoreSheet({ open, onClose }: MobileNavMoreSheetProps) {
                 selected={isActive}
                 onClick={onClose}
                 sx={{
-                  borderRadius: 2,
+                  borderRadius: 2.5,
                   py: 1.25,
                   minHeight: 48,
+                  mx: 0.5,
+                  "&.Mui-selected": {
+                    bgcolor: "action.selected",
+                  },
                 }}
               >
                 <ListItemIcon sx={{ minWidth: 44, color: isActive ? "primary.main" : "text.secondary" }}>

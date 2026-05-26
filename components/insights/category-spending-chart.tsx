@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Skeleton, useTheme } from "@mui/material";
 import {
   Bar,
@@ -15,7 +14,8 @@ import {
 import { ChartCard } from "@/components/dashboard/chart-card";
 import { CHART_PALETTE, getChartGridStroke, getChartTooltipStyle } from "@/lib/theme/chart-styles";
 import { formatCurrency } from "@/lib/utils/format";
-import { CHART_AREA_HEIGHT } from "@/lib/config/layout-constants";
+import { useChartPlotHeight } from "@/hooks/use-chart-plot-height";
+import { useMounted } from "@/hooks/use-mounted";
 
 type CategorySpendingChartProps = {
   data: Array<{ category: string; amount: number }>;
@@ -23,11 +23,8 @@ type CategorySpendingChartProps = {
 
 export function CategorySpendingChart({ data }: CategorySpendingChartProps) {
   const theme = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useMounted();
+  const plotHeight = useChartPlotHeight();
 
   const chartData = data.slice(0, 8);
   const isEmpty = chartData.length === 0;
@@ -40,9 +37,9 @@ export function CategorySpendingChart({ data }: CategorySpendingChartProps) {
       emptyMessage="No expense categories to chart yet."
     >
       {!mounted && !isEmpty ? (
-        <Skeleton variant="rounded" sx={{ width: "100%", height: CHART_AREA_HEIGHT, borderRadius: 2 }} />
-      ) : (
-        <ResponsiveContainer width="100%" height="100%">
+        <Skeleton variant="rounded" sx={{ width: "100%", height: plotHeight, borderRadius: 2 }} />
+      ) : mounted && !isEmpty ? (
+        <ResponsiveContainer width="100%" height={plotHeight} minWidth={0}>
           <BarChart
             data={chartData}
             layout="vertical"
@@ -82,7 +79,7 @@ export function CategorySpendingChart({ data }: CategorySpendingChartProps) {
             </Bar>
           </BarChart>
         </ResponsiveContainer>
-      )}
+      ) : null}
     </ChartCard>
   );
 }

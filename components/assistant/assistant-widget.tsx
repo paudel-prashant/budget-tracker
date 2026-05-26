@@ -10,32 +10,31 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
+import { useMounted } from "@/hooks/use-mounted";
 import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import { AssistantChatPanel } from "@/components/assistant/assistant-chat-panel";
-import { useIsMobileNav } from "@/hooks/use-is-mobile-nav";
-import { MOBILE_FLOATING_OFFSET } from "@/lib/config/layout-constants";
+import {
+  ASSISTANT_FAB_SIZE,
+  MOBILE_FLOATING_OFFSET,
+  MOBILE_NAV_BREAKPOINT,
+} from "@/lib/config/layout-constants";
 
-const FAB_SIZE = 56;
+const FAB_SIZE = ASSISTANT_FAB_SIZE;
 const FAB_OFFSET_DESKTOP = 24;
 const PANEL_GAP = 16;
-/** Keep panel below the top of the viewport (below app bar area). */
 const VIEWPORT_TOP_GAP = 80;
+
+const PANEL_BOTTOM_MOBILE = `calc(${MOBILE_FLOATING_OFFSET + FAB_SIZE + PANEL_GAP}px + env(safe-area-inset-bottom, 0px))`;
+const FAB_BOTTOM_MOBILE = `calc(${MOBILE_FLOATING_OFFSET}px + env(safe-area-inset-bottom, 0px))`;
 
 export function AssistantWidget() {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const isMobileNav = useIsMobileNav();
   const [open, setOpen] = useState(false);
+  const mounted = useMounted();
+  const matchesSmall = useMediaQuery(theme.breakpoints.down("sm"));
+  const isCompactPanel = mounted && matchesSmall;
 
-  const fabBottomPx = isMobileNav ? MOBILE_FLOATING_OFFSET : FAB_OFFSET_DESKTOP;
-  const fabBottom = isMobileNav
-    ? `calc(${MOBILE_FLOATING_OFFSET}px + env(safe-area-inset-bottom, 0px))`
-    : FAB_OFFSET_DESKTOP;
-  const panelBottomPx = fabBottomPx + FAB_SIZE + PANEL_GAP;
-  const panelWidth = isMobile ? "calc(100vw - 32px)" : 380;
-  const maxPanelHeight = `calc(100dvh - ${panelBottomPx + VIEWPORT_TOP_GAP}px)`;
-  const preferredHeight = isMobile ? "min(560px, 85dvh)" : "min(440px, 72dvh)";
   const zIndex = theme.zIndex.modal + 2;
 
   return (
@@ -47,16 +46,23 @@ export function AssistantWidget() {
           aria-modal={open}
           sx={{
             position: "fixed",
-            bottom: isMobileNav
-              ? `calc(${panelBottomPx}px + env(safe-area-inset-bottom, 0px))`
-              : panelBottomPx,
+            bottom: {
+              xs: PANEL_BOTTOM_MOBILE,
+              [MOBILE_NAV_BREAKPOINT]: FAB_OFFSET_DESKTOP + FAB_SIZE + PANEL_GAP,
+            },
             right: FAB_OFFSET_DESKTOP,
-            left: isMobile ? FAB_OFFSET_DESKTOP : "auto",
-            width: panelWidth,
-            height: `min(${preferredHeight}, ${maxPanelHeight})`,
-            maxHeight: maxPanelHeight,
-            minHeight: { xs: 280, sm: 320 },
-            maxWidth: isMobile ? undefined : 400,
+            left: { xs: FAB_OFFSET_DESKTOP, sm: FAB_OFFSET_DESKTOP, md: "auto" },
+            width: { xs: "calc(100vw - 32px)", md: 380 },
+            height: {
+              xs: `min(min(560px, 85dvh), calc(100dvh - ${MOBILE_FLOATING_OFFSET + FAB_SIZE + PANEL_GAP + VIEWPORT_TOP_GAP}px))`,
+              md: "min(440px, 72dvh)",
+            },
+            maxHeight: {
+              xs: `calc(100dvh - ${MOBILE_FLOATING_OFFSET + FAB_SIZE + PANEL_GAP + VIEWPORT_TOP_GAP}px - env(safe-area-inset-bottom, 0px))`,
+              md: `calc(100dvh - ${FAB_OFFSET_DESKTOP + FAB_SIZE + PANEL_GAP + VIEWPORT_TOP_GAP}px)`,
+            },
+            minHeight: { xs: 280, md: 320 },
+            maxWidth: { xs: undefined, md: 400 },
             zIndex,
             display: "flex",
             flexDirection: "column",
@@ -64,7 +70,7 @@ export function AssistantWidget() {
             pointerEvents: open ? "auto" : "none",
           }}
         >
-          <AssistantChatPanel onClose={() => setOpen(false)} compact={isMobile} />
+          <AssistantChatPanel onClose={() => setOpen(false)} compact={isCompactPanel} />
         </Box>
       </Fade>
 
@@ -75,7 +81,10 @@ export function AssistantWidget() {
         onClick={() => setOpen((prev) => !prev)}
         sx={{
           position: "fixed",
-          bottom: fabBottom,
+          bottom: {
+            xs: FAB_BOTTOM_MOBILE,
+            [MOBILE_NAV_BREAKPOINT]: FAB_OFFSET_DESKTOP,
+          },
           right: FAB_OFFSET_DESKTOP,
           zIndex: zIndex + 1,
           width: FAB_SIZE,

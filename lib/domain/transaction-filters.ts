@@ -44,6 +44,12 @@ const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 25;
 const MAX_PAGE_SIZE = 100;
 
+/** Mobile infinite scroll: rows per API request (capped by MAX_PAGE_SIZE). */
+export const MOBILE_TRANSACTIONS_PAGE_SIZE = MAX_PAGE_SIZE;
+
+/** Mobile infinite scroll: maximum rows loaded into the list. */
+export const MOBILE_TRANSACTIONS_MAX_ROWS = 1000;
+
 function parsePositiveInt(value: string | null, fallback: number): number {
   if (!value) return fallback;
   const parsed = Number.parseInt(value, 10);

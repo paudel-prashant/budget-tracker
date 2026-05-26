@@ -17,6 +17,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
+import { useMounted } from "@/hooks/use-mounted";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -84,7 +85,9 @@ export function TransactionFiltersDrawer({
   onApply,
 }: TransactionFiltersDrawerProps) {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const mounted = useMounted();
+  const matchesSmall = useMediaQuery(theme.breakpoints.down("sm"));
+  const anchorBottom = mounted && matchesSmall;
   const [draft, setDraft] = useState<DraftFilters>(emptyDraft);
 
   useEffect(() => {
@@ -104,14 +107,14 @@ export function TransactionFiltersDrawer({
 
   return (
     <Drawer
-      anchor={isMobile ? "bottom" : "right"}
+      anchor={anchorBottom ? "bottom" : "right"}
       open={open}
       onClose={onClose}
       slotProps={{
         paper: {
           sx: {
             width: { xs: "100%", sm: 360 },
-            maxHeight: { xs: "90vh", sm: "100%" },
+            maxHeight: { xs: "90dvh", sm: "100%" },
             borderTopLeftRadius: { xs: 16, sm: 0 },
             borderTopRightRadius: { xs: 16, sm: 0 },
           },
@@ -233,10 +236,10 @@ export function TransactionFiltersDrawer({
         spacing={1.5}
         sx={{ p: 2.5 }}
       >
-        <Button variant="outlined" onClick={handleReset} fullWidth={isMobile}>
+        <Button variant="outlined" onClick={handleReset} sx={{ width: { xs: "100%", sm: "auto" } }}>
           Reset
         </Button>
-        <Button variant="contained" onClick={handleApply} fullWidth={isMobile}>
+        <Button variant="contained" onClick={handleApply} sx={{ width: { xs: "100%", sm: "auto" } }}>
           Apply filters
         </Button>
       </Stack>

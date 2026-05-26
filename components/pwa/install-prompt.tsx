@@ -16,13 +16,15 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import InstallMobileOutlinedIcon from "@mui/icons-material/InstallMobileOutlined";
 import { APP_NAME } from "@/lib/config/app";
 import { usePwa } from "@/components/pwa/pwa-provider";
-import { useIsMobileNav } from "@/hooks/use-is-mobile-nav";
-import { MOBILE_FLOATING_OFFSET } from "@/lib/config/layout-constants";
+import {
+  BOTTOM_NAV_ADD_OVERFLOW,
+  BOTTOM_NAV_HEIGHT,
+  MOBILE_NAV_BREAKPOINT,
+} from "@/lib/config/layout-constants";
 
 export function PwaInstallPrompt() {
   const theme = useTheme();
   const { canInstall, isInstalled, installDismissed, promptInstall, dismissInstall } = usePwa();
-  const isMobileNav = useIsMobileNav();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -37,9 +39,11 @@ export function PwaInstallPrompt() {
         elevation={6}
         sx={{
           position: "fixed",
-          bottom: isMobileNav
-            ? `calc(${MOBILE_FLOATING_OFFSET + 56}px + env(safe-area-inset-bottom, 0px))`
-            : { xs: 88, sm: 24 },
+          bottom: {
+            xs: `calc(${BOTTOM_NAV_HEIGHT + BOTTOM_NAV_ADD_OVERFLOW + 16}px + env(safe-area-inset-bottom, 0px))`,
+            sm: `calc(${BOTTOM_NAV_HEIGHT + BOTTOM_NAV_ADD_OVERFLOW + 16}px + env(safe-area-inset-bottom, 0px))`,
+            [MOBILE_NAV_BREAKPOINT]: 24,
+          },
           left: { xs: 16, sm: "auto" },
           right: 16,
           zIndex: theme.zIndex.snackbar,

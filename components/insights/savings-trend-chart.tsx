@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Skeleton, useTheme } from "@mui/material";
 import {
   Area,
@@ -14,7 +13,8 @@ import {
 import { ChartCard } from "@/components/dashboard/chart-card";
 import { getChartGridStroke, getChartTooltipStyle } from "@/lib/theme/chart-styles";
 import { formatCurrency, formatMonth } from "@/lib/utils/format";
-import { CHART_AREA_HEIGHT } from "@/lib/config/layout-constants";
+import { useChartPlotHeight } from "@/hooks/use-chart-plot-height";
+import { useMounted } from "@/hooks/use-mounted";
 import type { MonthlySavingsPoint } from "@/lib/types";
 
 type SavingsTrendChartProps = {
@@ -23,12 +23,9 @@ type SavingsTrendChartProps = {
 
 export function SavingsTrendChart({ data }: SavingsTrendChartProps) {
   const theme = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useMounted();
+  const plotHeight = useChartPlotHeight();
   const gradientId = "savingsAreaGradient";
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const chartData = data.map((point) => ({
     ...point,
@@ -44,9 +41,9 @@ export function SavingsTrendChart({ data }: SavingsTrendChartProps) {
       isEmpty={isEmpty}
     >
       {!mounted && !isEmpty ? (
-        <Skeleton variant="rounded" sx={{ width: "100%", height: CHART_AREA_HEIGHT, borderRadius: 2 }} />
-      ) : (
-        <ResponsiveContainer width="100%" height="100%">
+        <Skeleton variant="rounded" sx={{ width: "100%", height: plotHeight, borderRadius: 2 }} />
+      ) : mounted && !isEmpty ? (
+        <ResponsiveContainer width="100%" height={plotHeight} minWidth={0}>
           <AreaChart data={chartData} margin={{ top: 12, right: 16, left: 4, bottom: 4 }}>
             <defs>
               <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -92,7 +89,7 @@ export function SavingsTrendChart({ data }: SavingsTrendChartProps) {
             />
           </AreaChart>
         </ResponsiveContainer>
-      )}
+      ) : null}
     </ChartCard>
   );
 }

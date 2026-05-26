@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Box,
   Button,
   Chip,
+  CircularProgress,
   IconButton,
   Stack,
   Table,
@@ -32,22 +33,29 @@ import { EmptyState } from "@/components/shared/ui/empty-state";
 import { TransactionsTableSkeleton } from "@/components/shared/ui/transactions-table-skeleton";
 import { TransactionFormDialog } from "@/components/transactions/transaction-form-dialog";
 import { DeleteTransactionDialog } from "@/components/transactions/delete-transaction-dialog";
-import { TransactionSwipeableCard } from "@/components/transactions/transaction-swipeable-card";
+import {
+  SWIPE_HINT_STORAGE_KEY,
+  TransactionSwipeableCard,
+} from "@/components/transactions/transaction-swipeable-card";
 import { StaggeredReveal } from "@/components/shared/ui/staggered-reveal";
 import { TransactionFiltersDrawer } from "@/components/transactions/transaction-filters-drawer";
 import { TransactionFiltersToolbar } from "@/components/transactions/transaction-filters-toolbar";
 import { OfflineBanner } from "@/components/pwa/offline-banner";
 import { usePwa } from "@/components/pwa/pwa-provider";
 import { useQuickTransaction } from "@/components/transactions/quick-transaction-provider";
-import { useIsMobileNav } from "@/hooks/use-is-mobile-nav";
+import { MOBILE_NAV_BREAKPOINT } from "@/lib/config/layout-constants";
 import { useSnackbar } from "@/components/shared/providers/snackbar-provider";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { useLoadMoreOnVisible } from "@/hooks/use-load-more-on-visible";
+import { useMounted } from "@/hooks/use-mounted";
 import { fetchWithCache, OfflineFetchError } from "@/lib/pwa/fetch-with-cache";
 import { transactionsListCacheKey } from "@/lib/pwa/cache-keys";
 import {
   buildTransactionListQuery,
   countActiveFilters,
   EMPTY_TRANSACTION_FILTERS,
+  MOBILE_TRANSACTIONS_MAX_ROWS,
+  MOBILE_TRANSACTIONS_PAGE_SIZE,
 } from "@/lib/domain/transaction-filters";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type {
@@ -61,8 +69,13 @@ const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
 
 export function TransactionsView() {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const isMobileNav = useIsMobileNav();
+  const mounted = useMounted();
+  const isMobileInfinite = useMediaQuery(
+    theme.breakpoints.down(MOBILE_NAV_BREAKPOINT),
+    { noSsr: true }
+  );
+  const useInfiniteList = mounted && isMobileInfinite;
+
   const { isOnline } = usePwa();
   const { openQuickAdd } = useQuickTransaction();
   const { showSuccess, showError } = useSnackbar();
@@ -82,8 +95,11 @@ export function TransactionsView() {
   const [filters, setFilters] = useState<TransactionFilters>(EMPTY_TRANSACTION_FILTERS);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [mobilePage, setMobilePage] = useState(1);
 
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [fromCache, setFromCache] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -93,46 +109,82 @@ export function TransactionsView() {
   const [editTarget, setEditTarget] = useState<Transaction | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [showSwipeHint, setShowSwipeHint] = useState(false);
+  const [filterVersion, setFilterVersion] = useState(0);
+  const appliedFilterVersionRef = useRef(filterVersion);
+  const silentNextListFetchRef = useRef(false);
 
-  const listQuery = useMemo(
-    () =>
-      buildTransactionListQuery({
-        ...filters,
-        search: debouncedSearch.trim() || undefined,
-        page,
-        pageSize,
-      }),
-    [filters, debouncedSearch, page, pageSize]
-  );
+  useEffect(() => {
+    setShowSwipeHint(sessionStorage.getItem(SWIPE_HINT_STORAGE_KEY) !== "1");
+  }, []);
 
   const hasActiveFilters = useMemo(() => {
-    return (
-      Boolean(debouncedSearch.trim()) ||
-      countActiveFilters(filters) > 0
-    );
+    return Boolean(debouncedSearch.trim()) || countActiveFilters(filters) > 0;
   }, [debouncedSearch, filters]);
 
-  const loadTransactions = useCallback(
-    async (options?: { silent?: boolean }) => {
-      if (options?.silent) {
+  const fetchTransactions = useCallback(
+    async (
+      targetPage: number,
+      targetPageSize: number,
+      options?: { silent?: boolean; append?: boolean }
+    ) => {
+      const append = options?.append ?? false;
+      const silent = options?.silent ?? false;
+
+      if (append) {
+        setLoadingMore(true);
+      } else if (silent) {
         setRefreshing(true);
       } else {
         setLoading(true);
       }
       setError(null);
 
+      const query = buildTransactionListQuery({
+        ...filters,
+        search: debouncedSearch.trim() || undefined,
+        page: targetPage,
+        pageSize: targetPageSize,
+      });
+
       try {
-        const cacheKey = transactionsListCacheKey(listQuery);
+        const cacheKey = transactionsListCacheKey(query);
         const result = await fetchWithCache<TransactionListResponse>(
-          `/api/transactions?${listQuery}`,
+          `/api/transactions?${query}`,
           cacheKey
         );
 
+        const newRows = result.data.data;
+        const pag = result.data.pagination;
+
         setFromCache(result.fromCache);
-        setTransactions(result.data.data);
-        setPagination(result.data.pagination);
         setCategories(result.data.meta.categories);
         setTotalUnfiltered(result.data.meta.totalUnfiltered);
+        setPagination(pag);
+
+        setTransactions((prev) => {
+          let merged: Transaction[];
+          if (append) {
+            const ids = new Set(prev.map((t) => t.id));
+            merged = [
+              ...prev,
+              ...newRows.filter((t) => !ids.has(t.id)),
+            ].slice(0, MOBILE_TRANSACTIONS_MAX_ROWS);
+          } else {
+            merged = newRows;
+          }
+
+          if (useInfiniteList) {
+            const cap = Math.min(pag.total, MOBILE_TRANSACTIONS_MAX_ROWS);
+            setHasMore(
+              merged.length < cap && newRows.length === targetPageSize
+            );
+          } else {
+            setHasMore(false);
+          }
+
+          return merged;
+        });
       } catch (err) {
         const message =
           err instanceof OfflineFetchError
@@ -146,28 +198,80 @@ export function TransactionsView() {
         }
       } finally {
         setLoading(false);
+        setLoadingMore(false);
         setRefreshing(false);
       }
     },
-    [listQuery, showError, isOnline]
+    [filters, debouncedSearch, useInfiniteList, showError, isOnline]
   );
 
-  useEffect(() => {
-    loadTransactions();
-  }, [loadTransactions]);
+  const refreshTransactions = useCallback(() => {
+    silentNextListFetchRef.current = true;
+    setPage(1);
+    setMobilePage(1);
+    setFilterVersion((v) => v + 1);
+  }, []);
 
   useEffect(() => {
-    const refresh = () => void loadTransactions({ silent: true });
+    const filtersJustChanged = appliedFilterVersionRef.current !== filterVersion;
+    appliedFilterVersionRef.current = filterVersion;
+
+    const targetPage = filtersJustChanged
+      ? 1
+      : useInfiniteList
+        ? mobilePage
+        : page;
+    const targetPageSize = useInfiniteList ? MOBILE_TRANSACTIONS_PAGE_SIZE : pageSize;
+    const append = useInfiniteList && targetPage > 1 && !filtersJustChanged;
+    const silent = silentNextListFetchRef.current;
+    silentNextListFetchRef.current = false;
+
+    void fetchTransactions(targetPage, targetPageSize, { append, silent });
+  }, [
+    fetchTransactions,
+    useInfiniteList,
+    mobilePage,
+    page,
+    pageSize,
+    filterVersion,
+  ]);
+
+  useEffect(() => {
+    const refresh = () => void refreshTransactions();
     window.addEventListener("budgetrax:transactions-changed", refresh);
     return () => window.removeEventListener("budgetrax:transactions-changed", refresh);
-  }, [loadTransactions]);
+  }, [refreshTransactions]);
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, filters, pageSize]);
+    setMobilePage(1);
+    setFilterVersion((v) => v + 1);
+  }, [debouncedSearch, filters]);
 
-  const handleFormSuccess = async (mode: "create" | "edit") => {
-    await loadTransactions({ silent: true });
+  useEffect(() => {
+    if (!useInfiniteList) {
+      setPage(1);
+    }
+  }, [pageSize, useInfiniteList]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    setPage(1);
+    setMobilePage(1);
+  }, [useInfiniteList, mounted]);
+
+  const loadMoreMobile = useCallback(() => {
+    if (!useInfiniteList || loading || loadingMore || !hasMore) return;
+    setMobilePage((p) => p + 1);
+  }, [useInfiniteList, loading, loadingMore, hasMore]);
+
+  const loadMoreSentinelRef = useLoadMoreOnVisible(
+    loadMoreMobile,
+    useInfiniteList && hasMore && !loading && !loadingMore
+  );
+
+  const handleFormSuccess = (mode: "create" | "edit") => {
+    refreshTransactions();
     showSuccess(
       mode === "edit"
         ? "Transaction updated successfully"
@@ -209,7 +313,7 @@ export function TransactionsView() {
 
       setDeleteTarget(null);
       showSuccess("Transaction deleted successfully");
-      await loadTransactions({ silent: true });
+      refreshTransactions();
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to delete transaction";
@@ -227,6 +331,7 @@ export function TransactionsView() {
     setSearchInput("");
     setFilters(EMPTY_TRANSACTION_FILTERS);
     setPage(1);
+    setMobilePage(1);
   };
 
   const handleRemoveFilter = (key: keyof TransactionFilters) => {
@@ -241,15 +346,45 @@ export function TransactionsView() {
       return next;
     });
     setPage(1);
+    setMobilePage(1);
   };
 
   const handleApplyFilters = (next: TransactionFilters) => {
     setFilters(next);
     setPage(1);
+    setMobilePage(1);
   };
 
   const showEmptyLedger = !loading && totalUnfiltered === 0;
   const showNoResults = !loading && pagination.total === 0 && totalUnfiltered > 0;
+
+  const mobileListCapped =
+    useInfiniteList &&
+    pagination.total > MOBILE_TRANSACTIONS_MAX_ROWS &&
+    transactions.length >= MOBILE_TRANSACTIONS_MAX_ROWS;
+
+  const mobileListFooter = useInfiniteList && !loading && transactions.length > 0 && (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 1,
+        py: 2,
+        px: 2,
+      }}
+    >
+      {loadingMore && <CircularProgress size={28} aria-label="Loading more transactions" />}
+      {hasMore && <Box ref={loadMoreSentinelRef} sx={{ height: 1, width: "100%" }} aria-hidden />}
+      {!hasMore && (
+        <Typography variant="caption" color="text.secondary" textAlign="center">
+          {mobileListCapped
+            ? `Showing first ${MOBILE_TRANSACTIONS_MAX_ROWS.toLocaleString()} of ${pagination.total.toLocaleString()} transactions`
+            : `Showing ${transactions.length.toLocaleString()} transaction${transactions.length === 1 ? "" : "s"}`}
+        </Typography>
+      )}
+    </Box>
+  );
 
   return (
     <PageStack>
@@ -257,16 +392,17 @@ export function TransactionsView() {
         title="Transactions"
         description="View and manage your income and expenses."
         action={
-          !isMobileNav ? (
-            <Button
-              variant="contained"
-              startIcon={<AddOutlinedIcon />}
-              onClick={openCreateDialog}
-              sx={{ minWidth: 180 }}
-            >
-              Add Transaction
-            </Button>
-          ) : undefined
+          <Button
+            variant="contained"
+            startIcon={<AddOutlinedIcon />}
+            onClick={openCreateDialog}
+            sx={{
+              minWidth: 180,
+              display: { xs: "none", [MOBILE_NAV_BREAKPOINT]: "inline-flex" },
+            }}
+          >
+            Add Transaction
+          </Button>
         }
       />
 
@@ -313,116 +449,121 @@ export function TransactionsView() {
             actionLabel="Clear filters"
             onAction={handleClearFilters}
           />
-        ) : isMobile ? (
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 1.75,
-              px: { xs: 2, sm: 2.5 },
-              pb: 2,
-            }}
-          >
-            <StaggeredReveal staggerMs={45}>
-              {transactions.map((transaction) => (
-                <TransactionSwipeableCard
-                  key={transaction.id}
-                  transaction={transaction}
-                  deleting={deleting && deleteTarget?.id === transaction.id}
-                  onEdit={openEditDialog}
-                  onDelete={openDeleteDialog}
-                />
-              ))}
-            </StaggeredReveal>
-          </Box>
         ) : (
-          <TableContainer
-            sx={{
-              width: "100%",
-              overflowX: "auto",
-              WebkitOverflowScrolling: "touch",
-            }}
-          >
-            <Table size="medium" sx={{ minWidth: 720 }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Title</TableCell>
-                  <TableCell align="right">Amount</TableCell>
-                  <TableCell>Type</TableCell>
-                  <TableCell>Category</TableCell>
-                  <TableCell>Date</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {transactions.map((transaction) => (
-                  <TableRow
-                    key={transaction.id}
-                    hover
-                    sx={{
-                      "&:hover": { bgcolor: "action.hover" },
-                      "&:last-child td": { borderBottom: 0 },
-                    }}
-                  >
-                    <TableCell>
-                      <Typography variant="body2" fontWeight={500}>
-                        {transaction.title}
-                      </Typography>
-                    </TableCell>
-                    <TableCell
-                      align="right"
+          <>
+            <Box
+              sx={{
+                display: { xs: "flex", md: "none" },
+                flexDirection: "column",
+                gap: 1.75,
+                px: { xs: 2, sm: 2.5 },
+                pb: mobileListFooter ? 0 : 2,
+              }}
+            >
+              <StaggeredReveal staggerMs={45}>
+                {transactions.map((transaction, index) => (
+                  <TransactionSwipeableCard
+                    key={`mobile-${transaction.id}`}
+                    transaction={transaction}
+                    deleting={deleting && deleteTarget?.id === transaction.id}
+                    onEdit={openEditDialog}
+                    onDelete={openDeleteDialog}
+                    showSwipeHint={showSwipeHint && index === 0}
+                    onSwipeHintSeen={() => setShowSwipeHint(false)}
+                  />
+                ))}
+              </StaggeredReveal>
+              {mobileListFooter}
+            </Box>
+            <TableContainer
+              sx={{
+                display: { xs: "none", md: "block" },
+                width: "100%",
+                overflowX: "auto",
+                WebkitOverflowScrolling: "touch",
+              }}
+            >
+              <Table size="medium" sx={{ minWidth: 720 }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Title</TableCell>
+                    <TableCell align="right">Amount</TableCell>
+                    <TableCell>Type</TableCell>
+                    <TableCell>Category</TableCell>
+                    <TableCell>Date</TableCell>
+                    <TableCell align="right">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {transactions.map((transaction) => (
+                    <TableRow
+                      key={`desktop-${transaction.id}`}
+                      hover
                       sx={{
-                        fontWeight: 600,
-                        color:
-                          transaction.type === "INCOME"
-                            ? "success.main"
-                            : "error.main",
+                        "&:hover": { bgcolor: "action.hover" },
+                        "&:last-child td": { borderBottom: 0 },
                       }}
                     >
-                      {transaction.type === "INCOME" ? "+" : "-"}
-                      {formatCurrency(transaction.amount)}
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={transaction.type === "INCOME" ? "Income" : "Expense"}
-                        color={transaction.type === "INCOME" ? "success" : "error"}
-                        size="small"
-                        variant="outlined"
-                      />
-                    </TableCell>
-                    <TableCell>{transaction.category}</TableCell>
-                    <TableCell>{formatDate(transaction.date)}</TableCell>
-                    <TableCell align="right">
-                      <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                        <Tooltip title="Edit transaction">
-                          <IconButton
-                            color="primary"
-                            disabled={deleting && deleteTarget?.id === transaction.id}
-                            onClick={() => openEditDialog(transaction)}
-                            aria-label={`Edit ${transaction.title}`}
-                          >
-                            <EditOutlinedIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Delete transaction">
-                          <span>
+                      <TableCell>
+                        <Typography variant="body2" fontWeight={500}>
+                          {transaction.title}
+                        </Typography>
+                      </TableCell>
+                      <TableCell
+                        align="right"
+                        sx={{
+                          fontWeight: 600,
+                          color:
+                            transaction.type === "INCOME"
+                              ? "success.main"
+                              : "error.main",
+                        }}
+                      >
+                        {transaction.type === "INCOME" ? "+" : "-"}
+                        {formatCurrency(transaction.amount)}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={transaction.type === "INCOME" ? "Income" : "Expense"}
+                          color={transaction.type === "INCOME" ? "success" : "error"}
+                          size="small"
+                          variant="outlined"
+                        />
+                      </TableCell>
+                      <TableCell>{transaction.category}</TableCell>
+                      <TableCell>{formatDate(transaction.date)}</TableCell>
+                      <TableCell align="right">
+                        <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                          <Tooltip title="Edit transaction">
                             <IconButton
-                              color="error"
+                              color="primary"
                               disabled={deleting && deleteTarget?.id === transaction.id}
-                              onClick={() => openDeleteDialog(transaction)}
-                              aria-label={`Delete ${transaction.title}`}
+                              onClick={() => openEditDialog(transaction)}
+                              aria-label={`Edit ${transaction.title}`}
                             >
-                              <DeleteOutlineOutlinedIcon fontSize="small" />
+                              <EditOutlinedIcon fontSize="small" />
                             </IconButton>
-                          </span>
-                        </Tooltip>
-                      </Stack>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                          </Tooltip>
+                          <Tooltip title="Delete transaction">
+                            <span>
+                              <IconButton
+                                color="error"
+                                disabled={deleting && deleteTarget?.id === transaction.id}
+                                onClick={() => openDeleteDialog(transaction)}
+                                aria-label={`Delete ${transaction.title}`}
+                              >
+                                <DeleteOutlineOutlinedIcon fontSize="small" />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </>
         )}
 
         {!loading && pagination.total > 0 && (
@@ -439,13 +580,19 @@ export function TransactionsView() {
             labelDisplayedRows={({ from, to, count }) =>
               `${from}–${to} of ${count !== -1 ? count : `more than ${to}`}`
             }
-            size={isMobile ? "small" : "medium"}
             sx={{
+              display: { xs: "none", md: "flex" },
               borderTop: 1,
               borderColor: "divider",
               px: { xs: 1, sm: 2 },
+              "& .MuiTablePagination-toolbar": {
+                minHeight: { xs: 48, md: 52 },
+              },
               "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": {
                 fontSize: { xs: "0.75rem", sm: "0.875rem" },
+              },
+              "& .MuiInputBase-root": {
+                fontSize: { xs: "0.8125rem", md: "0.875rem" },
               },
             }}
           />

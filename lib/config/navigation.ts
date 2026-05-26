@@ -25,11 +25,10 @@ export const mainNavItems: NavItem[] = [
   { label: "Settings", href: "/settings", icon: SettingsOutlinedIcon },
 ];
 
-/** Primary destinations in the mobile bottom bar (max 4 + More). */
+/** Primary destinations in the mobile bottom bar (flanking the center Add control). */
 export const bottomNavItems: NavItem[] = [
   { label: "Home", href: "/", icon: DashboardOutlinedIcon },
   { label: "Activity", href: "/transactions", icon: ReceiptLongOutlinedIcon },
-  { label: "Budget", href: "/budget", icon: AccountBalanceWalletOutlinedIcon },
   { label: "Insights", href: "/insights", icon: InsightsOutlinedIcon },
 ];
 

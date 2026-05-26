@@ -17,31 +17,39 @@ import { touchIconButtonSx } from "@/lib/theme/touch-targets";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { Transaction } from "@/lib/types";
 
+export const SWIPE_HINT_STORAGE_KEY = "budgetrax-swipe-hint-seen";
+
 type TransactionSwipeableCardProps = {
   transaction: Transaction;
   deleting: boolean;
   onEdit: (transaction: Transaction) => void;
   onDelete: (transaction: Transaction) => void;
+  showSwipeHint?: boolean;
+  onSwipeHintSeen?: () => void;
 };
-
-const SWIPE_HINT_KEY = "budgetrax-swipe-hint-seen";
 
 export function TransactionSwipeableCard({
   transaction,
   deleting,
   onEdit,
   onDelete,
+  showSwipeHint: showSwipeHintProp,
+  onSwipeHintSeen,
 }: TransactionSwipeableCardProps) {
   const isIncome = transaction.type === "INCOME";
-  const [showSwipeHint, setShowSwipeHint] = useState(false);
+  const [localHint, setLocalHint] = useState(false);
 
   useEffect(() => {
-    setShowSwipeHint(sessionStorage.getItem(SWIPE_HINT_KEY) !== "1");
-  }, []);
+    if (showSwipeHintProp !== undefined) return;
+    setLocalHint(sessionStorage.getItem(SWIPE_HINT_STORAGE_KEY) !== "1");
+  }, [showSwipeHintProp]);
+
+  const showSwipeHint = showSwipeHintProp ?? localHint;
 
   const markHintSeen = () => {
-    sessionStorage.setItem(SWIPE_HINT_KEY, "1");
-    setShowSwipeHint(false);
+    sessionStorage.setItem(SWIPE_HINT_STORAGE_KEY, "1");
+    setLocalHint(false);
+    onSwipeHintSeen?.();
   };
 
   return (

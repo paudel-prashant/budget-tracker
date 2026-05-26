@@ -5,14 +5,24 @@ export const APP_BAR_HEIGHT = 64;
 /** Sticky mobile bottom navigation bar (excluding safe area). */
 export const BOTTOM_NAV_HEIGHT = 64;
 
+/** Center add button on the bottom bar. */
+export const BOTTOM_NAV_ADD_BUTTON_SIZE = 48;
+
+/** Extra scroll padding for the docked add button protrusion. */
+export const BOTTOM_NAV_ADD_OVERFLOW = 28;
+
 /** MUI breakpoint key: sidebar vs bottom nav (`theme.breakpoints.up(MOBILE_NAV_BREAKPOINT)` → sidebar). */
 export const MOBILE_NAV_BREAKPOINT = "md" as const;
 
 /** Minimum touch target per WCAG / mobile HIG (px). */
 export const TOUCH_TARGET_MIN = 44;
 
-/** FAB / assistant offset above bottom nav on phones. */
-export const MOBILE_FLOATING_OFFSET = BOTTOM_NAV_HEIGHT + 16;
+/** Assistant FAB offset above bottom nav + center add protrusion on phones. */
+export const MOBILE_FLOATING_OFFSET =
+  BOTTOM_NAV_HEIGHT + BOTTOM_NAV_ADD_OVERFLOW + 12;
+
+/** Fixed assistant FAB diameter (px). */
+export const ASSISTANT_FAB_SIZE = 56;
 
 /** Vertical rhythm between major page sections (MUI spacing units × 8px). */
 export const PAGE_STACK_SPACING = 3;

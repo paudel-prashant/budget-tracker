@@ -13,6 +13,7 @@ import {
 import { alpha } from "@mui/material/styles";
 import { MOTION_DURATION_MS, MOTION_EASE_OUT } from "@/lib/theme/motion";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import { useMounted } from "@/hooks/use-mounted";
 
 type DialogShellProps = DialogProps & {
   title: string;
@@ -21,8 +22,10 @@ type DialogShellProps = DialogProps & {
 
 export function DialogShell({ title, subtitle, children, sx, ...props }: DialogShellProps) {
   const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
+  const matchesSmall = useMediaQuery(theme.breakpoints.down("sm"));
+  const mounted = useMounted();
   const reducedMotion = usePrefersReducedMotion();
+  const fullScreen = mounted && matchesSmall;
 
   return (
     <Dialog
