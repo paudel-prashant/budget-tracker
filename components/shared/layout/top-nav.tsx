@@ -12,23 +12,23 @@ import { BrandLogo } from "@/components/shared/brand-logo";
 import { APP_NAME } from "@/lib/config/app";
 import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
-import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import { useThemeMode } from "@/lib/theme/theme-context";
-import { APP_BAR_HEIGHT, DRAWER_WIDTH } from "@/lib/config/layout-constants";
+import {
+  APP_BAR_HEIGHT,
+  DRAWER_WIDTH,
+  MOBILE_NAV_BREAKPOINT,
+} from "@/lib/config/layout-constants";
+import { touchIconButtonSx } from "@/lib/theme/touch-targets";
 import { UserMenu } from "@/components/shared/layout/user-menu";
+import { useIsMobileNav } from "@/hooks/use-is-mobile-nav";
 
 type TopNavProps = {
   drawerWidth?: number;
-  isMobile?: boolean;
-  onMenuClick?: () => void;
 };
 
-export function TopNav({
-  drawerWidth = DRAWER_WIDTH,
-  isMobile = false,
-  onMenuClick,
-}: TopNavProps) {
+export function TopNav({ drawerWidth = DRAWER_WIDTH }: TopNavProps) {
   const { mode, toggleColorMode } = useThemeMode();
+  const isMobileNav = useIsMobileNav();
 
   return (
     <AppBar
@@ -36,8 +36,11 @@ export function TopNav({
       color="inherit"
       elevation={0}
       sx={{
-        width: { xs: "100%", sm: `calc(100% - ${drawerWidth}px)` },
-        ml: { xs: 0, sm: `${drawerWidth}px` },
+        width: {
+          xs: "100%",
+          [MOBILE_NAV_BREAKPOINT]: `calc(100% - ${drawerWidth}px)`,
+        },
+        ml: { xs: 0, [MOBILE_NAV_BREAKPOINT]: `${drawerWidth}px` },
         bgcolor: "background.paper",
         borderBottom: 1,
         borderColor: "divider",
@@ -51,18 +54,9 @@ export function TopNav({
           gap: 1,
         }}
       >
-        {isMobile ? (
+        {isMobileNav ? (
           <>
-            <IconButton
-              edge="start"
-              onClick={onMenuClick}
-              aria-label="open navigation menu"
-              color="inherit"
-              sx={{ mr: 0.5 }}
-            >
-              <MenuOutlinedIcon />
-            </IconButton>
-            <BrandLogo size={28} />
+            <BrandLogo size={32} />
             <Typography
               variant="subtitle1"
               component="div"
@@ -78,7 +72,12 @@ export function TopNav({
         )}
         <UserMenu />
         <Tooltip title={mode === "light" ? "Switch to dark mode" : "Switch to light mode"}>
-          <IconButton onClick={toggleColorMode} aria-label="toggle color mode" color="inherit">
+          <IconButton
+            onClick={toggleColorMode}
+            aria-label="toggle color mode"
+            color="inherit"
+            sx={isMobileNav ? touchIconButtonSx : undefined}
+          >
             {mode === "light" ? <DarkModeOutlinedIcon /> : <LightModeOutlinedIcon />}
           </IconButton>
         </Tooltip>

@@ -24,3 +24,38 @@ export const mainNavItems: NavItem[] = [
   { label: "Net Worth", href: "/net-worth", icon: SavingsOutlinedIcon },
   { label: "Settings", href: "/settings", icon: SettingsOutlinedIcon },
 ];
+
+/** Primary destinations in the mobile bottom bar (max 4 + More). */
+export const bottomNavItems: NavItem[] = [
+  { label: "Home", href: "/", icon: DashboardOutlinedIcon },
+  { label: "Activity", href: "/transactions", icon: ReceiptLongOutlinedIcon },
+  { label: "Budget", href: "/budget", icon: AccountBalanceWalletOutlinedIcon },
+  { label: "Insights", href: "/insights", icon: InsightsOutlinedIcon },
+];
+
+const bottomNavHrefs = new Set(bottomNavItems.map((item) => item.href));
+
+/** Items surfaced in the mobile “More” sheet. */
+export const moreNavItems: NavItem[] = mainNavItems.filter(
+  (item) => !bottomNavHrefs.has(item.href)
+);
+
+/** Ordered routes for directional page transitions. */
+export const navRouteOrder: string[] = [
+  "/",
+  "/transactions",
+  "/budget",
+  "/recurring",
+  "/insights",
+  "/reports",
+  "/net-worth",
+  "/settings",
+];
+
+export function getNavRouteIndex(pathname: string): number {
+  if (pathname === "/") return 0;
+  const idx = navRouteOrder.findIndex(
+    (href) => href !== "/" && pathname.startsWith(href)
+  );
+  return idx >= 0 ? idx : navRouteOrder.length;
+}

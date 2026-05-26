@@ -36,11 +36,23 @@ export function PageHeader({ title, description, action }: PageHeaderProps) {
             background: `linear-gradient(180deg, ${theme.palette.primary.main}, ${alpha(theme.palette.primary.main, 0.35)})`,
           }}
         />
-        <Typography variant="h4" component="h1" sx={{ mb: description ? 1 : 0 }}>
+        <Typography
+          variant="h4"
+          component="h1"
+          sx={{
+            mb: description ? 1 : 0,
+            fontSize: { xs: "1.375rem", sm: "1.75rem", md: "2.125rem" },
+            lineHeight: { xs: 1.3, md: 1.2 },
+          }}
+        >
           {title}
         </Typography>
         {description && (
-          <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 560 }}>
+          <Typography
+            variant="body1"
+            color="text.secondary"
+            sx={{ maxWidth: 560, fontSize: { xs: "0.875rem", sm: "1rem" } }}
+          >
             {description}
           </Typography>
         )}

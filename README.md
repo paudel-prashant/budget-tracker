@@ -9,6 +9,31 @@ A personal finance app built with Next.js App Router, TypeScript, Material UI, P
 - REST API routes for transactions and summary
 - Light/dark mode, responsive layout, toast notifications
 - PostgreSQL via Prisma (Vercel Postgres in production)
+- **Progressive Web App (PWA)** — installable, offline dashboard & transactions, cached API responses
+
+## Progressive Web App (PWA)
+
+Budgetrax ships as an installable PWA powered by [`@ducanh2912/next-pwa`](https://github.com/DuCanhGH/next-pwa) (Workbox).
+
+| Capability | Implementation |
+|------------|----------------|
+| Web app manifest | `app/manifest.ts` → `/manifest.webmanifest` |
+| Service worker | Generated at `npm run build` → `public/sw.js` |
+| Install prompt | `components/pwa/install-prompt.tsx` |
+| Offline pages | Dashboard & transactions via `localStorage` + SW cache |
+| API cache | Network-first Workbox cache + client `fetchWithCache` |
+| Icons | `public/icons/` — regenerate with `npm run pwa:icons` |
+
+**Local testing:** Service workers are disabled in `next dev`. Run a production build:
+
+```bash
+npm run build
+npm start
+```
+
+Then open the app over `http://localhost:3000`, sign in, visit Dashboard and Transactions while online, then test offline in DevTools → Application → Service Workers.
+
+**Vercel:** `vercel.json` sets correct cache headers for `sw.js` and the manifest. No extra config required.
 
 ## Project structure
 

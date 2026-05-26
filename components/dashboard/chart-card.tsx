@@ -35,7 +35,11 @@ export function ChartCard({
       }}
     >
       <Box sx={{ mb: isEmpty ? 1.5 : 2.25 }}>
-        <Typography variant="h6" component="h2">
+        <Typography
+          variant="h6"
+          component="h2"
+          sx={{ fontSize: { xs: "1rem", sm: "1.125rem" } }}
+        >
           {title}
         </Typography>
         {subtitle && (

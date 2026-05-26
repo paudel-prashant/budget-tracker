@@ -10,6 +10,11 @@ export default auth((req) => {
 
   const isPublic =
     pathname === "/login" ||
+    pathname === "/offline" ||
+    pathname === "/manifest.webmanifest" ||
+    pathname === "/sw.js" ||
+    pathname.startsWith("/icons/") ||
+    pathname.startsWith("/workbox-") ||
     pathname.startsWith("/api/auth");
 
   if (!isLoggedIn && !isPublic) {
@@ -27,6 +32,6 @@ export default auth((req) => {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|\\.well-known|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sw\\.js|workbox-.*\\.js|manifest\\.webmanifest|icons/|\\.well-known|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

@@ -32,11 +32,18 @@ import { EmptyState } from "@/components/shared/ui/empty-state";
 import { TransactionsTableSkeleton } from "@/components/shared/ui/transactions-table-skeleton";
 import { TransactionFormDialog } from "@/components/transactions/transaction-form-dialog";
 import { DeleteTransactionDialog } from "@/components/transactions/delete-transaction-dialog";
-import { TransactionMobileCard } from "@/components/transactions/transaction-mobile-card";
+import { TransactionSwipeableCard } from "@/components/transactions/transaction-swipeable-card";
+import { StaggeredReveal } from "@/components/shared/ui/staggered-reveal";
 import { TransactionFiltersDrawer } from "@/components/transactions/transaction-filters-drawer";
 import { TransactionFiltersToolbar } from "@/components/transactions/transaction-filters-toolbar";
+import { OfflineBanner } from "@/components/pwa/offline-banner";
+import { usePwa } from "@/components/pwa/pwa-provider";
+import { useQuickTransaction } from "@/components/transactions/quick-transaction-provider";
+import { useIsMobileNav } from "@/hooks/use-is-mobile-nav";
 import { useSnackbar } from "@/components/shared/providers/snackbar-provider";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { fetchWithCache, OfflineFetchError } from "@/lib/pwa/fetch-with-cache";
+import { transactionsListCacheKey } from "@/lib/pwa/cache-keys";
 import {
   buildTransactionListQuery,
   countActiveFilters,
@@ -55,6 +62,9 @@ const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
 export function TransactionsView() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobileNav = useIsMobileNav();
+  const { isOnline } = usePwa();
+  const { openQuickAdd } = useQuickTransaction();
   const { showSuccess, showError } = useSnackbar();
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -75,6 +85,7 @@ export function TransactionsView() {
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [fromCache, setFromCache] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -111,32 +122,44 @@ export function TransactionsView() {
       setError(null);
 
       try {
-        const response = await fetch(`/api/transactions?${listQuery}`);
+        const cacheKey = transactionsListCacheKey(listQuery);
+        const result = await fetchWithCache<TransactionListResponse>(
+          `/api/transactions?${listQuery}`,
+          cacheKey
+        );
 
-        if (!response.ok) {
-          const data = await response.json().catch(() => ({}));
-          throw new Error(data.error ?? "Failed to load transactions");
-        }
-
-        const payload: TransactionListResponse = await response.json();
-        setTransactions(payload.data);
-        setPagination(payload.pagination);
-        setCategories(payload.meta.categories);
-        setTotalUnfiltered(payload.meta.totalUnfiltered);
+        setFromCache(result.fromCache);
+        setTransactions(result.data.data);
+        setPagination(result.data.pagination);
+        setCategories(result.data.meta.categories);
+        setTotalUnfiltered(result.data.meta.totalUnfiltered);
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Something went wrong";
+        const message =
+          err instanceof OfflineFetchError
+            ? err.message
+            : err instanceof Error
+              ? err.message
+              : "Something went wrong";
         setError(message);
-        showError(message);
+        if (isOnline || !(err instanceof OfflineFetchError)) {
+          showError(message);
+        }
       } finally {
         setLoading(false);
         setRefreshing(false);
       }
     },
-    [listQuery, showError]
+    [listQuery, showError, isOnline]
   );
 
   useEffect(() => {
     loadTransactions();
+  }, [loadTransactions]);
+
+  useEffect(() => {
+    const refresh = () => void loadTransactions({ silent: true });
+    window.addEventListener("budgetrax:transactions-changed", refresh);
+    return () => window.removeEventListener("budgetrax:transactions-changed", refresh);
   }, [loadTransactions]);
 
   useEffect(() => {
@@ -154,7 +177,7 @@ export function TransactionsView() {
 
   const openCreateDialog = () => {
     setEditTarget(null);
-    setFormOpen(true);
+    openQuickAdd();
   };
 
   const openEditDialog = (transaction: Transaction) => {
@@ -234,17 +257,20 @@ export function TransactionsView() {
         title="Transactions"
         description="View and manage your income and expenses."
         action={
-          <Button
-            variant="contained"
-            startIcon={<AddOutlinedIcon />}
-            onClick={openCreateDialog}
-            fullWidth={isMobile}
-            sx={{ minWidth: { sm: 180 } }}
-          >
-            Add Transaction
-          </Button>
+          !isMobileNav ? (
+            <Button
+              variant="contained"
+              startIcon={<AddOutlinedIcon />}
+              onClick={openCreateDialog}
+              sx={{ minWidth: 180 }}
+            >
+              Add Transaction
+            </Button>
+          ) : undefined
         }
       />
+
+      <OfflineBanner showingCachedData={fromCache || !isOnline} />
 
       {error && !loading && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
@@ -288,20 +314,36 @@ export function TransactionsView() {
             onAction={handleClearFilters}
           />
         ) : isMobile ? (
-          <Stack spacing={1.75} sx={{ px: { xs: 2, sm: 2.5 }, pb: 2 }}>
-            {transactions.map((transaction) => (
-              <TransactionMobileCard
-                key={transaction.id}
-                transaction={transaction}
-                deleting={deleting && deleteTarget?.id === transaction.id}
-                onEdit={openEditDialog}
-                onDelete={openDeleteDialog}
-              />
-            ))}
-          </Stack>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 1.75,
+              px: { xs: 2, sm: 2.5 },
+              pb: 2,
+            }}
+          >
+            <StaggeredReveal staggerMs={45}>
+              {transactions.map((transaction) => (
+                <TransactionSwipeableCard
+                  key={transaction.id}
+                  transaction={transaction}
+                  deleting={deleting && deleteTarget?.id === transaction.id}
+                  onEdit={openEditDialog}
+                  onDelete={openDeleteDialog}
+                />
+              ))}
+            </StaggeredReveal>
+          </Box>
         ) : (
-          <TableContainer sx={{ width: "100%", overflowX: "auto" }}>
-            <Table size="medium">
+          <TableContainer
+            sx={{
+              width: "100%",
+              overflowX: "auto",
+              WebkitOverflowScrolling: "touch",
+            }}
+          >
+            <Table size="medium" sx={{ minWidth: 720 }}>
               <TableHead>
                 <TableRow>
                   <TableCell>Title</TableCell>
@@ -354,7 +396,6 @@ export function TransactionsView() {
                       <Stack direction="row" spacing={0.5} justifyContent="flex-end">
                         <Tooltip title="Edit transaction">
                           <IconButton
-                            size="small"
                             color="primary"
                             disabled={deleting && deleteTarget?.id === transaction.id}
                             onClick={() => openEditDialog(transaction)}
@@ -366,7 +407,6 @@ export function TransactionsView() {
                         <Tooltip title="Delete transaction">
                           <span>
                             <IconButton
-                              size="small"
                               color="error"
                               disabled={deleting && deleteTarget?.id === transaction.id}
                               onClick={() => openDeleteDialog(transaction)}
@@ -399,10 +439,14 @@ export function TransactionsView() {
             labelDisplayedRows={({ from, to, count }) =>
               `${from}–${to} of ${count !== -1 ? count : `more than ${to}`}`
             }
+            size={isMobile ? "small" : "medium"}
             sx={{
               borderTop: 1,
               borderColor: "divider",
               px: { xs: 1, sm: 2 },
+              "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": {
+                fontSize: { xs: "0.75rem", sm: "0.875rem" },
+              },
             }}
           />
         )}
@@ -426,11 +470,11 @@ export function TransactionsView() {
       />
 
       <TransactionFormDialog
-        open={formOpen}
+        open={formOpen && Boolean(editTarget)}
         transaction={editTarget}
         extraCategories={categories}
         onClose={closeFormDialog}
-        onSuccess={() => handleFormSuccess(editTarget ? "edit" : "create")}
+        onSuccess={() => handleFormSuccess("edit")}
       />
 
       <DeleteTransactionDialog

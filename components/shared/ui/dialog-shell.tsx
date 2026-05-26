@@ -1,7 +1,18 @@
 "use client";
 
-import { Box, Dialog, DialogTitle, Typography, type DialogProps } from "@mui/material";
-import { alpha, useTheme } from "@mui/material/styles";
+import {
+  Box,
+  Dialog,
+  DialogTitle,
+  Slide,
+  Typography,
+  useMediaQuery,
+  useTheme,
+  type DialogProps,
+} from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import { MOTION_DURATION_MS, MOTION_EASE_OUT } from "@/lib/theme/motion";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 
 type DialogShellProps = DialogProps & {
   title: string;
@@ -10,15 +21,33 @@ type DialogShellProps = DialogProps & {
 
 export function DialogShell({ title, subtitle, children, sx, ...props }: DialogShellProps) {
   const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
+  const reducedMotion = usePrefersReducedMotion();
 
   return (
     <Dialog
       {...props}
+      fullScreen={fullScreen}
+      slots={fullScreen && !reducedMotion ? { transition: Slide } : undefined}
+      slotProps={
+        fullScreen && !reducedMotion
+          ? {
+              transition: {
+                direction: "up",
+                timeout: MOTION_DURATION_MS,
+                easing: { enter: MOTION_EASE_OUT, exit: MOTION_EASE_OUT },
+              },
+            }
+          : undefined
+      }
       scroll="paper"
       sx={[
         {
           "& .MuiDialog-paper": {
-            m: { xs: 2, sm: 3 },
+            m: fullScreen ? 0 : { xs: 2, sm: 3 },
+            width: fullScreen ? "100%" : undefined,
+            maxHeight: fullScreen ? "100dvh" : undefined,
+            borderRadius: fullScreen ? 0 : undefined,
             overflow: "hidden",
             border: 1,
             borderColor: "divider",

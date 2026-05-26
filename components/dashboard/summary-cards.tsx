@@ -3,8 +3,10 @@
 import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
 import TrendingDownOutlinedIcon from "@mui/icons-material/TrendingDownOutlined";
 import AccountBalanceOutlinedIcon from "@mui/icons-material/AccountBalanceOutlined";
+import { useMediaQuery, useTheme } from "@mui/material";
 import { StatCard } from "@/components/shared/ui/stat-card";
 import { ResponsiveColumns } from "@/components/shared/ui/responsive-columns";
+import { StaggeredReveal } from "@/components/shared/ui/staggered-reveal";
 import { formatCurrency } from "@/lib/utils/format";
 import type { Summary } from "@/lib/types";
 
@@ -40,18 +42,23 @@ const cards = [
 ];
 
 export function SummaryCards({ summary }: SummaryCardsProps) {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
+  const cardNodes = cards.map((card) => (
+    <StatCard
+      key={card.key}
+      title={card.title}
+      value={formatCurrency(card.value(summary))}
+      icon={card.icon}
+      tint={card.tint}
+      accentGradient={card.gradient}
+    />
+  ));
+
   return (
-    <ResponsiveColumns columns={{ xs: 1, sm: 2, md: 3 }}>
-      {cards.map((card) => (
-        <StatCard
-          key={card.key}
-          title={card.title}
-          value={formatCurrency(card.value(summary))}
-          icon={card.icon}
-          tint={card.tint}
-          accentGradient={card.gradient}
-        />
-      ))}
+    <ResponsiveColumns columns={{ xs: 1, sm: 2, lg: 3 }} gap={2}>
+      {isMobile ? <StaggeredReveal staggerMs={60}>{cardNodes}</StaggeredReveal> : cardNodes}
     </ResponsiveColumns>
   );
 }

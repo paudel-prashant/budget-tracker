@@ -48,6 +48,92 @@ body[data-mui-color-scheme="dark"] {
 }
 
 /* App toast host — always bottom-center; never affected by layout/transform parents */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-transition-enter {
+  animation: page-enter 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes page-enter-forward {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes page-enter-back {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.page-transition-forward {
+  animation: page-enter-forward 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.page-transition-back {
+  animation: page-enter-back 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes stagger-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stagger-reveal-item {
+  animation: stagger-fade-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes fab-press {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.94);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.fab-press-animation {
+  animation: fab-press 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-transition-enter,
+  .page-transition-forward,
+  .page-transition-back,
+  .stagger-reveal-item,
+  .fab-press-animation {
+    animation: none !important;
+  }
+}
+
 #app-toast-host {
   position: fixed !important;
   left: 0 !important;

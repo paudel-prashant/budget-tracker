@@ -16,7 +16,7 @@ import { PageStack } from "@/components/shared/ui/page-stack";
 import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { BudgetHealthWidget } from "@/components/dashboard/budget-health-widget";
 import { BudgetWarnings } from "@/components/dashboard/budget-warnings";
-import { DashboardCharts } from "@/components/dashboard/dashboard-charts";
+import { DashboardChartsLazy } from "@/components/dashboard/dashboard-charts-lazy";
 import { DashboardGettingStarted } from "@/components/dashboard/dashboard-getting-started";
 import { DashboardInsightsWidget } from "@/components/dashboard/dashboard-insights-widget";
 import { GoalsWidget } from "@/components/dashboard/goals-widget";
@@ -61,7 +61,7 @@ export function DashboardView({ data, initialLayout }: DashboardViewProps) {
           return <SummaryCards summary={data.summary} />;
         case "charts":
           return (
-            <DashboardCharts
+            <DashboardChartsLazy
               balanceChartData={data.balanceChartData}
               monthlyChartData={data.monthlyChartData}
               embedded
@@ -108,7 +108,12 @@ export function DashboardView({ data, initialLayout }: DashboardViewProps) {
         title="Dashboard"
         description="Overview of your financial activity and trends."
         action={
-          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1}
+            alignItems={{ xs: "stretch", sm: "center" }}
+            sx={{ width: { xs: "100%", sm: "auto" } }}
+          >
             {saving && (
               <Chip
                 size="small"

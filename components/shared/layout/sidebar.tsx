@@ -17,14 +17,13 @@ import { usePathname } from "next/navigation";
 import { BrandLogo } from "@/components/shared/brand-logo";
 import { APP_NAME, APP_TAGLINE } from "@/lib/config/app";
 import { mainNavItems } from "@/lib/config/navigation";
-import { APP_BAR_HEIGHT, DRAWER_WIDTH } from "@/lib/config/layout-constants";
+import {
+  APP_BAR_HEIGHT,
+  DRAWER_WIDTH,
+  MOBILE_NAV_BREAKPOINT,
+} from "@/lib/config/layout-constants";
 
 export { DRAWER_WIDTH };
-
-type SidebarProps = {
-  mobileOpen?: boolean;
-  onMobileClose?: () => void;
-};
 
 function SidebarBrand() {
   const theme = useTheme();
@@ -56,7 +55,7 @@ function SidebarBrand() {
   );
 }
 
-function NavList({ onNavigate }: { onNavigate?: () => void }) {
+function NavList() {
   const pathname = usePathname();
   const theme = useTheme();
 
@@ -74,11 +73,11 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
               href={item.href}
               prefetch={false}
               selected={isActive}
-              onClick={onNavigate}
               sx={{
                 borderRadius: 2.5,
                 py: 1.15,
                 px: 1.75,
+                minHeight: 44,
                 position: "relative",
                 overflow: "hidden",
                 "&.Mui-selected": {
@@ -129,16 +128,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-function DrawerContent({ onNavigate }: { onNavigate?: () => void }) {
-  return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <SidebarBrand />
-      <NavList onNavigate={onNavigate} />
-    </Box>
-  );
-}
-
-export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
+export function Sidebar() {
   const drawerPaperSx = {
     boxSizing: "border-box",
     width: DRAWER_WIDTH,
@@ -151,34 +141,24 @@ export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
     <Box
       component="nav"
       sx={{
-        width: { xs: 0, sm: DRAWER_WIDTH },
+        width: { xs: 0, [MOBILE_NAV_BREAKPOINT]: DRAWER_WIDTH },
         flexShrink: 0,
-        overflow: { xs: "hidden", sm: "visible" },
+        display: { xs: "none", [MOBILE_NAV_BREAKPOINT]: "block" },
       }}
       aria-label="main navigation"
     >
       <Drawer
-        variant="temporary"
-        open={mobileOpen}
-        onClose={onMobileClose}
-        ModalProps={{ keepMounted: true }}
-        sx={{
-          display: { xs: "block", sm: "none" },
-          "& .MuiDrawer-paper": drawerPaperSx,
-        }}
-      >
-        <DrawerContent onNavigate={onMobileClose} />
-      </Drawer>
-
-      <Drawer
         variant="permanent"
         sx={{
-          display: { xs: "none", sm: "block" },
+          display: { xs: "none", [MOBILE_NAV_BREAKPOINT]: "block" },
           "& .MuiDrawer-paper": drawerPaperSx,
         }}
         open
       >
-        <DrawerContent />
+        <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+          <SidebarBrand />
+          <NavList />
+        </Box>
       </Drawer>
     </Box>
   );
