@@ -1,6 +1,7 @@
 "use client";
 
-import { Skeleton, useTheme } from "@mui/material";
+import { useTheme } from "@mui/material";
+import { ChartPlotShimmer } from "@/components/shared/ui/chart-shimmer";
 import {
   Area,
   AreaChart,
@@ -14,7 +15,6 @@ import { ChartCard } from "@/components/dashboard/chart-card";
 import { getChartGridStroke, getChartTooltipStyle } from "@/lib/theme/chart-styles";
 import { formatChartDate, formatCurrency } from "@/lib/utils/format";
 import { useChartPlotHeight } from "@/hooks/use-chart-plot-height";
-import { CHART_AREA_HEIGHT } from "@/lib/config/layout-constants";
 import type { BalanceChartPoint } from "@/lib/types";
 
 type BalanceLineChartProps = {
@@ -41,7 +41,7 @@ export function BalanceLineChart({ data, chartReady = true }: BalanceLineChartPr
       isEmpty={isEmpty}
     >
       {!chartReady && !isEmpty ? (
-        <Skeleton variant="rounded" sx={{ width: "100%", height: CHART_AREA_HEIGHT, borderRadius: 2 }} />
+        <ChartPlotShimmer variant="line" height={plotHeight} />
       ) : (
         <ResponsiveContainer width="100%" height={plotHeight}>
           <AreaChart data={chartData} margin={{ top: 12, right: 16, left: 4, bottom: 4 }}>

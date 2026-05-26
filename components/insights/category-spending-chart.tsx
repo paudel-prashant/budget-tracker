@@ -1,6 +1,7 @@
 "use client";
 
-import { Skeleton, useTheme } from "@mui/material";
+import { useTheme } from "@mui/material";
+import { ChartPlotShimmer } from "@/components/shared/ui/chart-shimmer";
 import {
   Bar,
   BarChart,
@@ -37,7 +38,7 @@ export function CategorySpendingChart({ data }: CategorySpendingChartProps) {
       emptyMessage="No expense categories to chart yet."
     >
       {!mounted && !isEmpty ? (
-        <Skeleton variant="rounded" sx={{ width: "100%", height: plotHeight, borderRadius: 2 }} />
+        <ChartPlotShimmer variant="bar" height={plotHeight} />
       ) : mounted && !isEmpty ? (
         <ResponsiveContainer width="100%" height={plotHeight} minWidth={0}>
           <BarChart

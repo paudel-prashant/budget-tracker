@@ -8,9 +8,18 @@ function getMonthKey(date: string): string {
   return date.slice(0, 7);
 }
 
+type BalanceChartOptions = {
+  /** Net balance from transactions before the filtered period. */
+  openingBalance?: number;
+  /** YYYY-MM-DD anchor when the range has no in-period transactions but a non-zero opening balance. */
+  rangeStartDate?: string;
+};
+
 export function buildBalanceOverTimeData(
-  transactions: Transaction[]
+  transactions: Transaction[],
+  options: BalanceChartOptions = {}
 ): BalanceChartPoint[] {
+  const openingBalance = options.openingBalance ?? 0;
   const sorted = [...transactions].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
@@ -24,7 +33,7 @@ export function buildBalanceOverTimeData(
     byDate.set(dateKey, existing);
   }
 
-  let runningBalance = 0;
+  let runningBalance = openingBalance;
   const points: BalanceChartPoint[] = [];
 
   for (const date of Array.from(byDate.keys()).sort()) {
@@ -36,6 +45,10 @@ export function buildBalanceOverTimeData(
     }
 
     points.push({ date, balance: runningBalance });
+  }
+
+  if (points.length === 0 && openingBalance !== 0 && options.rangeStartDate) {
+    points.push({ date: options.rangeStartDate, balance: openingBalance });
   }
 
   return points;

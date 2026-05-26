@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import {
   Alert,
-  Box,
   Button,
   Chip,
   CircularProgress,
@@ -17,7 +16,9 @@ import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { BudgetHealthWidget } from "@/components/dashboard/budget-health-widget";
 import { BudgetWarnings } from "@/components/dashboard/budget-warnings";
 import { DashboardChartsLazy } from "@/components/dashboard/dashboard-charts-lazy";
+import { DashboardDateRangeSelector } from "@/components/dashboard/dashboard-date-range-selector";
 import { DashboardGettingStarted } from "@/components/dashboard/dashboard-getting-started";
+import { DashboardMetricsTransition } from "@/components/dashboard/dashboard-metrics-transition";
 import { DashboardInsightsWidget } from "@/components/dashboard/dashboard-insights-widget";
 import { GoalsWidget } from "@/components/dashboard/goals-widget";
 import { DashboardCustomizeDialog } from "@/components/dashboard/dashboard-customize-dialog";
@@ -30,25 +31,40 @@ import {
   type DashboardLayoutPreferences,
   type DashboardWidgetId,
 } from "@/lib/domain/dashboard-layout";
-import type { DashboardData } from "@/lib/types";
+import { useDashboardMetrics } from "@/hooks/use-dashboard-metrics";
+import type { DashboardData, DashboardMetrics } from "@/lib/types";
 
 type DashboardViewProps = {
   data: DashboardData;
   initialLayout: DashboardLayoutPreferences;
 };
 
+function metricsFromDashboardData(data: DashboardData): DashboardMetrics {
+  return {
+    summary: data.summary,
+    balanceChartData: data.balanceChartData,
+    monthlyChartData: data.monthlyChartData,
+    insights: data.insights,
+    dateRange: data.dateRange,
+  };
+}
+
 export function DashboardView({ data, initialLayout }: DashboardViewProps) {
   const [layout, setLayout] = useState(() => normalizeDashboardLayout(initialLayout));
   const [customizeMode, setCustomizeMode] = useState(false);
   const [customizeOpen, setCustomizeOpen] = useState(false);
 
+  const initialMetrics = useMemo(() => metricsFromDashboardData(data), [data]);
+  const { metrics, loading: metricsLoading, error: metricsError, applyRange, clearError } =
+    useDashboardMetrics({ initialMetrics });
+
   const initialSerialized = useMemo(() => JSON.stringify(initialLayout), [initialLayout]);
   const { saving } = usePersistDashboardLayout(layout, initialSerialized);
 
   const hasNoActivity =
-    data.summary.totalIncome === 0 &&
-    data.summary.totalExpenses === 0 &&
-    data.balanceChartData.length === 0;
+    metrics.summary.totalIncome === 0 &&
+    metrics.summary.totalExpenses === 0 &&
+    metrics.balanceChartData.length === 0;
 
   const handleLayoutChange = useCallback((next: DashboardLayoutPreferences) => {
     setLayout(next);
@@ -56,14 +72,20 @@ export function DashboardView({ data, initialLayout }: DashboardViewProps) {
 
   const renderWidget = useCallback(
     (id: DashboardWidgetId) => {
+      const metricsContent = (content: ReactNode) => (
+        <DashboardMetricsTransition loading={metricsLoading}>{content}</DashboardMetricsTransition>
+      );
+
       switch (id) {
         case "balance":
-          return <SummaryCards summary={data.summary} />;
+          return metricsContent(
+            <SummaryCards summary={metrics.summary} dimmed={metricsLoading} />
+          );
         case "charts":
-          return (
+          return metricsContent(
             <DashboardChartsLazy
-              balanceChartData={data.balanceChartData}
-              monthlyChartData={data.monthlyChartData}
+              balanceChartData={metrics.balanceChartData}
+              monthlyChartData={metrics.monthlyChartData}
               embedded
             />
           );
@@ -79,34 +101,36 @@ export function DashboardView({ data, initialLayout }: DashboardViewProps) {
             </Stack>
           );
         case "goals":
-          return (
+          return metricsContent(
             <GoalsWidget
-              summary={data.summary}
+              summary={metrics.summary}
               health={data.budgetHealth}
-              insights={data.insights}
+              insights={metrics.insights}
               embedded
             />
           );
         case "insights":
-          return data.insights ? (
-            <DashboardInsightsWidget insights={data.insights} embedded />
-          ) : (
-            <Alert severity="info" variant="outlined">
-              Add more transactions to unlock personalized insights.
-            </Alert>
+          return metricsContent(
+            metrics.insights ? (
+              <DashboardInsightsWidget insights={metrics.insights} embedded />
+            ) : (
+              <Alert severity="info" variant="outlined">
+                Add more transactions to unlock personalized insights.
+              </Alert>
+            )
           );
         default:
           return null;
       }
     },
-    [data]
+    [data.budgetHealth, data.budgetWarnings, metrics, metricsLoading]
   );
 
   return (
     <PageStack>
       <PageHeader
         title="Dashboard"
-        description="Overview of your financial activity and trends."
+        description="Overview of your financial activity. Use the date range filter to analyze any period."
         action={
           <Stack
             direction={{ xs: "column", sm: "row" }}
@@ -147,6 +171,18 @@ export function DashboardView({ data, initialLayout }: DashboardViewProps) {
           </Typography>
         </Alert>
       )}
+
+      {metricsError && (
+        <Alert severity="error" variant="outlined" onClose={clearError}>
+          {metricsError}
+        </Alert>
+      )}
+
+      <DashboardDateRangeSelector
+        value={metrics.dateRange}
+        loading={metricsLoading}
+        onChange={applyRange}
+      />
 
       {hasNoActivity && <DashboardGettingStarted />}
 

@@ -1,6 +1,7 @@
 "use client";
 
-import { Skeleton, useTheme } from "@mui/material";
+import { useTheme } from "@mui/material";
+import { ChartPlotShimmer } from "@/components/shared/ui/chart-shimmer";
 import {
   Bar,
   BarChart,
@@ -15,7 +16,6 @@ import { ChartCard } from "@/components/dashboard/chart-card";
 import { getChartGridStroke, getChartTooltipStyle } from "@/lib/theme/chart-styles";
 import { formatCurrency, formatMonth } from "@/lib/utils/format";
 import { useChartPlotHeight } from "@/hooks/use-chart-plot-height";
-import { CHART_AREA_HEIGHT } from "@/lib/config/layout-constants";
 import type { MonthlyChartPoint } from "@/lib/types";
 
 type MonthlyIncomeExpenseChartProps = {
@@ -44,7 +44,7 @@ export function MonthlyIncomeExpenseChart({
       isEmpty={isEmpty}
     >
       {!chartReady && !isEmpty ? (
-        <Skeleton variant="rounded" sx={{ width: "100%", height: CHART_AREA_HEIGHT, borderRadius: 2 }} />
+        <ChartPlotShimmer variant="bar" height={plotHeight} />
       ) : (
         <ResponsiveContainer width="100%" height={plotHeight}>
           <BarChart data={chartData} margin={{ top: 12, right: 16, left: 4, bottom: 4 }} barGap={6}>

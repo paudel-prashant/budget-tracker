@@ -3,6 +3,7 @@
 import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
 import TrendingDownOutlinedIcon from "@mui/icons-material/TrendingDownOutlined";
 import AccountBalanceOutlinedIcon from "@mui/icons-material/AccountBalanceOutlined";
+import { Box } from "@mui/material";
 import { StatCard } from "@/components/shared/ui/stat-card";
 import { ResponsiveColumns } from "@/components/shared/ui/responsive-columns";
 import { StaggeredReveal } from "@/components/shared/ui/staggered-reveal";
@@ -11,6 +12,7 @@ import type { Summary } from "@/lib/types";
 
 type SummaryCardsProps = {
   summary: Summary;
+  dimmed?: boolean;
 };
 
 const cards = [
@@ -40,7 +42,7 @@ const cards = [
   },
 ];
 
-export function SummaryCards({ summary }: SummaryCardsProps) {
+export function SummaryCards({ summary, dimmed = false }: SummaryCardsProps) {
   const cardNodes = cards.map((card) => (
     <StatCard
       key={card.key}
@@ -53,8 +55,15 @@ export function SummaryCards({ summary }: SummaryCardsProps) {
   ));
 
   return (
-    <ResponsiveColumns columns={{ xs: 1, sm: 2, lg: 3 }} gap={2}>
-      <StaggeredReveal staggerMs={60}>{cardNodes}</StaggeredReveal>
-    </ResponsiveColumns>
+    <Box
+      sx={{
+        opacity: dimmed ? 0.85 : 1,
+        transition: "opacity 0.28s ease",
+      }}
+    >
+      <ResponsiveColumns columns={{ xs: 1, sm: 2, lg: 3 }} gap={2}>
+        <StaggeredReveal staggerMs={60}>{cardNodes}</StaggeredReveal>
+      </ResponsiveColumns>
+    </Box>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Skeleton, useTheme } from "@mui/material";
+import { useTheme } from "@mui/material";
+import { ChartPlotShimmer } from "@/components/shared/ui/chart-shimmer";
 import {
   Area,
   AreaChart,
@@ -15,7 +16,6 @@ import {
 import { ChartCard } from "@/components/dashboard/chart-card";
 import { getChartGridStroke, getChartTooltipStyle } from "@/lib/theme/chart-styles";
 import { formatCurrency, formatMonth, formatPercent } from "@/lib/utils/format";
-import { CHART_AREA_HEIGHT } from "@/lib/config/layout-constants";
 import type { NetWorthHistoryPoint } from "@/lib/types";
 
 type NetWorthGrowthChartProps = {
@@ -45,7 +45,7 @@ export function NetWorthGrowthChart({ data }: NetWorthGrowthChartProps) {
       emptyMessage="Add assets and liabilities to see net worth growth."
     >
       {!mounted && !isEmpty ? (
-        <Skeleton variant="rounded" sx={{ width: "100%", height: CHART_AREA_HEIGHT, borderRadius: 2 }} />
+        <ChartPlotShimmer variant="line" />
       ) : (
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 12, right: 16, left: 4, bottom: 4 }}>

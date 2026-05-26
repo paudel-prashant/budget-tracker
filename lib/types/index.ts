@@ -222,11 +222,9 @@ export type FinancialInsights = {
   categoryBreakdown: Array<{ category: string; amount: number }>;
 };
 
-export type DashboardData = {
-  summary: Summary;
-  balanceChartData: BalanceChartPoint[];
-  monthlyChartData: MonthlyChartPoint[];
-  budgetHealth: BudgetHealth;
-  budgetWarnings: BudgetWithProgress[];
-  insights: DashboardInsights | null;
-};
+export type {
+  DashboardData,
+  DashboardDatePreset,
+  DashboardDateRange,
+  DashboardMetrics,
+} from "@/lib/types";

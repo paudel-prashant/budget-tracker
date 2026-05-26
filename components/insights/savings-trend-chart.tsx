@@ -1,6 +1,7 @@
 "use client";
 
-import { Skeleton, useTheme } from "@mui/material";
+import { useTheme } from "@mui/material";
+import { ChartPlotShimmer } from "@/components/shared/ui/chart-shimmer";
 import {
   Area,
   AreaChart,
@@ -41,7 +42,7 @@ export function SavingsTrendChart({ data }: SavingsTrendChartProps) {
       isEmpty={isEmpty}
     >
       {!mounted && !isEmpty ? (
-        <Skeleton variant="rounded" sx={{ width: "100%", height: plotHeight, borderRadius: 2 }} />
+        <ChartPlotShimmer variant="line" height={plotHeight} />
       ) : mounted && !isEmpty ? (
         <ResponsiveContainer width="100%" height={plotHeight} minWidth={0}>
           <AreaChart data={chartData} margin={{ top: 12, right: 16, left: 4, bottom: 4 }}>

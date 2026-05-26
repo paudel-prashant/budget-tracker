@@ -271,13 +271,30 @@ export type NetWorthDashboardData = {
   history: NetWorthHistoryPoint[];
 };
 
-export type DashboardData = {
+export type DashboardDatePreset =
+  | "this_week"
+  | "this_month"
+  | "last_month"
+  | "last_3_months"
+  | "custom";
+
+export type DashboardDateRange = {
+  preset: DashboardDatePreset;
+  dateFrom: string;
+  dateTo: string;
+};
+
+export type DashboardMetrics = {
   summary: Summary;
   balanceChartData: BalanceChartPoint[];
   monthlyChartData: MonthlyChartPoint[];
+  insights: DashboardInsights | null;
+  dateRange: DashboardDateRange;
+};
+
+export type DashboardData = DashboardMetrics & {
   budgetHealth: BudgetHealth;
   budgetWarnings: BudgetWithProgress[];
-  insights: DashboardInsights | null;
   netWorth: NetWorthDashboardData;
 };
 

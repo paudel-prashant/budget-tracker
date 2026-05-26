@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Skeleton, useTheme } from "@mui/material";
+import { useTheme } from "@mui/material";
+import { ChartPlotShimmer } from "@/components/shared/ui/chart-shimmer";
 import {
   Area,
   AreaChart,
@@ -44,7 +45,7 @@ export function ReportDailySpendingChart({ data }: ReportDailySpendingChartProps
       emptyMessage="No expenses recorded this month."
     >
       {!mounted && !isEmpty ? (
-        <Skeleton variant="rounded" sx={{ width: "100%", height: CHART_AREA_HEIGHT, borderRadius: 2 }} />
+        <ChartPlotShimmer variant="line" height={CHART_AREA_HEIGHT} />
       ) : (
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 12, right: 16, left: 4, bottom: 4 }}>
