@@ -1,9 +1,7 @@
 "use client";
 
-import NextLink from "next/link";
 import {
   Box,
-  Button,
   Chip,
   LinearProgress,
   Stack,
@@ -11,13 +9,14 @@ import {
   alpha,
   useTheme,
 } from "@mui/material";
-import ArrowForwardOutlinedIcon from "@mui/icons-material/ArrowForwardOutlined";
 import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
 import TrendingDownOutlinedIcon from "@mui/icons-material/TrendingDownOutlined";
 import TrendingFlatOutlinedIcon from "@mui/icons-material/TrendingFlatOutlined";
 import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
 import { SurfaceCard } from "@/components/shared/ui/surface-card";
 import { CARD_PADDING } from "@/lib/config/layout-constants";
+import { WidgetFooter, WidgetLinkButton } from "@/components/dashboard/widget-actions";
+import { widgetContentTitleSx, widgetLabelSx } from "@/lib/theme/typography";
 import { formatCurrency, formatPercent } from "@/lib/utils/format";
 import type { DashboardInsightTone, DashboardInsights } from "@/lib/types";
 
@@ -105,13 +104,11 @@ export function DashboardInsightsWidget({
               >
                 <InsightsOutlinedIcon />
               </Box>
-              <Typography variant="overline" color="text.secondary">
-                Insight highlight
-              </Typography>
+              <Typography sx={widgetLabelSx}>Insight highlight</Typography>
             </Stack>
           )}
 
-          <Typography variant="h6" sx={{ mb: 0.75 }}>
+          <Typography sx={{ ...widgetContentTitleSx, mb: 0.75 }}>
             {insights.headline}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2, lineHeight: 1.65, maxWidth: 560 }}>
@@ -209,17 +206,9 @@ export function DashboardInsightsWidget({
         </Box>
       </Stack>
 
-      <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: "divider", display: "flex", justifyContent: "flex-end" }}>
-        <Button
-          component={NextLink}
-          href="/insights"
-          endIcon={<ArrowForwardOutlinedIcon />}
-          size="small"
-          sx={{ fontWeight: 600 }}
-        >
-          View full insights
-        </Button>
-      </Box>
+      <WidgetFooter>
+        <WidgetLinkButton href="/insights">View full insights</WidgetLinkButton>
+      </WidgetFooter>
     </>
   );
 

@@ -2,6 +2,7 @@ export const DASHBOARD_WIDGET_IDS = [
   "balance",
   "kpis",
   "charts",
+  "forecast",
   "budgets",
   "goals",
   "insights",
@@ -36,6 +37,11 @@ export const DASHBOARD_WIDGET_META: Record<
   charts: {
     label: "Charts",
     description: "Balance over time and monthly income vs expenses",
+    fullWidth: true,
+  },
+  forecast: {
+    label: "Cash flow forecast",
+    description: "30-day outlook at a glance",
     fullWidth: true,
   },
   budgets: {

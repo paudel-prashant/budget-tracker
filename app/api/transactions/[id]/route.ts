@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db/prisma";
 import { requireApiUserId } from "@/lib/auth/api-auth";
 import { handleApiError, jsonError } from "@/lib/utils/api-utils";
 import { revalidateFinancePages } from "@/lib/utils/revalidate-pages";
+import { syncFinanceAccountsForUser } from "@/lib/data/finance-account-data";
 import { computeTransactionImportHash } from "@/lib/domain/transaction-import-hash";
 import { upsertLearnedCategoryMapping } from "@/lib/domain/category-mapping-service";
 import { validateTransactionBody } from "@/lib/validation/transaction-validation";
@@ -81,6 +82,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       validation.data.type
     );
 
+    await syncFinanceAccountsForUser(auth.userId);
     revalidateFinancePages();
 
     return NextResponse.json(transaction);
@@ -103,6 +105,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
       where: { id },
     });
 
+    await syncFinanceAccountsForUser(auth.userId);
     revalidateFinancePages();
 
     return NextResponse.json({ success: true, id });

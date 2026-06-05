@@ -87,3 +87,44 @@ export function getDueOccurrences(
 
   return occurrences;
 }
+
+/** Generate future recurring occurrences strictly after `from` through `through` (inclusive). */
+export function getFutureOccurrences(
+  startDate: Date,
+  frequency: RecurrenceFrequency,
+  from: Date,
+  through: Date,
+  endDate: Date | null
+): Date[] {
+  const start = startOfUtcDay(startDate);
+  const lowerBound = startOfUtcDay(from);
+  const upperBound = startOfUtcDay(through);
+  const recurringEnd = endDate ? startOfUtcDay(endDate) : upperBound;
+  const effectiveUpper = recurringEnd < upperBound ? recurringEnd : upperBound;
+
+  if (start > effectiveUpper) {
+    return [];
+  }
+
+  let cursor = start;
+  let iterations = 0;
+
+  while (cursor <= lowerBound && iterations < MAX_OCCURRENCES) {
+    const next = getNextOccurrence(cursor, frequency, start);
+    if (next.getTime() === cursor.getTime()) break;
+    cursor = next;
+    iterations += 1;
+  }
+
+  const occurrences: Date[] = [];
+
+  while (cursor <= effectiveUpper && iterations < MAX_OCCURRENCES) {
+    if (cursor > lowerBound) {
+      occurrences.push(cursor);
+    }
+    cursor = getNextOccurrence(cursor, frequency, start);
+    iterations += 1;
+  }
+
+  return occurrences;
+}

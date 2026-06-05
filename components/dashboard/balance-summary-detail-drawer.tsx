@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import {
   Alert,
   Box,
@@ -19,7 +18,7 @@ import {
   useTheme,
 } from "@mui/material";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
-import OpenInNewOutlinedIcon from "@mui/icons-material/OpenInNewOutlined";
+import { WidgetFooter, WidgetLinkButton } from "@/components/dashboard/widget-actions";
 import { useMounted } from "@/hooks/use-mounted";
 import {
   formatDashboardDateRangeLabel,
@@ -346,33 +345,9 @@ export function BalanceSummaryDetailDrawer({
         )}
       </Box>
 
-      <Box
-        sx={{
-          flexShrink: 0,
-          px: 2.5,
-          py: 2,
-          borderTop: 1,
-          borderColor: "divider",
-        }}
-      >
-        <Typography
-          component={Link}
-          href="/transactions"
-          variant="body2"
-          sx={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 0.5,
-            fontWeight: 600,
-            color: "primary.main",
-            textDecoration: "none",
-            "&:hover": { textDecoration: "underline" },
-          }}
-        >
-          View all transactions
-          <OpenInNewOutlinedIcon sx={{ fontSize: 16 }} />
-        </Typography>
-      </Box>
+      <WidgetFooter sx={{ mt: 0, px: 2.5, py: 2, flexShrink: 0 }}>
+        <WidgetLinkButton href="/transactions">View all transactions</WidgetLinkButton>
+      </WidgetFooter>
     </Drawer>
   );
 }

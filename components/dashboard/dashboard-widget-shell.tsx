@@ -15,6 +15,7 @@ import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined
 import { SurfaceCard } from "@/components/shared/ui/surface-card";
 import { CARD_PADDING } from "@/lib/config/layout-constants";
 import { DASHBOARD_WIDGET_META, type DashboardWidgetId } from "@/lib/domain/dashboard-layout";
+import { widgetSectionTitleSx } from "@/lib/theme/typography";
 
 type DashboardWidgetShellProps = {
   widgetId: DashboardWidgetId;
@@ -109,11 +110,7 @@ export function DashboardWidgetShell({
       >
         {!customizeMode && (
           <Box sx={{ mb: 2, flexShrink: 0 }}>
-            <Typography
-              variant="overline"
-              color="text.secondary"
-              sx={{ display: "block", lineHeight: 1.4 }}
-            >
+            <Typography color="text.primary" sx={{ ...widgetSectionTitleSx, display: "block" }}>
               {meta.label}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>

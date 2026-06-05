@@ -20,6 +20,14 @@ enum RecurrenceFrequency {
   YEARLY
 }
 
+enum FinanceAccountType {
+  CHECKING
+  SAVINGS
+  CASH
+  CREDIT
+  OTHER
+}
+
 model User {
   id                    String                 @id @default(cuid())
   name                  String?
@@ -36,6 +44,7 @@ model User {
   liabilities           Liability[]
   netWorthSnapshots     NetWorthSnapshot[]
   dashboardLayout       DashboardLayout?
+  financeAccounts       FinanceAccount[]
 }
 
 model DashboardLayout {
@@ -90,10 +99,12 @@ model Transaction {
   date                   DateTime
   createdAt              DateTime              @default(now())
   userId                 String
+  financeAccountId       String?
   recurringTransactionId String?
   occurrenceDate         DateTime?
   importHash             String?
   user                   User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  financeAccount         FinanceAccount?       @relation(fields: [financeAccountId], references: [id], onDelete: SetNull)
   recurringTransaction   RecurringTransaction? @relation(fields: [recurringTransactionId], references: [id], onDelete: SetNull)
 
   @@unique([recurringTransactionId, occurrenceDate])
@@ -101,6 +112,21 @@ model Transaction {
   @@index([userId, date(sort: Desc)])
   @@index([userId, type])
   @@index([userId, category])
+  @@index([financeAccountId])
+}
+
+model FinanceAccount {
+  id             String             @id @default(cuid())
+  userId         String
+  name           String
+  type           FinanceAccountType @default(CHECKING)
+  currentBalance Float              @default(0)
+  currency       String             @default("USD")
+  createdAt      DateTime           @default(now())
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions   Transaction[]
+
+  @@index([userId])
 }
 
 model RecurringTransaction {

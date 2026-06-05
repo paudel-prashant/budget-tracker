@@ -1,9 +1,7 @@
 "use client";
 
-import NextLink from "next/link";
 import {
   Box,
-  Button,
   Chip,
   LinearProgress,
   Stack,
@@ -15,11 +13,12 @@ import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalance
 import SavingsOutlinedIcon from "@mui/icons-material/SavingsOutlined";
 import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
 import TrendingDownOutlinedIcon from "@mui/icons-material/TrendingDownOutlined";
-import ArrowForwardOutlinedIcon from "@mui/icons-material/ArrowForwardOutlined";
 import { ResponsiveColumns } from "@/components/shared/ui/responsive-columns";
 import { StatCard } from "@/components/shared/ui/stat-card";
 import { SurfaceCard } from "@/components/shared/ui/surface-card";
 import { NetWorthGrowthChart } from "@/components/dashboard/net-worth-growth-chart";
+import { WidgetLinkButton } from "@/components/dashboard/widget-actions";
+import { statValueSx, widgetLabelSx } from "@/lib/theme/typography";
 import { formatCurrency, formatPercent } from "@/lib/utils/format";
 import type { NetWorthDashboardData } from "@/lib/types";
 
@@ -53,13 +52,9 @@ export function NetWorthWidget({ data }: NetWorthWidgetProps) {
           <Box>
             <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
               <AccountBalanceWalletOutlinedIcon color="primary" fontSize="small" />
-              <Typography variant="overline" color="text.secondary">
-                Net worth & savings
-              </Typography>
+              <Typography sx={widgetLabelSx}>Net worth & savings</Typography>
             </Stack>
-            <Typography variant="h4">
-              {formatCurrency(current.netWorth)}
-            </Typography>
+            <Typography sx={statValueSx}>{formatCurrency(current.netWorth)}</Typography>
             {current.netWorthChangePercent !== null && (
               <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mt: 0.75 }}>
                 {current.netWorthChangePercent >= 0 ? (
@@ -74,15 +69,9 @@ export function NetWorthWidget({ data }: NetWorthWidgetProps) {
               </Stack>
             )}
           </Box>
-          <Button
-            component={NextLink}
-            href="/net-worth"
-            variant="outlined"
-            endIcon={<ArrowForwardOutlinedIcon />}
-            sx={{ alignSelf: { sm: "center" }, flexShrink: 0 }}
-          >
+          <WidgetLinkButton href="/net-worth" sx={{ alignSelf: { sm: "center" } }}>
             Manage assets
-          </Button>
+          </WidgetLinkButton>
         </Stack>
 
         <ResponsiveColumns columns={{ xs: 1, sm: 2, lg: 4 }}>

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 export function revalidateFinancePages() {
   revalidatePath("/");
   revalidatePath("/insights");
+  revalidatePath("/forecast");
   revalidatePath("/reports");
   revalidatePath("/net-worth");
   revalidatePath("/budget");

@@ -1,9 +1,7 @@
 "use client";
 
-import NextLink from "next/link";
 import {
   Box,
-  Button,
   LinearProgress,
   Stack,
   Typography,
@@ -13,11 +11,12 @@ import {
 import FlagOutlinedIcon from "@mui/icons-material/FlagOutlined";
 import SavingsOutlinedIcon from "@mui/icons-material/SavingsOutlined";
 import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
-import ArrowForwardOutlinedIcon from "@mui/icons-material/ArrowForwardOutlined";
 import { SurfaceCard } from "@/components/shared/ui/surface-card";
 import { ResponsiveColumns } from "@/components/shared/ui/responsive-columns";
 import { StatCard } from "@/components/shared/ui/stat-card";
 import { CARD_PADDING } from "@/lib/config/layout-constants";
+import { WidgetLinkButton } from "@/components/dashboard/widget-actions";
+import { widgetContentTitleSx, widgetLabelSx } from "@/lib/theme/typography";
 import { formatCurrency, formatPercent } from "@/lib/utils/format";
 import type { BudgetHealth, DashboardInsights, Summary } from "@/lib/types";
 
@@ -58,25 +57,14 @@ export function GoalsWidget({ summary, health, insights, embedded = false }: Goa
           {!embedded && (
             <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
               <FlagOutlinedIcon color="primary" fontSize="small" />
-              <Typography variant="overline" color="text.secondary">
-                Goals
-              </Typography>
+              <Typography sx={widgetLabelSx}>Goals</Typography>
             </Stack>
           )}
-          <Typography variant="h6" fontWeight={700}>
-            Progress toward your targets
-          </Typography>
+          <Typography sx={widgetContentTitleSx}>Progress toward your targets</Typography>
         </Box>
-        <Button
-          component={NextLink}
-          href="/budget"
-          size="small"
-          variant="outlined"
-          endIcon={<ArrowForwardOutlinedIcon />}
-          sx={{ alignSelf: { sm: "center" }, flexShrink: 0 }}
-        >
+        <WidgetLinkButton href="/budget" sx={{ alignSelf: { sm: "center" } }}>
           Manage budgets
-        </Button>
+        </WidgetLinkButton>
       </Stack>
 
       <ResponsiveColumns columns={{ xs: 1, sm: 2 }}>

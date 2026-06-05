@@ -5,6 +5,7 @@ import { requireApiUserId } from "@/lib/auth/api-auth";
 import { handleApiError, jsonError } from "@/lib/utils/api-utils";
 import { processRecurringTransactions } from "@/lib/domain/recurring-processor";
 import { revalidateFinancePages } from "@/lib/utils/revalidate-pages";
+import { syncFinanceAccountsForUser } from "@/lib/data/finance-account-data";
 import { upsertLearnedCategoryMapping } from "@/lib/domain/category-mapping-service";
 import {
   buildTransactionWhere,
@@ -92,9 +93,18 @@ export async function POST(request: NextRequest) {
       return jsonError(validation.error, 400);
     }
 
+    await processRecurringTransactions(auth.userId);
+    const account = await syncFinanceAccountsForUser(auth.userId);
+
     const transaction = await prisma.transaction.create({
-      data: { ...validation.data, userId: auth.userId },
+      data: {
+        ...validation.data,
+        userId: auth.userId,
+        financeAccountId: account.id,
+      },
     });
+
+    await syncFinanceAccountsForUser(auth.userId);
 
     await upsertLearnedCategoryMapping(
       auth.userId,

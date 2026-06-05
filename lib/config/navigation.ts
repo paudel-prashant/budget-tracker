@@ -5,6 +5,7 @@ import AutorenewOutlinedIcon from "@mui/icons-material/AutorenewOutlined";
 import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
 import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
 import SavingsOutlinedIcon from "@mui/icons-material/SavingsOutlined";
+import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import type { SvgIconComponent } from "@mui/icons-material";
 
@@ -20,6 +21,7 @@ export const mainNavItems: NavItem[] = [
   { label: "Budget", href: "/budget", icon: AccountBalanceWalletOutlinedIcon },
   { label: "Recurring", href: "/recurring", icon: AutorenewOutlinedIcon },
   { label: "Insights", href: "/insights", icon: InsightsOutlinedIcon },
+  { label: "Forecast", href: "/forecast", icon: TimelineOutlinedIcon },
   { label: "Reports", href: "/reports", icon: AssessmentOutlinedIcon },
   { label: "Net Worth", href: "/net-worth", icon: SavingsOutlinedIcon },
   { label: "Settings", href: "/settings", icon: SettingsOutlinedIcon },
@@ -46,6 +48,7 @@ export const navRouteOrder: string[] = [
   "/budget",
   "/recurring",
   "/insights",
+  "/forecast",
   "/reports",
   "/net-worth",
   "/settings",

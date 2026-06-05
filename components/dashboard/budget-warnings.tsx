@@ -1,6 +1,6 @@
-import NextLink from "next/link";
-import { Alert, AlertTitle, Box, Button, Stack, Typography } from "@mui/material";
+import { Alert, AlertTitle, Box, Stack, Typography } from "@mui/material";
 import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
+import { WidgetLinkButton } from "@/components/dashboard/widget-actions";
 import { formatCurrency, formatMonthYear } from "@/lib/utils/format";
 import type { BudgetWithProgress } from "@/lib/types";
 
@@ -20,9 +20,9 @@ export function BudgetWarnings({ warnings, month, year }: BudgetWarningsProps) {
           severity="error"
           icon={<WarningAmberOutlinedIcon />}
           action={
-            <Button component={NextLink} href="/budget" color="inherit" size="small">
+            <WidgetLinkButton href="/budget" color="error">
               View budgets
-            </Button>
+            </WidgetLinkButton>
           }
         >
           <AlertTitle>

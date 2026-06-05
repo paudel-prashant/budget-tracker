@@ -7,6 +7,7 @@ import TrendingFlatOutlinedIcon from "@mui/icons-material/TrendingFlatOutlined";
 import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
 import { SurfaceCard } from "@/components/shared/ui/surface-card";
 import { CARD_PADDING } from "@/lib/config/layout-constants";
+import { statValueSx, widgetLabelSx } from "@/lib/theme/typography";
 import type { TrendDirection } from "@/lib/types";
 
 function resolveThemeColor(theme: Theme, color: string) {
@@ -90,7 +91,6 @@ export function InsightCard({
 
   return (
     <SurfaceCard
-      hover
       accentColor={palette.main}
       sx={{
         p: CARD_PADDING,
@@ -119,12 +119,10 @@ export function InsightCard({
           <Icon sx={{ fontSize: 26 }} />
         </Box>
         <Box sx={{ minWidth: 0, flex: 1 }}>
-          <Typography variant="overline" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
+          <Typography sx={{ ...widgetLabelSx, display: "block", mb: 0.5 }}>
             {title}
           </Typography>
-          <Typography variant="h5" noWrap>
-            {value}
-          </Typography>
+          <Typography sx={{ ...statValueSx, whiteSpace: "nowrap" }}>{value}</Typography>
         </Box>
       </Stack>
 

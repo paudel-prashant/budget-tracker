@@ -22,6 +22,7 @@ import { DashboardGettingStarted } from "@/components/dashboard/dashboard-gettin
 import { DashboardMetricsTransition } from "@/components/dashboard/dashboard-metrics-transition";
 import { DashboardInsightsWidget } from "@/components/dashboard/dashboard-insights-widget";
 import { GoalsWidget } from "@/components/dashboard/goals-widget";
+import { DashboardForecastWidget } from "@/components/dashboard/dashboard-forecast-widget";
 import { DashboardCustomizeDialog } from "@/components/dashboard/dashboard-customize-dialog";
 import {
   DashboardWidgetGrid,
@@ -99,6 +100,8 @@ export function DashboardView({ data, initialLayout }: DashboardViewProps) {
               embedded
             />
           );
+        case "forecast":
+          return <DashboardForecastWidget />;
         case "budgets":
           return (
             <Stack spacing={2.5} sx={{ width: "100%", minWidth: 0 }}>

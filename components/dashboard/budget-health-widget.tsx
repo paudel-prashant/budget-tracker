@@ -1,15 +1,14 @@
 "use client";
 
-import NextLink from "next/link";
 import {
   Box,
-  Button,
   LinearProgress,
   Stack,
   Typography,
   alpha,
 } from "@mui/material";
 import { ResponsiveColumns } from "@/components/shared/ui/responsive-columns";
+import { WidgetInlineLink, WidgetLinkButton } from "@/components/dashboard/widget-actions";
 import { CARD_PADDING } from "@/lib/config/layout-constants";
 import SavingsOutlinedIcon from "@mui/icons-material/SavingsOutlined";
 import {
@@ -69,21 +68,12 @@ export function BudgetHealthWidget({ health, embedded = false }: BudgetHealthWid
             </Typography>
           </Box>
         </Stack>
-        <Button component={NextLink} href="/budget" size="small" variant="outlined">
-          Manage budgets
-        </Button>
+        <WidgetLinkButton href="/budget">Manage budgets</WidgetLinkButton>
       </Stack>
 
       {!hasBudgets ? (
         <Typography variant="body2" color="text.secondary">
-          No category budgets for this month.{" "}
-          <Box
-            component={NextLink}
-            href="/budget"
-            sx={{ color: "primary.main", fontWeight: 500, textDecoration: "none" }}
-          >
-            Add limits
-          </Box>{" "}
+          No category budgets for this month. <WidgetInlineLink href="/budget">Add limits</WidgetInlineLink>{" "}
           to track spending against your plan.
         </Typography>
       ) : (
