@@ -41,7 +41,7 @@ export type TransactionListResponse = {
 };
 
 const DEFAULT_PAGE = 1;
-const DEFAULT_PAGE_SIZE = 25;
+export const DEFAULT_PAGE_SIZE = 10;
 const MAX_PAGE_SIZE = 100;
 
 /** Mobile infinite scroll: rows per API request (capped by MAX_PAGE_SIZE). */

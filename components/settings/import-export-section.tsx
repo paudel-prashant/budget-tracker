@@ -22,6 +22,7 @@ import {
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DialogDatePicker } from "@/components/shared/ui/dialog-date-picker";
+import { DataTableHeadCell } from "@/components/shared/ui/data-table-head-cell";
 import dayjs, { type Dayjs } from "dayjs";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import FileUploadOutlinedIcon from "@mui/icons-material/FileUploadOutlined";
@@ -369,14 +370,14 @@ export function ImportExportSection() {
                 <Table size="small" stickyHeader>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Row</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Title</TableCell>
-                      <TableCell>Amount</TableCell>
-                      <TableCell>Type</TableCell>
-                      <TableCell>Category</TableCell>
-                      <TableCell>Date</TableCell>
-                      <TableCell>Notes</TableCell>
+                      <DataTableHeadCell>Row</DataTableHeadCell>
+                      <DataTableHeadCell>Status</DataTableHeadCell>
+                      <DataTableHeadCell>Title</DataTableHeadCell>
+                      <DataTableHeadCell>Amount</DataTableHeadCell>
+                      <DataTableHeadCell>Type</DataTableHeadCell>
+                      <DataTableHeadCell>Category</DataTableHeadCell>
+                      <DataTableHeadCell>Date</DataTableHeadCell>
+                      <DataTableHeadCell>Notes</DataTableHeadCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>

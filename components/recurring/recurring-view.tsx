@@ -24,6 +24,7 @@ import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined
 import { PageHeader } from "@/components/shared/ui/page-header";
 import { PageStack } from "@/components/shared/ui/page-stack";
 import { EmptyState } from "@/components/shared/ui/empty-state";
+import { DataTableHeadCell } from "@/components/shared/ui/data-table-head-cell";
 import { TransactionsTableSkeleton } from "@/components/shared/ui/transactions-table-skeleton";
 import { AddRecurringDialog } from "@/components/recurring/add-recurring-dialog";
 import { DeleteRecurringDialog } from "@/components/recurring/delete-recurring-dialog";
@@ -155,14 +156,14 @@ export function RecurringView() {
             <Table size="medium">
               <TableHead>
                 <TableRow>
-                  <TableCell>Title</TableCell>
-                  <TableCell align="right">Amount</TableCell>
-                  <TableCell>Type</TableCell>
-                  <TableCell>Category</TableCell>
-                  <TableCell>Frequency</TableCell>
-                  <TableCell>Start</TableCell>
-                  <TableCell>End</TableCell>
-                  <TableCell align="right">Actions</TableCell>
+                  <DataTableHeadCell>Title</DataTableHeadCell>
+                  <DataTableHeadCell align="right">Amount</DataTableHeadCell>
+                  <DataTableHeadCell>Type</DataTableHeadCell>
+                  <DataTableHeadCell>Category</DataTableHeadCell>
+                  <DataTableHeadCell>Frequency</DataTableHeadCell>
+                  <DataTableHeadCell>Start</DataTableHeadCell>
+                  <DataTableHeadCell>End</DataTableHeadCell>
+                  <DataTableHeadCell align="right">Actions</DataTableHeadCell>
                 </TableRow>
               </TableHead>
               <TableBody>

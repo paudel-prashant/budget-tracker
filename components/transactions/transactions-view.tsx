@@ -14,7 +14,6 @@ import {
   TableCell,
   TableContainer,
   TableHead,
-  TablePagination,
   TableRow,
   Tooltip,
   Typography,
@@ -31,6 +30,8 @@ import { SectionPanel } from "@/components/shared/ui/section-panel";
 import { PageStack } from "@/components/shared/ui/page-stack";
 import { EmptyState } from "@/components/shared/ui/empty-state";
 import { TransactionsTableSkeleton } from "@/components/shared/ui/transactions-table-skeleton";
+import { NumberedPagination } from "@/components/shared/ui/numbered-pagination";
+import { DataTableHeadCell } from "@/components/shared/ui/data-table-head-cell";
 import { TransactionFormDialog } from "@/components/transactions/transaction-form-dialog";
 import { DeleteTransactionDialog } from "@/components/transactions/delete-transaction-dialog";
 import {
@@ -58,6 +59,7 @@ import {
   EMPTY_TRANSACTION_FILTERS,
   MOBILE_TRANSACTIONS_MAX_ROWS,
   MOBILE_TRANSACTIONS_PAGE_SIZE,
+  DEFAULT_PAGE_SIZE,
 } from "@/lib/domain/transaction-filters";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type {
@@ -66,8 +68,6 @@ import type {
   TransactionListPagination,
   TransactionListResponse,
 } from "@/lib/types";
-
-const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
 
 export function TransactionsView() {
   const theme = useTheme();
@@ -85,7 +85,7 @@ export function TransactionsView() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [pagination, setPagination] = useState<TransactionListPagination>({
     page: 1,
-    pageSize: 25,
+    pageSize: DEFAULT_PAGE_SIZE,
     total: 0,
     totalPages: 0,
   });
@@ -96,7 +96,7 @@ export function TransactionsView() {
   const debouncedSearch = useDebouncedValue(searchInput, 350);
   const [filters, setFilters] = useState<TransactionFilters>(EMPTY_TRANSACTION_FILTERS);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const pageSize = DEFAULT_PAGE_SIZE;
   const [mobilePage, setMobilePage] = useState(1);
 
   const [loading, setLoading] = useState(true);
@@ -292,11 +292,9 @@ export function TransactionsView() {
     setFilterVersion((v) => v + 1);
   }, [debouncedSearch, filters]);
 
-  useEffect(() => {
-    if (!useInfiniteList) {
-      setPage(1);
-    }
-  }, [pageSize, useInfiniteList]);
+  const handlePageChange = useCallback((nextPage: number) => {
+    setPage(nextPage);
+  }, []);
 
   useEffect(() => {
     if (!mounted) return;
@@ -546,12 +544,12 @@ export function TransactionsView() {
               <Table size="medium" sx={{ minWidth: 720 }}>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Title</TableCell>
-                    <TableCell align="right">Amount</TableCell>
-                    <TableCell>Type</TableCell>
-                    <TableCell>Category</TableCell>
-                    <TableCell>Date</TableCell>
-                    <TableCell align="right">Actions</TableCell>
+                    <DataTableHeadCell>Title</DataTableHeadCell>
+                    <DataTableHeadCell align="right">Amount</DataTableHeadCell>
+                    <DataTableHeadCell>Type</DataTableHeadCell>
+                    <DataTableHeadCell>Category</DataTableHeadCell>
+                    <DataTableHeadCell>Date</DataTableHeadCell>
+                    <DataTableHeadCell align="right">Actions</DataTableHeadCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -625,29 +623,14 @@ export function TransactionsView() {
         )}
 
         {!loading && pagination.total > 0 && (
-          <TablePagination
-            component="div"
-            count={pagination.total}
-            page={Math.max(0, pagination.page - 1)}
-            onPageChange={(_event, newPage) => setPage(newPage + 1)}
-            rowsPerPage={pageSize}
-            onRowsPerPageChange={(event) => {
-              setPageSize(Number.parseInt(event.target.value, 10));
-            }}
-            rowsPerPageOptions={[...PAGE_SIZE_OPTIONS]}
-            labelDisplayedRows={({ from, to, count }) =>
-              `${from}–${to} of ${count !== -1 ? count : `more than ${to}`}`
-            }
-            sx={{
-              display: { xs: "none", md: "flex" },
-              borderTop: 1,
-              borderColor: "divider",
-              px: { xs: 1, sm: 2 },
-              "& .MuiTablePagination-toolbar": {
-                minHeight: { xs: 48, md: 52 },
-              },
-            }}
-          />
+          <Box sx={{ display: { xs: "none", md: "block" } }}>
+            <NumberedPagination
+              page={pagination.page}
+              totalPages={Math.max(1, pagination.totalPages)}
+              onPageChange={handlePageChange}
+              disabled={loading}
+            />
+          </Box>
         )}
       </SectionPanel>
 

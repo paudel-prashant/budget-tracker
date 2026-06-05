@@ -63,3 +63,19 @@ export const cardTitleSx: SxProps<Theme> = {
 export const emphasisBodySx: SxProps<Theme> = {
   fontWeight: 600,
 };
+
+/** Table column header labels — shared by all data tables. */
+export const tableHeadCellSx: SxProps<Theme> = {
+  fontWeight: 700,
+  fontSize: "0.875rem",
+  lineHeight: 1.4,
+  letterSpacing: "normal",
+  textTransform: "none",
+  color: "text.secondary",
+};
+
+/** Inline section labels that match table column header styling. */
+export const tableColumnLabelSx: SxProps<Theme> = {
+  ...tableHeadCellSx,
+  display: "block",
+};

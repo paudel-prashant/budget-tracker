@@ -7,6 +7,7 @@ import {
   TableHead,
   TableRow,
 } from "@mui/material";
+import { DataTableHeadCell } from "@/components/shared/ui/data-table-head-cell";
 
 const ROWS = 5;
 
@@ -17,9 +18,9 @@ export function TransactionsTableSkeleton() {
         <TableHead>
           <TableRow>
             {["Title", "Amount", "Type", "Category", "Date", "Actions"].map((col) => (
-              <TableCell key={col}>
-                <Skeleton variant="text" width={col === "Actions" ? 40 : 80} />
-              </TableCell>
+              <DataTableHeadCell key={col}>
+                {col}
+              </DataTableHeadCell>
             ))}
           </TableRow>
         </TableHead>

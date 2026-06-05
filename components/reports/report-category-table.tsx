@@ -11,6 +11,7 @@ import {
   Typography,
 } from "@mui/material";
 import { formatCurrency, formatPercent } from "@/lib/utils/format";
+import { DataTableHeadCell } from "@/components/shared/ui/data-table-head-cell";
 import type { MonthlyReportCategoryRow } from "@/lib/types";
 
 type ReportCategoryTableProps = {
@@ -45,10 +46,10 @@ export function ReportCategoryTable({
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell>Category</TableCell>
-                <TableCell align="right">Amount</TableCell>
-                <TableCell align="right">Share</TableCell>
-                <TableCell align="right">Count</TableCell>
+                <DataTableHeadCell>Category</DataTableHeadCell>
+                <DataTableHeadCell align="right">Amount</DataTableHeadCell>
+                <DataTableHeadCell align="right">Share</DataTableHeadCell>
+                <DataTableHeadCell align="right">Count</DataTableHeadCell>
               </TableRow>
             </TableHead>
             <TableBody>

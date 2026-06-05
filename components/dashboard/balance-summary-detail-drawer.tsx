@@ -19,6 +19,7 @@ import {
 } from "@mui/material";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import { WidgetFooter, WidgetLinkButton } from "@/components/dashboard/widget-actions";
+import { tableColumnLabelSx } from "@/lib/theme/typography";
 import { useMounted } from "@/hooks/use-mounted";
 import {
   formatDashboardDateRangeLabel,
@@ -134,9 +135,7 @@ function TransactionSection({
   return (
     <Box>
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-        <Typography variant="overline" color="text.secondary">
-          {title}
-        </Typography>
+        <Typography sx={tableColumnLabelSx}>{title}</Typography>
         <Typography
           variant="body2"
           sx={{ fontWeight: 700, color: isIncome ? "success.main" : "error.main" }}
@@ -282,9 +281,7 @@ export function BalanceSummaryDetailDrawer({
       </Box>
 
       <Box sx={{ px: 2.5, py: 2, flexShrink: 0, bgcolor: "action.hover" }}>
-        <Typography variant="overline" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
-          {meta?.totalLabel}
-        </Typography>
+        <Typography sx={{ ...tableColumnLabelSx, mb: 0.5 }}>{meta?.totalLabel}</Typography>
         <Typography
           variant="h5"
           sx={{
