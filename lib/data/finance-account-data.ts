@@ -18,7 +18,7 @@ export async function ensureDefaultFinanceAccount(userId: string) {
         userId,
         name: DEFAULT_ACCOUNT_NAME,
         type: "CHECKING",
-        currency: "USD",
+        currency: "CAD",
         currentBalance: 0,
       },
     });
@@ -41,15 +41,15 @@ export async function syncFinanceAccountBalance(userId: string, financeAccountId
   const [income, expenses] = await Promise.all([
     prisma.transaction.aggregate({
       where: { userId, financeAccountId, type: "INCOME" },
-      _sum: { amount: true },
+      _sum: { baseAmount: true },
     }),
     prisma.transaction.aggregate({
       where: { userId, financeAccountId, type: "EXPENSE" },
-      _sum: { amount: true },
+      _sum: { baseAmount: true },
     }),
   ]);
 
-  const balance = roundMoney((income._sum.amount ?? 0) - (expenses._sum.amount ?? 0));
+  const balance = roundMoney((income._sum.baseAmount ?? 0) - (expenses._sum.baseAmount ?? 0));
 
   await prisma.financeAccount.update({
     where: { id: financeAccountId },

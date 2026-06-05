@@ -1,4 +1,5 @@
-import { formatMonth } from "@/lib/utils/format";
+import { formatMonth, getDisplayCurrency } from "@/lib/utils/format";
+import { amountForTotals } from "@/lib/currency/amount";
 import type {
   CategorySpendingInsight,
   DashboardInsightTone,
@@ -18,9 +19,9 @@ function roundPercent(value: number): number {
 }
 
 function formatMoneyPlain(value: number): string {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("en-CA", {
     style: "currency",
-    currency: "USD",
+    currency: getDisplayCurrency(),
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value);
@@ -36,7 +37,10 @@ function getTopExpenseCategory(
 
   for (const transaction of transactions) {
     if (transaction.type !== "EXPENSE") continue;
-    byCategory.set(transaction.category, (byCategory.get(transaction.category) ?? 0) + transaction.amount);
+    byCategory.set(
+      transaction.category,
+      (byCategory.get(transaction.category) ?? 0) + amountForTotals(transaction)
+    );
   }
 
   let top: { category: string; amount: number } | null = null;

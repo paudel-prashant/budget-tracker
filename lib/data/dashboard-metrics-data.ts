@@ -14,27 +14,8 @@ import {
 } from "@/lib/domain/dashboard-date-range";
 import { assertDatabaseUrl } from "@/lib/config/env";
 import { prisma } from "@/lib/db/prisma";
-import type { CategorySpendingInsight, DashboardMetrics, Transaction } from "@/lib/types";
-
-function serializeTransaction(transaction: {
-  id: string;
-  title: string;
-  amount: number;
-  type: TransactionType;
-  category: string;
-  date: Date;
-  createdAt: Date;
-}): Transaction {
-  return {
-    id: transaction.id,
-    title: transaction.title,
-    amount: transaction.amount,
-    type: transaction.type,
-    category: transaction.category,
-    date: transaction.date.toISOString(),
-    createdAt: transaction.createdAt.toISOString(),
-  };
-}
+import { serializeTransaction } from "@/lib/services/serialize-transaction";
+import type { CategorySpendingInsight, DashboardMetrics } from "@/lib/types";
 
 function roundMoney(value: number): number {
   return Math.round(value * 100) / 100;
@@ -45,7 +26,7 @@ function roundPercent(value: number): number {
 }
 
 function toTopCategory(
-  rows: Array<{ category: string; _sum: { amount: number | null } }>,
+  rows: Array<{ category: string; _sum: { baseAmount: number | null } }>,
   totalExpenses: number
 ): CategorySpendingInsight | null {
   const top = rows[0];
@@ -53,7 +34,7 @@ function toTopCategory(
     return null;
   }
 
-  const amount = roundMoney(top._sum.amount ?? 0);
+  const amount = roundMoney(top._sum.baseAmount ?? 0);
   return {
     category: top.category,
     amount,
@@ -65,6 +46,8 @@ const transactionSelect = {
   id: true,
   title: true,
   amount: true,
+  currency: true,
+  baseAmount: true,
   type: true,
   category: true,
   date: true,
@@ -123,52 +106,52 @@ export async function getDashboardMetrics(
     }),
     prisma.transaction.aggregate({
       where: { ...rangeWhere, type: TransactionType.INCOME },
-      _sum: { amount: true },
+      _sum: { baseAmount: true },
     }),
     prisma.transaction.aggregate({
       where: { ...rangeWhere, type: TransactionType.EXPENSE },
-      _sum: { amount: true },
+      _sum: { baseAmount: true },
     }),
     prisma.transaction.aggregate({
       where: { ...beforeRangeWhere, type: TransactionType.INCOME },
-      _sum: { amount: true },
+      _sum: { baseAmount: true },
     }),
     prisma.transaction.aggregate({
       where: { ...beforeRangeWhere, type: TransactionType.EXPENSE },
-      _sum: { amount: true },
+      _sum: { baseAmount: true },
     }),
     prisma.transaction.aggregate({
       where: { ...previousRangeWhere, type: TransactionType.INCOME },
-      _sum: { amount: true },
+      _sum: { baseAmount: true },
     }),
     prisma.transaction.aggregate({
       where: { ...previousRangeWhere, type: TransactionType.EXPENSE },
-      _sum: { amount: true },
+      _sum: { baseAmount: true },
     }),
     prisma.transaction.groupBy({
       by: ["category"],
       where: { ...rangeWhere, type: TransactionType.EXPENSE },
-      _sum: { amount: true },
-      orderBy: { _sum: { amount: "desc" } },
+      _sum: { baseAmount: true },
+      orderBy: { _sum: { baseAmount: "desc" } },
       take: 1,
     }),
     prisma.transaction.groupBy({
       by: ["category"],
       where: { ...previousRangeWhere, type: TransactionType.EXPENSE },
-      _sum: { amount: true },
-      orderBy: { _sum: { amount: "desc" } },
+      _sum: { baseAmount: true },
+      orderBy: { _sum: { baseAmount: "desc" } },
       take: 1,
     }),
     prisma.$queryRaw<ExpenseDayStatsRow[]>(Prisma.sql`
       SELECT
-        COALESCE(SUM(amount), 0)::float AS total,
+        COALESCE(SUM("baseAmount"), 0)::float AS total,
         COUNT(DISTINCT DATE(date))::int AS days
       FROM "Transaction"
       WHERE type = 'EXPENSE' AND ${rangeDateFilter}
     `),
     prisma.$queryRaw<ExpenseDayStatsRow[]>(Prisma.sql`
       SELECT
-        COALESCE(SUM(amount), 0)::float AS total,
+        COALESCE(SUM("baseAmount"), 0)::float AS total,
         COUNT(DISTINCT DATE(date))::int AS days
       FROM "Transaction"
       WHERE type = 'EXPENSE' AND ${previousDateFilter}
@@ -176,10 +159,10 @@ export async function getDashboardMetrics(
   ]);
 
   const serialized = transactionsInRange.map(serializeTransaction);
-  const totalIncome = incomeResult._sum.amount ?? 0;
-  const totalExpenses = expenseResult._sum.amount ?? 0;
+  const totalIncome = incomeResult._sum.baseAmount ?? 0;
+  const totalExpenses = expenseResult._sum.baseAmount ?? 0;
   const openingBalance =
-    (incomeBefore._sum.amount ?? 0) - (expenseBefore._sum.amount ?? 0);
+    (incomeBefore._sum.baseAmount ?? 0) - (expenseBefore._sum.baseAmount ?? 0);
 
   const summary = {
     totalIncome,
@@ -188,10 +171,10 @@ export async function getDashboardMetrics(
   };
 
   const previousSummary = {
-    totalIncome: previousIncomeResult._sum.amount ?? 0,
-    totalExpenses: previousExpenseResult._sum.amount ?? 0,
+    totalIncome: previousIncomeResult._sum.baseAmount ?? 0,
+    totalExpenses: previousExpenseResult._sum.baseAmount ?? 0,
     netBalance:
-      (previousIncomeResult._sum.amount ?? 0) - (previousExpenseResult._sum.amount ?? 0),
+      (previousIncomeResult._sum.baseAmount ?? 0) - (previousExpenseResult._sum.baseAmount ?? 0),
   };
 
   const monthlyChartData = buildMonthlyIncomeExpenseData(serialized);
@@ -203,7 +186,7 @@ export async function getDashboardMetrics(
     summary,
     previousSummary,
     topCategory,
-    previousTopCategoryAmount: roundMoney(previousTopCategoryRows[0]?._sum.amount ?? 0),
+    previousTopCategoryAmount: roundMoney(previousTopCategoryRows[0]?._sum.baseAmount ?? 0),
     expenseDaysCount: expenseStats.days,
     previousExpenseDaysCount: previousExpenseStats.days,
     range,

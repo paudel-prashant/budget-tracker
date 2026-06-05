@@ -33,6 +33,7 @@ async function loadForecastInput(userId: string, timeframe: ForecastTimeframe) {
       select: {
         date: true,
         amount: true,
+        baseAmount: true,
         type: true,
         category: true,
         recurringTransactionId: true,
@@ -57,7 +58,7 @@ async function loadForecastInput(userId: string, timeframe: ForecastTimeframe) {
   const historicalPoints = buildHistoricalBalancePoints(
     transactions.map((tx) => ({
       date: tx.date,
-      amount: tx.amount,
+      amount: tx.baseAmount ?? tx.amount,
       type: tx.type,
     })),
     Math.min(90, forecastDays + 30)
@@ -68,7 +69,7 @@ async function loadForecastInput(userId: string, timeframe: ForecastTimeframe) {
   const trends = calculateSpendingTrends(
     transactions.map((tx) => ({
       date: tx.date,
-      amount: tx.amount,
+      amount: tx.baseAmount ?? tx.amount,
       type: tx.type,
       category: tx.category,
       recurringTransactionId: tx.recurringTransactionId,

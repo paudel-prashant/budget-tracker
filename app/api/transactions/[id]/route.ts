@@ -6,7 +6,9 @@ import { handleApiError, jsonError } from "@/lib/utils/api-utils";
 import { revalidateFinancePages } from "@/lib/utils/revalidate-pages";
 import { syncFinanceAccountsForUser } from "@/lib/data/finance-account-data";
 import { computeTransactionImportHash } from "@/lib/domain/transaction-import-hash";
+import { buildTransactionWriteData } from "@/lib/currency/transaction-write";
 import { upsertLearnedCategoryMapping } from "@/lib/domain/category-mapping-service";
+import { serializeTransaction } from "@/lib/services/serialize-transaction";
 import { validateTransactionBody } from "@/lib/validation/transaction-validation";
 
 export const runtime = "nodejs";
@@ -55,22 +57,20 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return jsonError(validation.error, 400);
     }
 
+    const writeData = await buildTransactionWriteData(auth.userId, validation.data);
+
     const importHash = computeTransactionImportHash({
-      title: validation.data.title,
-      amount: validation.data.amount,
-      type: validation.data.type,
-      category: validation.data.category,
-      date: validation.data.date,
+      title: writeData.title,
+      amount: writeData.amount,
+      type: writeData.type,
+      category: writeData.category,
+      date: writeData.date,
     });
 
     const transaction = await prisma.transaction.update({
       where: { id },
       data: {
-        title: validation.data.title,
-        amount: validation.data.amount,
-        type: validation.data.type,
-        category: validation.data.category,
-        date: validation.data.date,
+        ...writeData,
         importHash,
       },
     });
@@ -85,7 +85,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     await syncFinanceAccountsForUser(auth.userId);
     revalidateFinancePages();
 
-    return NextResponse.json(transaction);
+    return NextResponse.json(serializeTransaction(transaction));
   } catch (error) {
     return handleApiError(error);
   }

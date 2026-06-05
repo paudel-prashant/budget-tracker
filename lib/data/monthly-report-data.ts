@@ -40,15 +40,15 @@ function changePercent(current: number, previous: number): number | null {
 }
 
 function buildCategoryRows(
-  groups: Array<{ category: string; _sum: { amount: number | null }; _count: { _all: number } }>,
+  groups: Array<{ category: string; _sum: { baseAmount: number | null }; _count: { _all: number } }>,
   total: number,
   limit = 8
 ): MonthlyReportCategoryRow[] {
   return groups
     .map((group) => ({
       category: group.category,
-      amount: roundMoney(group._sum.amount ?? 0),
-      percentOfTotal: percentOf(group._sum.amount ?? 0, total),
+      amount: roundMoney(group._sum.baseAmount ?? 0),
+      percentOfTotal: percentOf(group._sum.baseAmount ?? 0, total),
       transactionCount: group._count._all,
     }))
     .filter((row) => row.amount > 0)
@@ -69,18 +69,18 @@ async function getMonthTotals(
   const [incomeResult, expenseResult, transactionCount] = await Promise.all([
     prisma.transaction.aggregate({
       where: { ...where, type: TransactionType.INCOME },
-      _sum: { amount: true },
+      _sum: { baseAmount: true },
     }),
     prisma.transaction.aggregate({
       where: { ...where, type: TransactionType.EXPENSE },
-      _sum: { amount: true },
+      _sum: { baseAmount: true },
     }),
     prisma.transaction.count({ where }),
   ]);
 
   return {
-    income: roundMoney(incomeResult._sum.amount ?? 0),
-    expenses: roundMoney(expenseResult._sum.amount ?? 0),
+    income: roundMoney(incomeResult._sum.baseAmount ?? 0),
+    expenses: roundMoney(expenseResult._sum.baseAmount ?? 0),
     transactionCount,
   };
 }
@@ -129,20 +129,20 @@ export async function getMonthlyReport(
     prisma.transaction.groupBy({
       by: ["category"],
       where: expenseWhere,
-      _sum: { amount: true },
+      _sum: { baseAmount: true },
       _count: { _all: true },
-      orderBy: { _sum: { amount: "desc" } },
+      orderBy: { _sum: { baseAmount: "desc" } },
     }),
     prisma.transaction.groupBy({
       by: ["category"],
       where: incomeWhere,
-      _sum: { amount: true },
+      _sum: { baseAmount: true },
       _count: { _all: true },
-      orderBy: { _sum: { amount: "desc" } },
+      orderBy: { _sum: { baseAmount: "desc" } },
     }),
     prisma.$queryRaw<Array<{ day: string; amount: number }>>(
       Prisma.sql`
-        SELECT to_char("date", 'YYYY-MM-DD') AS day, SUM("amount")::float AS amount
+        SELECT to_char("date", 'YYYY-MM-DD') AS day, SUM("baseAmount")::float AS amount
         FROM "Transaction"
         WHERE "userId" = ${userId}
           AND "type" = 'EXPENSE'

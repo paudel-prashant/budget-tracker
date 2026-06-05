@@ -1,4 +1,5 @@
 import { getDueOccurrences, startOfUtcDay } from "@/lib/domain/recurrence-dates";
+import { getUserPreferredCurrency } from "@/lib/data/user-settings-data";
 import { assertDatabaseUrl } from "@/lib/config/env";
 import { prisma } from "@/lib/db/prisma";
 
@@ -15,6 +16,8 @@ export async function processRecurringTransactions(userId: string): Promise<numb
   });
 
   let totalCreated = 0;
+
+  const preferredCurrency = await getUserPreferredCurrency(userId);
 
   for (const recurring of recurringList) {
     const occurrences = getDueOccurrences(
@@ -33,6 +36,8 @@ export async function processRecurringTransactions(userId: string): Promise<numb
         userId,
         title: recurring.title,
         amount: recurring.amount,
+        currency: preferredCurrency,
+        baseAmount: recurring.amount,
         type: recurring.type,
         category: recurring.category,
         date: occurrenceDate,

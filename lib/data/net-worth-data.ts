@@ -79,16 +79,16 @@ async function getMonthTransactionTotals(
   const [incomeResult, expenseResult] = await Promise.all([
     prisma.transaction.aggregate({
       where: { ...where, type: TransactionType.INCOME },
-      _sum: { amount: true },
+      _sum: { baseAmount: true },
     }),
     prisma.transaction.aggregate({
       where: { ...where, type: TransactionType.EXPENSE },
-      _sum: { amount: true },
+      _sum: { baseAmount: true },
     }),
   ]);
 
-  const income = roundMoney(incomeResult._sum.amount ?? 0);
-  const expenses = roundMoney(expenseResult._sum.amount ?? 0);
+  const income = roundMoney(incomeResult._sum.baseAmount ?? 0);
+  const expenses = roundMoney(expenseResult._sum.baseAmount ?? 0);
   const savings = roundMoney(income - expenses);
 
   return {

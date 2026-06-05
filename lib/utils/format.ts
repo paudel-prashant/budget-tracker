@@ -1,15 +1,44 @@
-export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-US", {
+import {
+  DEFAULT_CURRENCY,
+  getLocaleForCurrency,
+  normalizeCurrencyCode,
+} from "@/lib/currency/constants";
+
+let displayCurrency = DEFAULT_CURRENCY;
+
+export function setDisplayCurrency(currency: string) {
+  displayCurrency = normalizeCurrencyCode(currency);
+}
+
+export function getDisplayCurrency() {
+  return displayCurrency;
+}
+
+export function formatCurrency(amount: number, currency?: string): string {
+  const code = normalizeCurrencyCode(currency ?? displayCurrency);
+  return new Intl.NumberFormat(getLocaleForCurrency(code), {
     style: "currency",
-    currency: "USD",
+    currency: code,
+    maximumFractionDigits: code === "JPY" ? 0 : 2,
   }).format(amount);
 }
 
-export function formatCurrencyAxis(amount: number): string {
+export function formatCurrencyAxis(amount: number, currency?: string): string {
+  const code = normalizeCurrencyCode(currency ?? displayCurrency);
+  const formatted = new Intl.NumberFormat(getLocaleForCurrency(code), {
+    style: "currency",
+    currency: code,
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(amount);
+
+  if (formatted) return formatted;
+
   const abs = Math.abs(amount);
-  if (abs >= 1_000_000) return `$${(amount / 1_000_000).toFixed(1)}M`;
-  if (abs >= 1_000) return `$${(amount / 1_000).toFixed(0)}K`;
-  return `$${Math.round(amount)}`;
+  const prefix = amount < 0 ? "-" : "";
+  if (abs >= 1_000_000) return `${prefix}${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000) return `${prefix}${(abs / 1_000).toFixed(0)}K`;
+  return formatCurrency(amount, code);
 }
 
 export function formatDate(date: string | Date): string {
@@ -48,4 +77,22 @@ export function formatMonthYear(month: number, year: number): string {
 
 export function formatPercent(value: number): string {
   return `${value.toFixed(1)}%`;
+}
+
+/** Show original amount with optional converted hint in base currency. */
+export function formatTransactionAmount(
+  amount: number,
+  currency: string,
+  baseAmount: number,
+  preferredCurrency?: string
+): string {
+  const base = normalizeCurrencyCode(preferredCurrency ?? displayCurrency);
+  const txCurrency = normalizeCurrencyCode(currency);
+  const primary = formatCurrency(amount, txCurrency);
+
+  if (txCurrency === base || Math.abs(amount - baseAmount) < 0.005) {
+    return primary;
+  }
+
+  return `${primary} (≈ ${formatCurrency(baseAmount, base)})`;
 }

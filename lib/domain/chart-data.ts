@@ -1,4 +1,5 @@
 import type { BalanceChartPoint, MonthlyChartPoint, Transaction } from "@/lib/types";
+import { amountForTotals } from "@/lib/currency/amount";
 
 function getDateKey(date: string): string {
   return date.slice(0, 10);
@@ -41,7 +42,9 @@ export function buildBalanceOverTimeData(
 
     for (const transaction of dayTransactions) {
       runningBalance +=
-        transaction.type === "INCOME" ? transaction.amount : -transaction.amount;
+        transaction.type === "INCOME"
+          ? amountForTotals(transaction)
+          : -amountForTotals(transaction);
     }
 
     points.push({ date, balance: runningBalance });
@@ -68,9 +71,9 @@ export function buildMonthlyIncomeExpenseData(
     };
 
     if (transaction.type === "INCOME") {
-      existing.income += transaction.amount;
+      existing.income += amountForTotals(transaction);
     } else {
-      existing.expenses += transaction.amount;
+      existing.expenses += amountForTotals(transaction);
     }
 
     grouped.set(monthKey, existing);

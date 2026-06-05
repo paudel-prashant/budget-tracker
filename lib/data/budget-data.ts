@@ -41,12 +41,12 @@ export async function getSpentByCategoryForMonth(
       type: TransactionType.EXPENSE,
       date: { gte: start, lt: end },
     },
-    _sum: { amount: true },
+    _sum: { baseAmount: true },
   });
 
   const map = new Map<string, number>();
   for (const row of grouped) {
-    map.set(row.category, row._sum.amount ?? 0);
+    map.set(row.category, row._sum.baseAmount ?? 0);
   }
   return map;
 }

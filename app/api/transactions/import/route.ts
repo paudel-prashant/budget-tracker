@@ -7,6 +7,7 @@ import { handleApiError, jsonError } from "@/lib/utils/api-utils";
 import { computeTransactionImportHash } from "@/lib/domain/transaction-import-hash";
 import { upsertLearnedCategoryMapping } from "@/lib/domain/category-mapping-service";
 import { normalizeTitleKey } from "@/lib/domain/category-suggestion-engine";
+import { getUserPreferredCurrency } from "@/lib/data/user-settings-data";
 import { revalidateFinancePages } from "@/lib/utils/revalidate-pages";
 import { startOfUtcDay } from "@/lib/domain/recurrence-dates";
 
@@ -150,11 +151,15 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const preferredCurrency = await getUserPreferredCurrency(auth.userId);
+
     const result = await prisma.transaction.createMany({
       data: toInsert.map((row) => ({
         userId: auth.userId,
         title: row.title,
         amount: row.amount,
+        currency: preferredCurrency,
+        baseAmount: row.amount,
         type: row.type,
         category: row.category,
         date: new Date(row.date),

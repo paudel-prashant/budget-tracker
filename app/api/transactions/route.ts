@@ -12,6 +12,7 @@ import {
   parseTransactionListParams,
 } from "@/lib/domain/transaction-filters";
 import { serializeTransaction } from "@/lib/services/serialize-transaction";
+import { buildTransactionWriteData } from "@/lib/currency/transaction-write";
 import { validateCreateTransactionBody } from "@/lib/validation/transaction-validation";
 
 export const runtime = "nodejs";
@@ -96,9 +97,11 @@ export async function POST(request: NextRequest) {
     await processRecurringTransactions(auth.userId);
     const account = await syncFinanceAccountsForUser(auth.userId);
 
+    const writeData = await buildTransactionWriteData(auth.userId, validation.data);
+
     const transaction = await prisma.transaction.create({
       data: {
-        ...validation.data,
+        ...writeData,
         userId: auth.userId,
         financeAccountId: account.id,
       },

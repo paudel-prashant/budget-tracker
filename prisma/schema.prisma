@@ -34,6 +34,7 @@ model User {
   email                 String?                @unique
   emailVerified         DateTime?
   image                 String?
+  preferredCurrency     String                 @default("CAD")
   accounts              Account[]
   sessions              Session[]
   transactions          Transaction[]
@@ -94,6 +95,8 @@ model Transaction {
   id                     String                @id @default(cuid())
   title                  String
   amount                 Float
+  currency               String                @default("CAD")
+  baseAmount             Float
   type                   TransactionType
   category               String
   date                   DateTime
@@ -121,7 +124,7 @@ model FinanceAccount {
   name           String
   type           FinanceAccountType @default(CHECKING)
   currentBalance Float              @default(0)
-  currency       String             @default("USD")
+  currency       String             @default("CAD")
   createdAt      DateTime           @default(now())
   user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions   Transaction[]

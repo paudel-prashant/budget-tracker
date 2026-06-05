@@ -1,8 +1,10 @@
 import { TransactionType } from "@prisma/client";
+import { isSupportedCurrency, normalizeCurrencyCode } from "@/lib/currency/constants";
 
 export type CreateTransactionInput = {
   title: string;
   amount: number;
+  currency?: string;
   type: TransactionType;
   category: string;
   date: Date;
@@ -17,7 +19,7 @@ export function validateTransactionBody(body: unknown): ValidationResult {
     return { success: false, error: "Request body must be a JSON object" };
   }
 
-  const { title, amount, type, category, date } = body as Record<string, unknown>;
+  const { title, amount, currency, type, category, date } = body as Record<string, unknown>;
 
   if (typeof title !== "string" || title.trim().length === 0) {
     return { success: false, error: "title is required and must be a non-empty string" };
@@ -48,11 +50,18 @@ export function validateTransactionBody(body: unknown): ValidationResult {
     };
   }
 
+  if (currency !== undefined) {
+    if (typeof currency !== "string" || !isSupportedCurrency(currency)) {
+      return { success: false, error: "currency must be a supported ISO currency code" };
+    }
+  }
+
   return {
     success: true,
     data: {
       title: title.trim(),
       amount,
+      currency: currency ? normalizeCurrencyCode(currency) : undefined,
       type,
       category: category.trim(),
       date: new Date(date),

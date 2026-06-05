@@ -17,6 +17,8 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DialogDatePicker } from "@/components/shared/ui/dialog-date-picker";
 import dayjs, { type Dayjs } from "dayjs";
 import { CategorySelectField } from "@/components/shared/ui/category-select-field";
+import { useCurrency } from "@/components/shared/providers/currency-provider";
+import { SUPPORTED_CURRENCIES } from "@/lib/currency/constants";
 import { CategorySuggestionBanner } from "@/components/transactions/category-suggestion-banner";
 import { DialogShell } from "@/components/shared/ui/dialog-shell";
 import { useCategorySuggestion } from "@/hooks/use-category-suggestion";
@@ -35,14 +37,16 @@ type TransactionFormDialogProps = {
 type FormState = {
   title: string;
   amount: string;
+  currency: string;
   type: TransactionType;
   category: string;
   date: Dayjs;
 };
 
-const emptyForm = (): FormState => ({
+const emptyForm = (currency: string): FormState => ({
   title: "",
   amount: "",
+  currency,
   type: "EXPENSE",
   category: "",
   date: dayjs(),
@@ -52,6 +56,7 @@ function formFromTransaction(transaction: Transaction): FormState {
   return {
     title: transaction.title,
     amount: String(transaction.amount),
+    currency: transaction.currency,
     type: transaction.type,
     category: transaction.category,
     date: dayjs(transaction.date),
@@ -71,7 +76,8 @@ export function TransactionFormDialog({
   onSuccess,
 }: TransactionFormDialogProps) {
   const isEdit = Boolean(transaction);
-  const [form, setForm] = useState<FormState>(emptyForm);
+  const { currency: preferredCurrency } = useCurrency();
+  const [form, setForm] = useState<FormState>(() => emptyForm(preferredCurrency));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const categoryTouchedRef = useRef(false);
@@ -86,10 +92,10 @@ export function TransactionFormDialog({
   useEffect(() => {
     if (!open) return;
 
-    setForm(transaction ? formFromTransaction(transaction) : emptyForm());
+    setForm(transaction ? formFromTransaction(transaction) : emptyForm(preferredCurrency));
     setError(null);
     categoryTouchedRef.current = Boolean(transaction?.category);
-  }, [open, transaction]);
+  }, [open, transaction, preferredCurrency]);
 
   const applySuggestion = useCallback(
     (category: string) => {
@@ -109,7 +115,7 @@ export function TransactionFormDialog({
 
   const handleClose = () => {
     if (submitting) return;
-    setForm(emptyForm());
+    setForm(emptyForm(preferredCurrency));
     setError(null);
     onClose();
   };
@@ -130,6 +136,7 @@ export function TransactionFormDialog({
     const payload = {
       title: form.title.trim(),
       amount,
+      currency: form.currency,
       type: form.type,
       category: form.category.trim(),
       date: form.date.toISOString(),
@@ -154,7 +161,7 @@ export function TransactionFormDialog({
         );
       }
 
-      setForm(emptyForm());
+      setForm(emptyForm(preferredCurrency));
       await onSuccess();
       onClose();
     } catch (err) {
@@ -197,18 +204,35 @@ export function TransactionFormDialog({
                 required
               />
 
-              <TextField
-                {...formTextFieldProps}
-                label="Amount"
-                type="number"
-                value={form.amount}
-                onChange={(e) => setForm((prev) => ({ ...prev, amount: e.target.value }))}
-                slotProps={{
-                  ...formTextFieldProps.slotProps,
-                  htmlInput: { min: 0, step: "0.01" },
-                }}
-                required
-              />
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={FORM_STACK_SPACING}>
+                <TextField
+                  {...formTextFieldProps}
+                  label="Amount"
+                  type="number"
+                  value={form.amount}
+                  onChange={(e) => setForm((prev) => ({ ...prev, amount: e.target.value }))}
+                  slotProps={{
+                    ...formTextFieldProps.slotProps,
+                    htmlInput: { min: 0, step: "0.01" },
+                  }}
+                  required
+                  sx={{ flex: 1 }}
+                />
+                <TextField
+                  {...formTextFieldProps}
+                  select
+                  label="Currency"
+                  value={form.currency}
+                  onChange={(e) => setForm((prev) => ({ ...prev, currency: e.target.value }))}
+                  sx={{ minWidth: { sm: 140 } }}
+                >
+                  {SUPPORTED_CURRENCIES.map((option) => (
+                    <MenuItem key={option.code} value={option.code}>
+                      {option.code}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Stack>
 
               <TextField
                 {...formTextFieldProps}

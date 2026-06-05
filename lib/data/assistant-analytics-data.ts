@@ -60,11 +60,11 @@ async function getMonthExpenseByCategory(
       type: TransactionType.EXPENSE,
       date: { gte: start, lte: end },
     },
-    _sum: { amount: true },
+    _sum: { baseAmount: true },
   });
 
   return new Map(
-    rows.map((row) => [row.category, roundMoney(row._sum.amount ?? 0)])
+    rows.map((row) => [row.category, roundMoney(row._sum.baseAmount ?? 0)])
   );
 }
 
@@ -155,19 +155,19 @@ export async function getAssistantAnalyticsSnapshot(
     prisma.transaction.count({ where: { userId } }),
     prisma.transaction.aggregate({
       where: { userId, type: TransactionType.INCOME },
-      _sum: { amount: true },
+      _sum: { baseAmount: true },
     }),
     prisma.transaction.aggregate({
       where: { userId, type: TransactionType.EXPENSE },
-      _sum: { amount: true },
+      _sum: { baseAmount: true },
     }),
     prisma.$queryRaw<
       Array<{ month: string; income: number; expenses: number }>
     >(Prisma.sql`
       SELECT
         TO_CHAR(date, 'YYYY-MM') AS month,
-        COALESCE(SUM(CASE WHEN type = 'INCOME' THEN amount ELSE 0 END), 0)::float AS income,
-        COALESCE(SUM(CASE WHEN type = 'EXPENSE' THEN amount ELSE 0 END), 0)::float AS expenses
+        COALESCE(SUM(CASE WHEN type = 'INCOME' THEN "baseAmount" ELSE 0 END), 0)::float AS income,
+        COALESCE(SUM(CASE WHEN type = 'EXPENSE' THEN "baseAmount" ELSE 0 END), 0)::float AS expenses
       FROM "Transaction"
       WHERE ${userFilter}
       GROUP BY TO_CHAR(date, 'YYYY-MM')
@@ -204,8 +204,8 @@ export async function getAssistantAnalyticsSnapshot(
   );
 
   const lifetime = buildMonthTotals(
-    incomeAll._sum.amount ?? 0,
-    expenseAll._sum.amount ?? 0
+    incomeAll._sum.baseAmount ?? 0,
+    expenseAll._sum.baseAmount ?? 0
   );
 
   const categoryComparisons = buildCategoryComparisons(

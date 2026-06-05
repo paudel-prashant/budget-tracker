@@ -100,22 +100,22 @@ export async function getFinancialInsights(userId: string): Promise<FinancialIns
       prisma.transaction.groupBy({
         by: ["category"],
         where: { userId, type: TransactionType.EXPENSE },
-        _sum: { amount: true },
-        orderBy: { _sum: { amount: "desc" } },
+        _sum: { baseAmount: true },
+        orderBy: { _sum: { baseAmount: "desc" } },
       }),
       prisma.transaction.aggregate({
         where: { userId, type: TransactionType.INCOME },
-        _sum: { amount: true },
+        _sum: { baseAmount: true },
       }),
       prisma.transaction.aggregate({
         where: { userId, type: TransactionType.EXPENSE },
-        _sum: { amount: true },
+        _sum: { baseAmount: true },
       }),
       prisma.$queryRaw<MonthlyAggregateRow[]>(Prisma.sql`
         SELECT
           TO_CHAR(date, 'YYYY-MM') AS month,
-          COALESCE(SUM(CASE WHEN type = 'INCOME' THEN amount ELSE 0 END), 0)::float AS income,
-          COALESCE(SUM(CASE WHEN type = 'EXPENSE' THEN amount ELSE 0 END), 0)::float AS expenses
+          COALESCE(SUM(CASE WHEN type = 'INCOME' THEN "baseAmount" ELSE 0 END), 0)::float AS income,
+          COALESCE(SUM(CASE WHEN type = 'EXPENSE' THEN "baseAmount" ELSE 0 END), 0)::float AS expenses
         FROM "Transaction"
         WHERE ${userFilter}
         GROUP BY TO_CHAR(date, 'YYYY-MM')
@@ -123,19 +123,19 @@ export async function getFinancialInsights(userId: string): Promise<FinancialIns
       `),
       prisma.$queryRaw<ExpenseDayStatsRow[]>(Prisma.sql`
         SELECT
-          COALESCE(SUM(amount), 0)::float AS total,
+          COALESCE(SUM("baseAmount"), 0)::float AS total,
           COUNT(DISTINCT DATE(date))::int AS days
         FROM "Transaction"
         WHERE type = 'EXPENSE' AND ${userFilter}
       `),
     ]);
 
-  const totalIncome = roundMoney(incomeResult._sum.amount ?? 0);
-  const totalExpenses = roundMoney(expenseResult._sum.amount ?? 0);
+  const totalIncome = roundMoney(incomeResult._sum.baseAmount ?? 0);
+  const totalExpenses = roundMoney(expenseResult._sum.baseAmount ?? 0);
 
   const categoryBreakdown = categoryGroups.map((row) => ({
     category: row.category,
-    amount: roundMoney(row._sum.amount ?? 0),
+    amount: roundMoney(row._sum.baseAmount ?? 0),
   }));
 
   const topCategory = categoryBreakdown[0] ?? null;

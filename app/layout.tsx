@@ -1,11 +1,14 @@
 import type { Metadata, Viewport } from "next";
+import { auth } from "@/auth";
 import { MuiProvider } from "@/components/shared/providers/mui-provider";
 import { SessionProvider } from "@/components/shared/providers/session-provider";
+import { CurrencyProvider } from "@/components/shared/providers/currency-provider";
 import { AuthLayout } from "@/components/shared/layout/auth-layout";
 import { PwaRoot } from "@/components/pwa/pwa-root";
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/config/app";
 import { PWA_BACKGROUND_COLOR, PWA_THEME_COLOR } from "@/lib/config/pwa";
 import { appFont } from "@/lib/theme/fonts";
+import { getUserPreferredCurrency } from "@/lib/data/user-settings-data";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
@@ -45,11 +48,16 @@ export const viewport: Viewport = {
   colorScheme: "light dark",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
+  const initialCurrency = session?.user?.id
+    ? await getUserPreferredCurrency(session.user.id)
+    : undefined;
+
   return (
     <html lang="en" className={appFont.variable} suppressHydrationWarning>
       <head>
@@ -69,9 +77,11 @@ export default function RootLayout({
       >
         <MuiProvider>
           <SessionProvider>
-            <PwaRoot>
-              <AuthLayout>{children}</AuthLayout>
-            </PwaRoot>
+            <CurrencyProvider initialCurrency={initialCurrency}>
+              <PwaRoot>
+                <AuthLayout>{children}</AuthLayout>
+              </PwaRoot>
+            </CurrencyProvider>
           </SessionProvider>
         </MuiProvider>
       </body>
