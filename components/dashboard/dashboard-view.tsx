@@ -81,7 +81,11 @@ export function DashboardView({ data, initialLayout }: DashboardViewProps) {
       switch (id) {
         case "balance":
           return metricsContent(
-            <SummaryCards summary={metrics.summary} dimmed={metricsLoading} />
+            <SummaryCards
+              summary={metrics.summary}
+              dateRange={metrics.dateRange}
+              dimmed={metricsLoading}
+            />
           );
         case "kpis":
           return metricsContent(
