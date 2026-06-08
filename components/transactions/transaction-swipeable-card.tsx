@@ -14,8 +14,7 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { SwipeableRow } from "@/components/shared/ui/swipeable-row";
 import { SurfaceCard } from "@/components/shared/ui/surface-card";
 import { touchIconButtonSx } from "@/lib/theme/touch-targets";
-import { formatDate, formatTransactionAmount } from "@/lib/utils/format";
-import { useCurrency } from "@/components/shared/providers/currency-provider";
+import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { cardTitleSx } from "@/lib/theme/typography";
 import type { Transaction } from "@/lib/types";
 
@@ -36,7 +35,6 @@ export function TransactionSwipeableCard({
   showSwipeHint: showSwipeHintProp,
   onSwipeHintSeen,
 }: TransactionSwipeableCardProps) {
-  const { currency: preferredCurrency } = useCurrency();
   const isIncome = transaction.type === "INCOME";
   const [localHint, setLocalHint] = useState(false);
 
@@ -139,12 +137,7 @@ export function TransactionSwipeableCard({
               color={isIncome ? "success.main" : "error.main"}
             >
               {isIncome ? "+" : "-"}
-              {formatTransactionAmount(
-                transaction.amount,
-                transaction.currency,
-                transaction.baseAmount,
-                preferredCurrency
-              )}
+              {formatCurrency(transaction.baseAmount ?? transaction.amount)}
             </Typography>
           </Box>
         </Stack>

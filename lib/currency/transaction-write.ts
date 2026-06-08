@@ -1,4 +1,3 @@
-import { normalizeCurrencyCode } from "@/lib/currency/constants";
 import { resolveTransactionBaseAmount } from "@/lib/currency/convert";
 import { getUserPreferredCurrency } from "@/lib/data/user-settings-data";
 
@@ -10,11 +9,10 @@ export async function buildTransactionWriteData(
     type: "INCOME" | "EXPENSE";
     category: string;
     date: Date;
-    currency?: string;
   }
 ) {
   const preferredCurrency = await getUserPreferredCurrency(userId);
-  const currency = normalizeCurrencyCode(input.currency ?? preferredCurrency);
+  const currency = preferredCurrency;
   const baseAmount = await resolveTransactionBaseAmount({
     amount: input.amount,
     currency,

@@ -578,7 +578,7 @@ export function TransactionsView() {
                         }}
                       >
                         {transaction.type === "INCOME" ? "+" : "-"}
-                        {formatCurrency(transaction.amount)}
+                        {formatCurrency(transaction.baseAmount ?? transaction.amount)}
                       </TableCell>
                       <TableCell>
                         <Chip
