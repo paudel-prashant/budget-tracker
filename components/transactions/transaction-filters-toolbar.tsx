@@ -11,16 +11,23 @@ import {
   Stack,
   TextField,
   Tooltip,
+  Typography,
 } from "@mui/material";
 import FilterListOutlinedIcon from "@mui/icons-material/FilterListOutlined";
 import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
-import { countActiveFilters } from "@/lib/domain/transaction-filters";
+import {
+  countActiveFilters,
+  getRollingDatePresetLabel,
+  isDefaultMonthDateFilter,
+  matchRollingDatePreset,
+} from "@/lib/domain/transaction-filters";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { TransactionFilters } from "@/lib/types";
 
 type TransactionFiltersToolbarProps = {
   search: string;
   filters: TransactionFilters;
+  periodHint?: string;
   onSearchChange: (value: string) => void;
   onOpenFilters: () => void;
   onClearFilters: () => void;
@@ -55,13 +62,21 @@ function buildFilterChips(
     );
   }
 
-  if (filters.dateFrom || filters.dateTo) {
+  if (
+    (filters.dateFrom || filters.dateTo) &&
+    !isDefaultMonthDateFilter(filters)
+  ) {
+    const rollingPreset = matchRollingDatePreset(filters);
     const from = filters.dateFrom ? formatDate(filters.dateFrom) : "…";
     const to = filters.dateTo ? formatDate(filters.dateTo) : "…";
     chips.push(
       <Chip
         key="date"
-        label={`Date: ${from} – ${to}`}
+        label={
+          rollingPreset
+            ? getRollingDatePresetLabel(rollingPreset)
+            : `Date: ${from} – ${to}`
+        }
         size="small"
         onDelete={() => {
           onRemove("dateFrom");
@@ -99,6 +114,7 @@ function buildFilterChips(
 export function TransactionFiltersToolbar({
   search,
   filters,
+  periodHint,
   onSearchChange,
   onOpenFilters,
   onClearFilters,
@@ -170,6 +186,12 @@ export function TransactionFiltersToolbar({
           </IconButton>
         </Tooltip>
       </Stack>
+
+      {periodHint && !hasAnyFilter && (
+        <Typography variant="caption" color="text.secondary">
+          {periodHint}
+        </Typography>
+      )}
 
       {hasAnyFilter && (
         <Box

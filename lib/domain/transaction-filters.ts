@@ -182,17 +182,132 @@ export function buildTransactionListQuery(params: TransactionListParams): string
   return query.toString();
 }
 
-export function countActiveFilters(filters: TransactionFilters): number {
+/** Start/end of the calendar month containing `referenceDate` (local timezone). */
+export function getCurrentMonthDateRange(referenceDate = new Date()): {
+  dateFrom: string;
+  dateTo: string;
+} {
+  const year = referenceDate.getFullYear();
+  const month = referenceDate.getMonth();
+  const start = new Date(year, month, 1, 0, 0, 0, 0);
+  const end = new Date(year, month + 1, 0, 23, 59, 59, 999);
+
+  return {
+    dateFrom: start.toISOString(),
+    dateTo: end.toISOString(),
+  };
+}
+
+export function getDefaultTransactionFilters(referenceDate = new Date()): TransactionFilters {
+  const { dateFrom, dateTo } = getCurrentMonthDateRange(referenceDate);
+  return { dateFrom, dateTo };
+}
+
+export const ROLLING_DATE_PRESET_DAYS = [30, 45, 60, 90] as const;
+
+export type RollingDatePresetDays = (typeof ROLLING_DATE_PRESET_DAYS)[number];
+
+function isSameCalendarDay(a: string, b: string): boolean {
+  const dateA = new Date(a);
+  const dateB = new Date(b);
+
+  return (
+    dateA.getFullYear() === dateB.getFullYear() &&
+    dateA.getMonth() === dateB.getMonth() &&
+    dateA.getDate() === dateB.getDate()
+  );
+}
+
+function matchesDateRange(
+  filters: TransactionFilters,
+  range: { dateFrom: string; dateTo: string }
+): boolean {
+  const { dateFrom, dateTo } = filters;
+  if (!dateFrom || !dateTo) return false;
+
+  return (
+    isSameCalendarDay(dateFrom, range.dateFrom) &&
+    isSameCalendarDay(dateTo, range.dateTo)
+  );
+}
+
+/** Rolling window ending today (inclusive). */
+export function getRollingDaysDateRange(
+  days: number,
+  referenceDate = new Date()
+): { dateFrom: string; dateTo: string } {
+  const safeDays = Math.max(1, Math.floor(days));
+  const end = new Date(referenceDate);
+  end.setHours(23, 59, 59, 999);
+
+  const start = new Date(referenceDate);
+  start.setDate(start.getDate() - (safeDays - 1));
+  start.setHours(0, 0, 0, 0);
+
+  return {
+    dateFrom: start.toISOString(),
+    dateTo: end.toISOString(),
+  };
+}
+
+export function getRollingDatePresetLabel(days: number): string {
+  return `Last ${days} days`;
+}
+
+export function matchRollingDatePreset(
+  filters: TransactionFilters,
+  referenceDate = new Date()
+): RollingDatePresetDays | null {
+  for (const days of ROLLING_DATE_PRESET_DAYS) {
+    const range = getRollingDaysDateRange(days, referenceDate);
+    if (matchesDateRange(filters, range)) {
+      return days;
+    }
+  }
+
+  return null;
+}
+
+export function isDefaultMonthDateFilter(
+  filters: TransactionFilters,
+  referenceDate = new Date()
+): boolean {
+  const { dateFrom, dateTo } = filters;
+  if (!dateFrom || !dateTo) return false;
+
+  const start = new Date(dateFrom);
+  const end = new Date(dateTo);
+  const year = referenceDate.getFullYear();
+  const month = referenceDate.getMonth();
+  const lastDay = new Date(year, month + 1, 0).getDate();
+
+  return (
+    start.getFullYear() === year &&
+    start.getMonth() === month &&
+    start.getDate() === 1 &&
+    end.getFullYear() === year &&
+    end.getMonth() === month &&
+    end.getDate() === lastDay
+  );
+}
+
+export function countActiveFilters(
+  filters: TransactionFilters,
+  referenceDate = new Date()
+): number {
   let count = 0;
   if (filters.search) count += 1;
   if (filters.category) count += 1;
   if (filters.type) count += 1;
-  if (filters.dateFrom || filters.dateTo) count += 1;
+  if ((filters.dateFrom || filters.dateTo) && !isDefaultMonthDateFilter(filters, referenceDate)) {
+    count += 1;
+  }
   if (filters.minAmount !== undefined) count += 1;
   if (filters.maxAmount !== undefined) count += 1;
   return count;
 }
 
+/** No date or category constraints — used when viewing all time. */
 export const EMPTY_TRANSACTION_FILTERS: TransactionFilters = {};
 
 export const DEFAULT_TRANSACTION_LIST_PARAMS: TransactionListParams = {

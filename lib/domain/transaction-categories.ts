@@ -3,6 +3,15 @@ import type { TransactionType } from "@/lib/types";
 /** Select menu value when the user enters a custom category. */
 export const OTHER_CATEGORY_OPTION = "Other";
 
+/** Internal Select value — must not collide with real category names. */
+export const OTHER_SELECT_VALUE = "__category_other__";
+
+export type CategorySelectState = {
+  selectValue: string;
+  customCategory: string;
+  isOtherMode: boolean;
+};
+
 export const DEFAULT_EXPENSE_CATEGORIES = [
   "Apparel",
   "Beauty",
@@ -60,4 +69,44 @@ export function buildCategoryOptions(
 export function isPresetCategory(value: string, options: string[]): boolean {
   const normalized = value.trim().toLowerCase();
   return options.some((option) => option.toLowerCase() === normalized);
+}
+
+/** Maps a stored category string to Select + custom field state. */
+export function resolveCategorySelectState(
+  value: string,
+  options: string[],
+  isOtherMode: boolean
+): CategorySelectState {
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    if (isOtherMode) {
+      return {
+        selectValue: OTHER_SELECT_VALUE,
+        customCategory: "",
+        isOtherMode: true,
+      };
+    }
+
+    return {
+      selectValue: "",
+      customCategory: "",
+      isOtherMode: false,
+    };
+  }
+
+  if (isPresetCategory(trimmed, options)) {
+    const match = options.find((option) => option.toLowerCase() === trimmed.toLowerCase());
+    return {
+      selectValue: match ?? trimmed,
+      customCategory: "",
+      isOtherMode: false,
+    };
+  }
+
+  return {
+    selectValue: OTHER_SELECT_VALUE,
+    customCategory: trimmed,
+    isOtherMode: true,
+  };
 }

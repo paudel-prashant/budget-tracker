@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   FormControl,
   InputLabel,
@@ -13,12 +13,11 @@ import {
 import { formFieldSx, formTextFieldProps } from "@/lib/theme/form-field";
 import {
   buildCategoryOptions,
-  isPresetCategory,
   OTHER_CATEGORY_OPTION,
+  OTHER_SELECT_VALUE,
+  resolveCategorySelectState,
 } from "@/lib/domain/transaction-categories";
 import type { TransactionType } from "@/lib/types";
-
-const OTHER_SELECT_VALUE = "__category_other__";
 
 /** MUI MenuItem row height (px) — keep in sync with theme if customized. */
 const MENU_ITEM_HEIGHT = 48;
@@ -61,44 +60,44 @@ export function CategorySelectField({
     [extraCategories, transactionType]
   );
 
+  const optionsScopeKey = useMemo(
+    () => `${transactionType ?? "ALL"}:${options.join("\0")}`,
+    [transactionType, options]
+  );
+
+  const otherModeRef = useRef(false);
   const [selectValue, setSelectValue] = useState("");
   const [customCategory, setCustomCategory] = useState("");
 
   useEffect(() => {
-    const trimmed = value.trim();
+    otherModeRef.current = false;
+  }, [optionsScopeKey]);
 
-    if (!trimmed) {
-      setSelectValue("");
-      setCustomCategory("");
-      return;
-    }
-
-    if (isPresetCategory(trimmed, options)) {
-      const match = options.find((o) => o.toLowerCase() === trimmed.toLowerCase());
-      setSelectValue(match ?? trimmed);
-      setCustomCategory("");
-      return;
-    }
-
-    setSelectValue(OTHER_SELECT_VALUE);
-    setCustomCategory(trimmed);
+  useEffect(() => {
+    const state = resolveCategorySelectState(value, options, otherModeRef.current);
+    setSelectValue(state.selectValue);
+    setCustomCategory(state.customCategory);
+    otherModeRef.current = state.isOtherMode;
   }, [value, options]);
 
   const handleSelectChange = (event: SelectChangeEvent<string>) => {
     const next = event.target.value;
 
     if (next === OTHER_SELECT_VALUE) {
+      otherModeRef.current = true;
       setSelectValue(OTHER_SELECT_VALUE);
       onChange(customCategory.trim());
       return;
     }
 
+    otherModeRef.current = false;
     setSelectValue(next);
     setCustomCategory("");
     onChange(next);
   };
 
   const handleCustomChange = (custom: string) => {
+    otherModeRef.current = true;
     setCustomCategory(custom);
     onChange(custom.trim());
   };

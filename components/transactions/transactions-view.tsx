@@ -56,12 +56,13 @@ import { transactionsListCacheKey } from "@/lib/pwa/cache-keys";
 import {
   buildTransactionListQuery,
   countActiveFilters,
-  EMPTY_TRANSACTION_FILTERS,
+  getDefaultTransactionFilters,
+  isDefaultMonthDateFilter,
   MOBILE_TRANSACTIONS_MAX_ROWS,
   MOBILE_TRANSACTIONS_PAGE_SIZE,
   DEFAULT_PAGE_SIZE,
 } from "@/lib/domain/transaction-filters";
-import { formatCurrency, formatDate } from "@/lib/utils/format";
+import { formatCurrency, formatDate, formatMonthYear } from "@/lib/utils/format";
 import type {
   Transaction,
   TransactionFilters,
@@ -94,7 +95,9 @@ export function TransactionsView() {
 
   const [searchInput, setSearchInput] = useState("");
   const debouncedSearch = useDebouncedValue(searchInput, 350);
-  const [filters, setFilters] = useState<TransactionFilters>(EMPTY_TRANSACTION_FILTERS);
+  const [filters, setFilters] = useState<TransactionFilters>(() =>
+    getDefaultTransactionFilters()
+  );
   const [page, setPage] = useState(1);
   const pageSize = DEFAULT_PAGE_SIZE;
   const [mobilePage, setMobilePage] = useState(1);
@@ -121,9 +124,21 @@ export function TransactionsView() {
     setShowSwipeHint(sessionStorage.getItem(SWIPE_HINT_STORAGE_KEY) !== "1");
   }, []);
 
+  const isDefaultMonthView = useMemo(
+    () => isDefaultMonthDateFilter(filters),
+    [filters]
+  );
+
   const hasActiveFilters = useMemo(() => {
     return Boolean(debouncedSearch.trim()) || countActiveFilters(filters) > 0;
   }, [debouncedSearch, filters]);
+
+  const periodHint = isDefaultMonthView
+    ? `Showing transactions for ${formatMonthYear(
+        new Date().getMonth() + 1,
+        new Date().getFullYear()
+      )}`
+    : undefined;
 
   const fetchTransactions = useCallback(
     async (
@@ -388,7 +403,7 @@ export function TransactionsView() {
 
   const handleClearFilters = () => {
     setSearchInput("");
-    setFilters(EMPTY_TRANSACTION_FILTERS);
+    setFilters(getDefaultTransactionFilters());
     setPage(1);
     setMobilePage(1);
   };
@@ -483,6 +498,7 @@ export function TransactionsView() {
           <TransactionFiltersToolbar
             search={searchInput}
             filters={filters}
+            periodHint={periodHint}
             onSearchChange={setSearchInput}
             onOpenFilters={() => setFiltersOpen(true)}
             onClearFilters={handleClearFilters}
@@ -504,7 +520,11 @@ export function TransactionsView() {
           <EmptyState
             icon={SearchOffOutlinedIcon}
             title="No matching transactions"
-            description="Try adjusting your search or filters to find what you're looking for."
+            description={
+              isDefaultMonthView
+                ? "No transactions this month. Open filters to choose a different date range."
+                : "Try adjusting your search or filters to find what you're looking for."
+            }
             actionLabel="Clear filters"
             onAction={handleClearFilters}
           />

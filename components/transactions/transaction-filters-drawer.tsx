@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   Box,
   Button,
+  Chip,
   Divider,
   Drawer,
   FormControl,
@@ -24,6 +25,12 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DialogDatePicker } from "@/components/shared/ui/dialog-date-picker";
 import dayjs, { type Dayjs } from "dayjs";
 import { formFieldSx, formTextFieldProps } from "@/lib/theme/form-field";
+import {
+  getRollingDatePresetLabel,
+  getRollingDaysDateRange,
+  matchRollingDatePreset,
+  ROLLING_DATE_PRESET_DAYS,
+} from "@/lib/domain/transaction-filters";
 import type { TransactionFilters, TransactionType } from "@/lib/types";
 
 type DraftFilters = {
@@ -105,6 +112,17 @@ export function TransactionFiltersDrawer({
     setDraft(emptyDraft());
   };
 
+  const activeRollingPreset = matchRollingDatePreset(filtersFromDraft(draft));
+
+  const applyRollingPreset = (days: (typeof ROLLING_DATE_PRESET_DAYS)[number]) => {
+    const { dateFrom, dateTo } = getRollingDaysDateRange(days);
+    setDraft((prev) => ({
+      ...prev,
+      dateFrom: dayjs(dateFrom),
+      dateTo: dayjs(dateTo),
+    }));
+  };
+
   return (
     <Drawer
       anchor={anchorBottom ? "bottom" : "right"}
@@ -184,6 +202,24 @@ export function TransactionFiltersDrawer({
               <MenuItem value="EXPENSE">Expense</MenuItem>
             </Select>
           </FormControl>
+
+          <Stack spacing={1}>
+            <Typography variant="caption" color="text.secondary" fontWeight={600}>
+              Quick ranges
+            </Typography>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+              {ROLLING_DATE_PRESET_DAYS.map((days) => (
+                <Chip
+                  key={days}
+                  label={getRollingDatePresetLabel(days)}
+                  clickable
+                  variant={activeRollingPreset === days ? "filled" : "outlined"}
+                  color={activeRollingPreset === days ? "primary" : "default"}
+                  onClick={() => applyRollingPreset(days)}
+                />
+              ))}
+            </Box>
+          </Stack>
 
           <Box sx={formFieldSx}>
             <DialogDatePicker
