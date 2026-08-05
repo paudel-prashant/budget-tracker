@@ -9,6 +9,8 @@ export type TransactionFilters = {
   dateTo?: string;
   minAmount?: number;
   maxAmount?: number;
+  /** Match transactions carrying ANY of these tags (already lowercased). */
+  tags?: string[];
 };
 
 export type TransactionListParams = TransactionFilters & {
@@ -102,6 +104,10 @@ export function parseTransactionListParams(
   const search = searchParams.get("q")?.trim() || searchParams.get("search")?.trim() || undefined;
   const category = searchParams.get("category")?.trim() || undefined;
   const type = parseTransactionType(searchParams.get("type"));
+  const tags = searchParams
+    .getAll("tag")
+    .map((tag) => tag.trim().toLowerCase())
+    .filter(Boolean);
 
   return {
     success: true,
@@ -115,6 +121,7 @@ export function parseTransactionListParams(
       dateTo,
       minAmount,
       maxAmount,
+      tags: tags.length > 0 ? tags : undefined,
     },
   };
 }
@@ -138,6 +145,10 @@ export function buildTransactionWhere(
       { title: { contains: filters.search, mode: "insensitive" } },
       { category: { contains: filters.search, mode: "insensitive" } },
     ];
+  }
+
+  if (filters.tags && filters.tags.length > 0) {
+    where.tags = { hasSome: filters.tags };
   }
 
   if (filters.dateFrom || filters.dateTo) {
@@ -178,6 +189,9 @@ export function buildTransactionListQuery(params: TransactionListParams): string
   if (params.dateTo) query.set("dateTo", params.dateTo);
   if (params.minAmount !== undefined) query.set("minAmount", String(params.minAmount));
   if (params.maxAmount !== undefined) query.set("maxAmount", String(params.maxAmount));
+  if (params.tags) {
+    for (const tag of params.tags) query.append("tag", tag);
+  }
 
   return query.toString();
 }
@@ -304,6 +318,7 @@ export function countActiveFilters(
   }
   if (filters.minAmount !== undefined) count += 1;
   if (filters.maxAmount !== undefined) count += 1;
+  if (filters.tags && filters.tags.length > 0) count += 1;
   return count;
 }
 

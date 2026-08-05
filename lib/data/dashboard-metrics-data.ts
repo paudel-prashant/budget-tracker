@@ -51,6 +51,7 @@ const transactionSelect = {
   type: true,
   category: true,
   date: true,
+  tags: true,
   createdAt: true,
 } as const;
 

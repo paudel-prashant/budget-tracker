@@ -23,6 +23,24 @@ export function isValidMonthYear(month: number, year: number): boolean {
   );
 }
 
+/** Previous calendar month, handling the January → December/previous-year rollover. */
+export function getPreviousMonthYear(month: number, year: number): { month: number; year: number } {
+  return month === 1 ? { month: 12, year: year - 1 } : { month: month - 1, year };
+}
+
+/**
+ * Unused (positive) or overspent (negative) amount from the previous month's budget
+ * for the same category, applied to this month's effective limit. Zero when rollover
+ * isn't enabled or there was no budget for that category last month.
+ */
+export function computeRolloverAmount(
+  previous: { monthlyLimit: number; spent: number } | null,
+  rolloverEnabled: boolean
+): number {
+  if (!rolloverEnabled || !previous) return 0;
+  return Math.round((previous.monthlyLimit - previous.spent) * 100) / 100;
+}
+
 export type BudgetProgressMetrics = {
   spent: number;
   remaining: number;

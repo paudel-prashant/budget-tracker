@@ -46,6 +46,7 @@ model User {
   netWorthSnapshots     NetWorthSnapshot[]
   dashboardLayout       DashboardLayout?
   financeAccounts       FinanceAccount[]
+  goals                 Goal[]
 }
 
 model DashboardLayout {
@@ -100,6 +101,7 @@ model Transaction {
   type                   TransactionType
   category               String
   date                   DateTime
+  tags                   String[]              @default([])
   createdAt              DateTime              @default(now())
   userId                 String
   financeAccountId       String?
@@ -149,14 +151,15 @@ model RecurringTransaction {
 }
 
 model Budget {
-  id           String   @id @default(cuid())
-  category     String
-  monthlyLimit Float
-  month        Int
-  year         Int
-  createdAt    DateTime @default(now())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String   @id @default(cuid())
+  category        String
+  monthlyLimit    Float
+  month           Int
+  year            Int
+  rolloverEnabled Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, category, month, year])
 }
@@ -220,4 +223,19 @@ model NetWorthSnapshot {
 
   @@unique([userId, month])
   @@index([userId, month])
+}
+
+model Goal {
+  id            String    @id @default(cuid())
+  userId        String
+  name          String
+  category      String?
+  targetAmount  Float
+  currentAmount Float     @default(0)
+  targetDate    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

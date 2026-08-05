@@ -11,6 +11,7 @@ type TransactionRow = Pick<
   | "type"
   | "category"
   | "date"
+  | "tags"
   | "createdAt"
 >;
 
@@ -24,6 +25,7 @@ export function serializeTransaction(row: TransactionRow) {
     type: row.type as TransactionType,
     category: row.category,
     date: row.date.toISOString(),
+    tags: row.tags,
     createdAt: row.createdAt.toISOString(),
   };
 }

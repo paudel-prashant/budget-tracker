@@ -7,6 +7,7 @@ export type CreateBudgetInput = {
   monthlyLimit: number;
   month: number;
   year: number;
+  rolloverEnabled: boolean;
 };
 
 const budgetFieldsSchema = z.object({
@@ -19,6 +20,7 @@ const budgetFieldsSchema = z.object({
   // since the default is computed at request time, not a fixed value).
   month: z.number().optional(),
   year: z.number().optional(),
+  rolloverEnabled: z.boolean().optional().default(false),
 });
 
 export function validateCreateBudgetBody(body: unknown): ValidationResult<CreateBudgetInput> {
@@ -46,8 +48,32 @@ export function validateCreateBudgetBody(body: unknown): ValidationResult<Create
       monthlyLimit: parsed.data.monthlyLimit,
       month: resolvedMonth,
       year: resolvedYear,
+      rolloverEnabled: parsed.data.rolloverEnabled,
     },
   };
+}
+
+export type UpdateBudgetInput = {
+  monthlyLimit: number;
+  rolloverEnabled: boolean;
+};
+
+// Only the limit and the rollover toggle are editable — category/month/year define
+// which budget this *is*; changing them means creating a different budget entirely.
+const budgetUpdateSchema = z.object({
+  monthlyLimit: z
+    .number()
+    .finite()
+    .positive("monthlyLimit is required and must be a positive number"),
+  rolloverEnabled: z.boolean().optional().default(false),
+});
+
+export function validateUpdateBudgetBody(body: unknown): ValidationResult<UpdateBudgetInput> {
+  if (!body || typeof body !== "object") {
+    return { success: false, error: "Request body must be a JSON object" };
+  }
+
+  return toValidationResult(budgetUpdateSchema.safeParse(body));
 }
 
 export function parseMonthYearSearchParams(

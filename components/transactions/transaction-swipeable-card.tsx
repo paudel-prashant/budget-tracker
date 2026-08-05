@@ -93,6 +93,13 @@ export function TransactionSwipeableCard({
               <Typography variant="body2" color="text.secondary">
                 {transaction.category} · {formatDate(transaction.date)}
               </Typography>
+              {transaction.tags.length > 0 && (
+                <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mt: 0.5 }}>
+                  {transaction.tags.map((tag) => (
+                    <Chip key={tag} label={tag} size="small" variant="outlined" sx={{ height: 20 }} />
+                  ))}
+                </Stack>
+              )}
               {showSwipeHint && (
                 <Typography variant="caption" color="text.disabled" sx={{ display: "block", mt: 0.5 }}>
                   Swipe right to edit · left to delete

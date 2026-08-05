@@ -91,6 +91,7 @@ export function TransactionsView() {
     totalPages: 0,
   });
   const [categories, setCategories] = useState<string[]>([]);
+  const [knownTags, setKnownTags] = useState<string[]>([]);
   const [totalUnfiltered, setTotalUnfiltered] = useState(0);
 
   const [searchInput, setSearchInput] = useState("");
@@ -177,6 +178,7 @@ export function TransactionsView() {
 
         setFromCache(result.fromCache);
         setCategories(result.data.meta.categories);
+        setKnownTags(result.data.meta.tags);
         setTotalUnfiltered(result.data.meta.totalUnfiltered);
         setPagination(pag);
 
@@ -586,6 +588,13 @@ export function TransactionsView() {
                         <Typography variant="body2" fontWeight={500}>
                           {transaction.title}
                         </Typography>
+                        {transaction.tags.length > 0 && (
+                          <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mt: 0.5 }}>
+                            {transaction.tags.map((tag) => (
+                              <Chip key={tag} label={tag} size="small" variant="outlined" sx={{ height: 20 }} />
+                            ))}
+                          </Stack>
+                        )}
                       </TableCell>
                       <TableCell
                         align="right"
@@ -667,6 +676,7 @@ export function TransactionsView() {
         open={filtersOpen}
         filters={filters}
         categories={categories}
+        tags={knownTags}
         onClose={() => setFiltersOpen(false)}
         onApply={handleApplyFilters}
       />
@@ -675,6 +685,7 @@ export function TransactionsView() {
         open={formOpen && Boolean(editTarget)}
         transaction={editTarget}
         extraCategories={categories}
+        knownTags={knownTags}
         onClose={closeFormDialog}
         onSuccess={() => handleFormSuccess("edit")}
       />

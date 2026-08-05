@@ -19,6 +19,7 @@ import dayjs, { type Dayjs } from "dayjs";
 import { CategorySelectField } from "@/components/shared/ui/category-select-field";
 import { CategorySuggestionBanner } from "@/components/transactions/category-suggestion-banner";
 import { DialogShell } from "@/components/shared/ui/dialog-shell";
+import { TagInput } from "@/components/shared/ui/tag-input";
 import { useCategorySuggestion } from "@/hooks/use-category-suggestion";
 import { formFieldSx, formTextFieldProps } from "@/lib/theme/form-field";
 import { FORM_STACK_SPACING } from "@/lib/config/layout-constants";
@@ -28,6 +29,7 @@ type TransactionFormDialogProps = {
   open: boolean;
   transaction?: Transaction | null;
   extraCategories?: string[];
+  knownTags?: string[];
   onClose: () => void;
   onSuccess: () => void | Promise<void>;
 };
@@ -38,6 +40,7 @@ type FormState = {
   type: TransactionType;
   category: string;
   date: Dayjs;
+  tags: string[];
 };
 
 const emptyForm = (): FormState => ({
@@ -46,6 +49,7 @@ const emptyForm = (): FormState => ({
   type: "EXPENSE",
   category: "",
   date: dayjs(),
+  tags: [],
 });
 
 function formFromTransaction(transaction: Transaction): FormState {
@@ -55,6 +59,7 @@ function formFromTransaction(transaction: Transaction): FormState {
     type: transaction.type,
     category: transaction.category,
     date: dayjs(transaction.date),
+    tags: transaction.tags ?? [],
   };
 }
 
@@ -67,6 +72,7 @@ export function TransactionFormDialog({
   open,
   transaction,
   extraCategories = [],
+  knownTags = [],
   onClose,
   onSuccess,
 }: TransactionFormDialogProps) {
@@ -133,6 +139,7 @@ export function TransactionFormDialog({
       type: form.type,
       category: form.category.trim(),
       date: form.date.toISOString(),
+      tags: form.tags,
     };
 
     try {
@@ -263,6 +270,12 @@ export function TransactionFormDialog({
                   textFieldProps={datePickerFieldProps}
                 />
               </Box>
+
+              <TagInput
+                value={form.tags}
+                onChange={(tags) => setForm((prev) => ({ ...prev, tags }))}
+                options={knownTags}
+              />
             </Stack>
           </LocalizationProvider>
         </DialogContent>

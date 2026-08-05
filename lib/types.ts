@@ -24,6 +24,7 @@ export type Transaction = {
   type: TransactionType;
   category: string;
   date: string;
+  tags: string[];
   createdAt: string;
 };
 
@@ -35,6 +36,7 @@ export type TransactionFilters = {
   dateTo?: string;
   minAmount?: number;
   maxAmount?: number;
+  tags?: string[];
 };
 
 export type TransactionListPagination = {
@@ -47,7 +49,7 @@ export type TransactionListPagination = {
 export type TransactionListResponse = {
   data: Transaction[];
   pagination: TransactionListPagination;
-  meta: { categories: string[]; totalUnfiltered: number };
+  meta: { categories: string[]; tags: string[]; totalUnfiltered: number };
 };
 
 export type MonthlyReportCategoryRow = {
@@ -120,6 +122,7 @@ export type Budget = {
   monthlyLimit: number;
   month: number;
   year: number;
+  rolloverEnabled: boolean;
   createdAt: string;
 };
 
@@ -129,6 +132,10 @@ export type BudgetWithProgress = Budget & {
   percentUsed: number;
   isOverBudget: boolean;
   isAtRisk: boolean;
+  /** Unused (+) or overspent (-) amount carried in from last month; 0 unless rolloverEnabled. */
+  rolloverAmount: number;
+  /** monthlyLimit + rolloverAmount — the limit actually used for spent/remaining/percentUsed. */
+  effectiveLimit: number;
 };
 
 export type BudgetHealth = {
@@ -271,6 +278,17 @@ export type NetWorthDashboardData = {
   assets: Asset[];
   liabilities: Liability[];
   history: NetWorthHistoryPoint[];
+};
+
+export type Goal = {
+  id: string;
+  name: string;
+  category: string | null;
+  targetAmount: number;
+  currentAmount: number;
+  targetDate: string | null;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type DashboardDatePreset =

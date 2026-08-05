@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   parseMonthYearSearchParams,
   validateCreateBudgetBody,
+  validateUpdateBudgetBody,
 } from "@/lib/validation/budget-validation";
 import { getCurrentMonthYear } from "@/lib/domain/budget-calculations";
 
@@ -53,6 +54,65 @@ describe("validateCreateBudgetBody", () => {
       validateCreateBudgetBody({ category: "Food", monthlyLimit: 100, month: 6, year: 1999 })
         .success
     ).toBe(false);
+  });
+
+  it("defaults rolloverEnabled to false when omitted", () => {
+    const result = validateCreateBudgetBody({ category: "Food", monthlyLimit: 100 });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.rolloverEnabled).toBe(false);
+    }
+  });
+
+  it("accepts an explicit rolloverEnabled value", () => {
+    const result = validateCreateBudgetBody({
+      category: "Food",
+      monthlyLimit: 100,
+      rolloverEnabled: true,
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.rolloverEnabled).toBe(true);
+    }
+  });
+});
+
+describe("validateUpdateBudgetBody", () => {
+  it("accepts a valid update", () => {
+    const result = validateUpdateBudgetBody({ monthlyLimit: 250, rolloverEnabled: true });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toEqual({ monthlyLimit: 250, rolloverEnabled: true });
+    }
+  });
+
+  it("defaults rolloverEnabled to false when omitted", () => {
+    const result = validateUpdateBudgetBody({ monthlyLimit: 250 });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.rolloverEnabled).toBe(false);
+    }
+  });
+
+  it("rejects a non-object body", () => {
+    expect(validateUpdateBudgetBody(null).success).toBe(false);
+  });
+
+  it("rejects a non-positive monthlyLimit", () => {
+    expect(validateUpdateBudgetBody({ monthlyLimit: 0 }).success).toBe(false);
+  });
+
+  it("ignores extraneous fields like category/month/year (not editable via update)", () => {
+    const result = validateUpdateBudgetBody({
+      monthlyLimit: 250,
+      category: "Should be ignored",
+      month: 1,
+      year: 2000,
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toEqual({ monthlyLimit: 250, rolloverEnabled: false });
+    }
   });
 });
 

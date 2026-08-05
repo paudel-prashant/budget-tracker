@@ -21,12 +21,13 @@ import {
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import AutorenewOutlinedIcon from "@mui/icons-material/AutorenewOutlined";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { PageHeader } from "@/components/shared/ui/page-header";
 import { PageStack } from "@/components/shared/ui/page-stack";
 import { EmptyState } from "@/components/shared/ui/empty-state";
 import { DataTableHeadCell } from "@/components/shared/ui/data-table-head-cell";
 import { TransactionsTableSkeleton } from "@/components/shared/ui/transactions-table-skeleton";
-import { AddRecurringDialog } from "@/components/recurring/add-recurring-dialog";
+import { RecurringFormDialog } from "@/components/recurring/recurring-form-dialog";
 import { DeleteRecurringDialog } from "@/components/recurring/delete-recurring-dialog";
 import { FrequencyBadge } from "@/components/recurring/frequency-badge";
 import { useSnackbar } from "@/components/shared/providers/snackbar-provider";
@@ -42,6 +43,7 @@ export function RecurringView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<RecurringTransaction | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<RecurringTransaction | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -72,9 +74,29 @@ export function RecurringView() {
     loadRecurring();
   }, [loadRecurring]);
 
-  const handleCreateSuccess = async () => {
+  const handleFormSuccess = async () => {
+    const wasEditing = Boolean(editTarget);
     await loadRecurring();
-    showSuccess("Recurring transaction created. Due entries are generated automatically.");
+    showSuccess(
+      wasEditing
+        ? "Recurring transaction updated. Future entries use the new details."
+        : "Recurring transaction created. Due entries are generated automatically."
+    );
+  };
+
+  const handleAddClick = () => {
+    setEditTarget(null);
+    setDialogOpen(true);
+  };
+
+  const handleEditClick = (item: RecurringTransaction) => {
+    setEditTarget(item);
+    setDialogOpen(true);
+  };
+
+  const closeForm = () => {
+    setDialogOpen(false);
+    setEditTarget(null);
   };
 
   const handleConfirmDelete = async () => {
@@ -118,7 +140,7 @@ export function RecurringView() {
           <Button
             variant="contained"
             startIcon={<AddOutlinedIcon />}
-            onClick={() => setDialogOpen(true)}
+            onClick={handleAddClick}
             fullWidth={isMobile}
             sx={{ minWidth: { sm: 200 } }}
           >
@@ -149,7 +171,7 @@ export function RecurringView() {
             title="No recurring transactions"
             description="Set up repeating income or expenses—like rent, salary, or subscriptions."
             actionLabel="Add Recurring"
-            onAction={() => setDialogOpen(true)}
+            onAction={handleAddClick}
           />
         ) : (
           <TableContainer sx={{ width: "100%", overflowX: "auto" }}>
@@ -201,6 +223,18 @@ export function RecurringView() {
                       {item.endDate ? formatDate(item.endDate) : "—"}
                     </TableCell>
                     <TableCell align="right">
+                      <Tooltip title="Edit recurring transaction">
+                        <span>
+                          <IconButton
+                            size="small"
+                            disabled={deleting && deleteTarget?.id === item.id}
+                            onClick={() => handleEditClick(item)}
+                            aria-label={`Edit ${item.title}`}
+                          >
+                            <EditOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
                       <Tooltip title="Delete recurring transaction">
                         <span>
                           <IconButton
@@ -223,11 +257,12 @@ export function RecurringView() {
         )}
       </Paper>
 
-      <AddRecurringDialog
+      <RecurringFormDialog
         open={dialogOpen}
+        recurring={editTarget}
         extraCategories={knownCategories}
-        onClose={() => setDialogOpen(false)}
-        onSuccess={handleCreateSuccess}
+        onClose={closeForm}
+        onSuccess={handleFormSuccess}
       />
 
       <DeleteRecurringDialog

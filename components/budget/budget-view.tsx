@@ -15,7 +15,7 @@ import { PageStack } from "@/components/shared/ui/page-stack";
 import { ResponsiveColumns } from "@/components/shared/ui/responsive-columns";
 import { EmptyState } from "@/components/shared/ui/empty-state";
 import { BudgetCard } from "@/components/budget/budget-card";
-import { AddBudgetDialog } from "@/components/budget/add-budget-dialog";
+import { BudgetFormDialog } from "@/components/budget/budget-form-dialog";
 import { DeleteBudgetDialog } from "@/components/budget/delete-budget-dialog";
 import { useSnackbar } from "@/components/shared/providers/snackbar-provider";
 import { getCurrentMonthYear } from "@/lib/domain/budget-calculations";
@@ -36,6 +36,7 @@ export function BudgetView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<BudgetWithProgress | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<BudgetWithProgress | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -66,9 +67,25 @@ export function BudgetView() {
     loadBudgets();
   }, [loadBudgets]);
 
-  const handleCreateSuccess = async () => {
+  const handleFormSuccess = async () => {
+    const wasEditing = Boolean(editTarget);
     await loadBudgets();
-    showSuccess("Budget created successfully");
+    showSuccess(wasEditing ? "Budget updated successfully" : "Budget created successfully");
+  };
+
+  const handleAddClick = () => {
+    setEditTarget(null);
+    setDialogOpen(true);
+  };
+
+  const handleEditClick = (budget: BudgetWithProgress) => {
+    setEditTarget(budget);
+    setDialogOpen(true);
+  };
+
+  const closeForm = () => {
+    setDialogOpen(false);
+    setEditTarget(null);
   };
 
   const handleConfirmDelete = async () => {
@@ -110,7 +127,7 @@ export function BudgetView() {
           <Button
             variant="contained"
             startIcon={<AddOutlinedIcon />}
-            onClick={() => setDialogOpen(true)}
+            onClick={handleAddClick}
             sx={{ alignSelf: { xs: "stretch", sm: "flex-start" } }}
           >
             Add Budget
@@ -136,12 +153,17 @@ export function BudgetView() {
           title="No budgets yet"
           description="Set monthly limits by category to track spending and stay on target."
           actionLabel="Add Budget"
-          onAction={() => setDialogOpen(true)}
+          onAction={handleAddClick}
         />
       ) : (
         <ResponsiveColumns columns={{ xs: 1, sm: 2, md: 3 }}>
           {budgets.map((budget) => (
-            <BudgetCard key={budget.id} budget={budget} onDelete={setDeleteTarget} />
+            <BudgetCard
+              key={budget.id}
+              budget={budget}
+              onEdit={handleEditClick}
+              onDelete={setDeleteTarget}
+            />
           ))}
         </ResponsiveColumns>
       )}
@@ -153,11 +175,12 @@ export function BudgetView() {
         </Typography>
       </Box>
 
-      <AddBudgetDialog
+      <BudgetFormDialog
         open={dialogOpen}
+        budget={editTarget}
         extraCategories={knownCategories}
-        onClose={() => setDialogOpen(false)}
-        onSuccess={handleCreateSuccess}
+        onClose={closeForm}
+        onSuccess={handleFormSuccess}
       />
 
       <DeleteBudgetDialog

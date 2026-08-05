@@ -9,6 +9,7 @@ export async function buildTransactionWriteData(
     type: "INCOME" | "EXPENSE";
     category: string;
     date: Date;
+    tags?: string[];
   }
 ) {
   const preferredCurrency = await getUserPreferredCurrency(userId);
@@ -28,5 +29,6 @@ export async function buildTransactionWriteData(
     type: input.type,
     category: input.category,
     date: input.date,
+    tags: input.tags ?? [],
   };
 }

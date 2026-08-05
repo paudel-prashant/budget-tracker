@@ -108,6 +108,17 @@ function buildFilterChips(
     );
   }
 
+  if (filters.tags && filters.tags.length > 0) {
+    chips.push(
+      <Chip
+        key="tags"
+        label={`Tags: ${filters.tags.join(", ")}`}
+        size="small"
+        onDelete={() => onRemove("tags")}
+      />
+    );
+  }
+
   return chips;
 }
 

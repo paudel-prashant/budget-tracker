@@ -21,49 +21,72 @@ import dayjs, { type Dayjs } from "dayjs";
 import { CategorySelectField } from "@/components/shared/ui/category-select-field";
 import { formFieldSx, formTextFieldProps } from "@/lib/theme/form-field";
 import { FORM_STACK_SPACING } from "@/lib/config/layout-constants";
-import type { RecurrenceFrequency, TransactionType } from "@/lib/types";
+import type { RecurrenceFrequency, RecurringTransaction, TransactionType } from "@/lib/types";
 
-type AddRecurringDialogProps = {
+type RecurringFormDialogProps = {
   open: boolean;
+  recurring?: RecurringTransaction | null;
   extraCategories?: string[];
   onClose: () => void;
   onSuccess: () => void | Promise<void>;
 };
 
-const initialForm = {
+type FormState = {
+  title: string;
+  amount: string;
+  type: TransactionType;
+  category: string;
+  frequency: RecurrenceFrequency;
+  startDate: Dayjs;
+  endDate: Dayjs | null;
+};
+
+const emptyForm = (): FormState => ({
   title: "",
   amount: "",
-  type: "EXPENSE" as TransactionType,
+  type: "EXPENSE",
   category: "",
-  frequency: "MONTHLY" as RecurrenceFrequency,
+  frequency: "MONTHLY",
   startDate: dayjs(),
-  endDate: null as Dayjs | null,
-};
+  endDate: null,
+});
+
+function formFromRecurring(recurring: RecurringTransaction): FormState {
+  return {
+    title: recurring.title,
+    amount: String(recurring.amount),
+    type: recurring.type,
+    category: recurring.category,
+    frequency: recurring.frequency,
+    startDate: dayjs(recurring.startDate),
+    endDate: recurring.endDate ? dayjs(recurring.endDate) : null,
+  };
+}
 
 const datePickerFieldProps = {
   ...formTextFieldProps,
 };
 
-export function AddRecurringDialog({
+export function RecurringFormDialog({
   open,
+  recurring,
   extraCategories = [],
   onClose,
   onSuccess,
-}: AddRecurringDialogProps) {
-  const [form, setForm] = useState(initialForm);
+}: RecurringFormDialogProps) {
+  const isEdit = Boolean(recurring);
+  const [form, setForm] = useState<FormState>(emptyForm);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (open) {
-      setForm({ ...initialForm, startDate: dayjs() });
-      setError(null);
-    }
-  }, [open]);
+    if (!open) return;
+    setForm(recurring ? formFromRecurring(recurring) : emptyForm());
+    setError(null);
+  }, [open, recurring]);
 
   const handleClose = () => {
     if (submitting) return;
-    setForm(initialForm);
     setError(null);
     onClose();
   };
@@ -86,33 +109,44 @@ export function AddRecurringDialog({
       return;
     }
 
+    const payload = {
+      title: form.title.trim(),
+      amount,
+      type: form.type,
+      category: form.category.trim(),
+      frequency: form.frequency,
+      startDate: form.startDate.startOf("day").toISOString(),
+      endDate: form.endDate ? form.endDate.startOf("day").toISOString() : null,
+    };
+
     try {
-      const response = await fetch("/api/recurring-transactions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: form.title.trim(),
-          amount,
-          type: form.type,
-          category: form.category.trim(),
-          frequency: form.frequency,
-          startDate: form.startDate.startOf("day").toISOString(),
-          endDate: form.endDate ? form.endDate.startOf("day").toISOString() : null,
-        }),
-      });
+      const response = await fetch(
+        isEdit ? `/api/recurring-transactions/${recurring!.id}` : "/api/recurring-transactions",
+        {
+          method: isEdit ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error ?? "Failed to create recurring transaction");
+        throw new Error(
+          data.error ??
+            (isEdit ? "Failed to update recurring transaction" : "Failed to create recurring transaction")
+        );
       }
 
-      setForm(initialForm);
       await onSuccess();
       onClose();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to create recurring transaction"
+        err instanceof Error
+          ? err.message
+          : isEdit
+            ? "Failed to update recurring transaction"
+            : "Failed to create recurring transaction"
       );
     } finally {
       setSubmitting(false);
@@ -129,11 +163,17 @@ export function AddRecurringDialog({
       sx={{ "& .MuiDialog-paper": { m: { xs: 2, sm: 3 } } }}
     >
       <form onSubmit={handleSubmit}>
-        <DialogTitle>Add Recurring Transaction</DialogTitle>
+        <DialogTitle>{isEdit ? "Edit Recurring Transaction" : "Add Recurring Transaction"}</DialogTitle>
         <DialogContent dividers sx={{ overflow: "visible" }}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <Stack spacing={FORM_STACK_SPACING} sx={{ py: 1 }}>
               {error && <Alert severity="error">{error}</Alert>}
+              {isEdit && (
+                <Alert severity="info" variant="outlined">
+                  Changes only apply going forward — transactions already generated from this
+                  keep the amount they were created with.
+                </Alert>
+              )}
 
               <TextField
                 {...formTextFieldProps}
@@ -248,7 +288,7 @@ export function AddRecurringDialog({
               ) : undefined
             }
           >
-            {submitting ? "Saving..." : "Add Recurring"}
+            {submitting ? "Saving..." : isEdit ? "Save Changes" : "Add Recurring"}
           </Button>
         </DialogActions>
       </form>

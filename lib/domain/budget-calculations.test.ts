@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   computeBudgetHealth,
   computeBudgetProgress,
+  computeRolloverAmount,
   getCurrentMonthYear,
   getMonthDateRange,
+  getPreviousMonthYear,
   getProgressBarColor,
   getProgressBarValue,
   isValidMonthYear,
@@ -136,6 +138,38 @@ describe("getProgressBarColor", () => {
 
   it("returns success below the at-risk threshold", () => {
     expect(getProgressBarColor(79.9, false)).toBe("success");
+  });
+});
+
+describe("getPreviousMonthYear", () => {
+  it("returns the prior month within the same year", () => {
+    expect(getPreviousMonthYear(6, 2026)).toEqual({ month: 5, year: 2026 });
+  });
+
+  it("rolls January back to December of the previous year", () => {
+    expect(getPreviousMonthYear(1, 2026)).toEqual({ month: 12, year: 2025 });
+  });
+});
+
+describe("computeRolloverAmount", () => {
+  it("returns 0 when rollover is disabled, even with a previous budget", () => {
+    expect(computeRolloverAmount({ monthlyLimit: 100, spent: 40 }, false)).toBe(0);
+  });
+
+  it("returns 0 when there is no previous budget, even when enabled", () => {
+    expect(computeRolloverAmount(null, true)).toBe(0);
+  });
+
+  it("returns the unused amount as a positive carry-forward", () => {
+    expect(computeRolloverAmount({ monthlyLimit: 100, spent: 40 }, true)).toBe(60);
+  });
+
+  it("returns a negative amount when the previous month was overspent", () => {
+    expect(computeRolloverAmount({ monthlyLimit: 100, spent: 130 }, true)).toBe(-30);
+  });
+
+  it("rounds to 2 decimal places", () => {
+    expect(computeRolloverAmount({ monthlyLimit: 100.005, spent: 33.333 }, true)).toBeCloseTo(66.67, 2);
   });
 });
 

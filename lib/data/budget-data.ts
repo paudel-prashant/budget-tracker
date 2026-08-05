@@ -2,12 +2,18 @@ import { TransactionType } from "@prisma/client";
 import {
   computeBudgetHealth,
   computeBudgetProgress,
+  computeRolloverAmount,
   getCurrentMonthYear,
   getMonthDateRange,
+  getPreviousMonthYear,
 } from "@/lib/domain/budget-calculations";
 import { assertDatabaseUrl } from "@/lib/config/env";
 import { prisma } from "@/lib/db/prisma";
 import type { Budget, BudgetHealth, BudgetWithProgress } from "@/lib/types";
+
+function roundMoney(value: number): number {
+  return Math.round(value * 100) / 100;
+}
 
 function serializeBudget(budget: {
   id: string;
@@ -15,6 +21,7 @@ function serializeBudget(budget: {
   monthlyLimit: number;
   month: number;
   year: number;
+  rolloverEnabled: boolean;
   createdAt: Date;
 }): Budget {
   return {
@@ -23,6 +30,7 @@ function serializeBudget(budget: {
     monthlyLimit: budget.monthlyLimit,
     month: budget.month,
     year: budget.year,
+    rolloverEnabled: budget.rolloverEnabled,
     createdAt: budget.createdAt.toISOString(),
   };
 }
@@ -66,13 +74,45 @@ export async function getBudgetsWithProgress(
     getSpentByCategoryForMonth(userId, month, year),
   ]);
 
+  // Only budgets with rollover enabled need last month's data — skip the extra
+  // queries entirely when nobody's using it.
+  const rolloverCategories = budgets.filter((b) => b.rolloverEnabled).map((b) => b.category);
+  const previousByCategory = new Map<string, { monthlyLimit: number; spent: number }>();
+
+  if (rolloverCategories.length > 0) {
+    const previous = getPreviousMonthYear(month, year);
+    const [previousBudgets, previousSpentByCategory] = await Promise.all([
+      prisma.budget.findMany({
+        where: {
+          userId,
+          month: previous.month,
+          year: previous.year,
+          category: { in: rolloverCategories },
+        },
+      }),
+      getSpentByCategoryForMonth(userId, previous.month, previous.year),
+    ]);
+
+    for (const previousBudget of previousBudgets) {
+      previousByCategory.set(previousBudget.category, {
+        monthlyLimit: previousBudget.monthlyLimit,
+        spent: previousSpentByCategory.get(previousBudget.category) ?? 0,
+      });
+    }
+  }
+
   return budgets.map((budget) => {
     const spent = spentByCategory.get(budget.category) ?? 0;
-    const progress = computeBudgetProgress(budget.monthlyLimit, spent);
+    const previous = previousByCategory.get(budget.category) ?? null;
+    const rolloverAmount = computeRolloverAmount(previous, budget.rolloverEnabled);
+    const effectiveLimit = roundMoney(budget.monthlyLimit + rolloverAmount);
+    const progress = computeBudgetProgress(effectiveLimit, spent);
 
     return {
       ...serializeBudget(budget),
       ...progress,
+      rolloverAmount,
+      effectiveLimit,
     };
   });
 }

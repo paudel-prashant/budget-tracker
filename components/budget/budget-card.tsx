@@ -12,6 +12,7 @@ import {
   useTheme,
 } from "@mui/material";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import {
   getProgressBarColor,
   getProgressBarValue,
@@ -23,10 +24,11 @@ import type { BudgetWithProgress } from "@/lib/types";
 
 type BudgetCardProps = {
   budget: BudgetWithProgress;
+  onEdit: (budget: BudgetWithProgress) => void;
   onDelete: (budget: BudgetWithProgress) => void;
 };
 
-export function BudgetCard({ budget, onDelete }: BudgetCardProps) {
+export function BudgetCard({ budget, onEdit, onDelete }: BudgetCardProps) {
   const theme = useTheme();
   const progressColor = getProgressBarColor(budget.percentUsed, budget.isOverBudget);
   const progressValue = getProgressBarValue(budget.percentUsed);
@@ -73,6 +75,16 @@ export function BudgetCard({ budget, onDelete }: BudgetCardProps) {
         </Box>
         <Stack direction="row" alignItems="center" spacing={0.5}>
           <Chip label={statusLabel} color={statusColor} size="small" variant="outlined" />
+          <Tooltip title="Edit budget">
+            <IconButton
+              size="small"
+              aria-label={`Edit ${budget.category} budget`}
+              onClick={() => onEdit(budget)}
+              sx={{ color: "text.secondary" }}
+            >
+              <EditOutlinedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
           <Tooltip title="Delete budget">
             <IconButton
               size="small"
@@ -85,6 +97,18 @@ export function BudgetCard({ budget, onDelete }: BudgetCardProps) {
           </Tooltip>
         </Stack>
       </Stack>
+
+      {budget.rolloverEnabled && budget.rolloverAmount !== 0 && (
+        <Typography
+          variant="caption"
+          sx={{ mt: 1, display: "block", fontWeight: 600 }}
+          color={budget.rolloverAmount >= 0 ? "success.main" : "error.main"}
+        >
+          {budget.rolloverAmount >= 0
+            ? `+${formatCurrency(budget.rolloverAmount)} rolled over from last month`
+            : `${formatCurrency(budget.rolloverAmount)} carried over (overspent last month)`}
+        </Typography>
+      )}
 
       <Box sx={{ mt: 3, mb: 1.5 }}>
         <Stack direction="row" justifyContent="space-between" sx={{ mb: 1 }}>

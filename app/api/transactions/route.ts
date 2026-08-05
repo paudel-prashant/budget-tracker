@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { assertDatabaseUrl } from "@/lib/config/env";
 import { prisma } from "@/lib/db/prisma";
 import { requireApiUserId } from "@/lib/auth/api-auth";
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
 
     const userScope = { userId: auth.userId };
 
-    const [total, rows, categoryRows, totalUnfiltered] = await Promise.all([
+    const [total, rows, categoryRows, tagRows, totalUnfiltered] = await Promise.all([
       prisma.transaction.count({ where }),
       prisma.transaction.findMany({
         where,
@@ -51,6 +52,14 @@ export async function GET(request: NextRequest) {
         select: { category: true },
         orderBy: { category: "asc" },
       }),
+      // `tags` is a Postgres array column — Prisma's `distinct` can't unnest it,
+      // so distinct tag *values* need a raw query.
+      prisma.$queryRaw<Array<{ tag: string }>>(Prisma.sql`
+        SELECT DISTINCT unnest("tags") AS tag
+        FROM "Transaction"
+        WHERE "userId" = ${auth.userId}
+        ORDER BY tag ASC
+      `),
       prisma.transaction.count({ where: userScope }),
     ]);
 
@@ -66,6 +75,7 @@ export async function GET(request: NextRequest) {
       },
       meta: {
         categories: categoryRows.map((row) => row.category),
+        tags: tagRows.map((row) => row.tag),
         totalUnfiltered,
       },
     });

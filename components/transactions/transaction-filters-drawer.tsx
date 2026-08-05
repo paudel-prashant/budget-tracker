@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import {
+  Autocomplete,
   Box,
   Button,
   Chip,
@@ -40,6 +41,7 @@ type DraftFilters = {
   dateTo: Dayjs | null;
   minAmount: string;
   maxAmount: string;
+  tags: string[];
 };
 
 const emptyDraft = (): DraftFilters => ({
@@ -49,6 +51,7 @@ const emptyDraft = (): DraftFilters => ({
   dateTo: null,
   minAmount: "",
   maxAmount: "",
+  tags: [],
 });
 
 function draftFromFilters(filters: TransactionFilters): DraftFilters {
@@ -59,6 +62,7 @@ function draftFromFilters(filters: TransactionFilters): DraftFilters {
     dateTo: filters.dateTo ? dayjs(filters.dateTo) : null,
     minAmount: filters.minAmount !== undefined ? String(filters.minAmount) : "",
     maxAmount: filters.maxAmount !== undefined ? String(filters.maxAmount) : "",
+    tags: filters.tags ?? [],
   };
 }
 
@@ -73,6 +77,7 @@ function filtersFromDraft(draft: DraftFilters): TransactionFilters {
     dateTo: draft.dateTo?.endOf("day").toISOString(),
     minAmount: min !== undefined && Number.isFinite(min) ? min : undefined,
     maxAmount: max !== undefined && Number.isFinite(max) ? max : undefined,
+    tags: draft.tags.length > 0 ? draft.tags : undefined,
   };
 }
 
@@ -80,6 +85,7 @@ type TransactionFiltersDrawerProps = {
   open: boolean;
   filters: TransactionFilters;
   categories: string[];
+  tags?: string[];
   onClose: () => void;
   onApply: (filters: TransactionFilters) => void;
 };
@@ -88,6 +94,7 @@ export function TransactionFiltersDrawer({
   open,
   filters,
   categories,
+  tags = [],
   onClose,
   onApply,
 }: TransactionFiltersDrawerProps) {
@@ -262,6 +269,27 @@ export function TransactionFiltersDrawer({
               ...formTextFieldProps.slotProps,
               htmlInput: { min: 0, step: "0.01" },
             }}
+          />
+
+          <Autocomplete
+            multiple
+            options={tags}
+            value={draft.tags}
+            onChange={(_event, next) => setDraft((prev) => ({ ...prev, tags: next }))}
+            renderTags={(selected, getTagProps) =>
+              selected.map((tag, index) => {
+                const { key, ...chipProps } = getTagProps({ index });
+                return <Chip key={key} label={tag} size="small" {...chipProps} />;
+              })
+            }
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                {...formTextFieldProps}
+                label="Tags"
+                placeholder={draft.tags.length === 0 ? "Any tag matches" : undefined}
+              />
+            )}
           />
         </Stack>
       </LocalizationProvider>

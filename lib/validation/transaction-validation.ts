@@ -10,7 +10,24 @@ export type CreateTransactionInput = {
   type: TransactionType;
   category: string;
   date: Date;
+  tags: string[];
 };
+
+const MAX_TAGS = 10;
+const MAX_TAG_LENGTH = 30;
+
+/** Lowercased + de-duplicated so "Work" and "work" collapse to one filterable tag. */
+function normalizeTags(tags: string[]): string[] {
+  const seen = new Set<string>();
+  const normalized: string[] = [];
+  for (const tag of tags) {
+    const clean = tag.trim().toLowerCase();
+    if (!clean || seen.has(clean)) continue;
+    seen.add(clean);
+    normalized.push(clean);
+  }
+  return normalized;
+}
 
 // Field order mirrors the original hand-written checks (title, amount, type,
 // category, date, currency) so the first reported issue matches what callers
@@ -28,6 +45,10 @@ const transactionSchema = z.object({
   currency: z
     .string()
     .refine(isSupportedCurrency, { message: "currency must be a supported ISO currency code" })
+    .optional(),
+  tags: z
+    .array(z.string().trim().min(1).max(MAX_TAG_LENGTH, `tags must be ${MAX_TAG_LENGTH} characters or fewer`))
+    .max(MAX_TAGS, `no more than ${MAX_TAGS} tags per transaction`)
     .optional(),
 });
 
@@ -50,6 +71,7 @@ export function validateTransactionBody(body: unknown): ValidationResult<CreateT
       type: parsed.data.type,
       category: parsed.data.category,
       date: new Date(parsed.data.date),
+      tags: normalizeTags(parsed.data.tags ?? []),
     },
   };
 }

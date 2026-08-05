@@ -77,4 +77,38 @@ describe("validateTransactionBody", () => {
       expect(result.data.currency).toBeUndefined();
     }
   });
+
+  it("defaults tags to an empty array when omitted", () => {
+    const result = validateTransactionBody(validBody);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.tags).toEqual([]);
+    }
+  });
+
+  it("trims, lowercases, and de-duplicates tags", () => {
+    const result = validateTransactionBody({ ...validBody, tags: ["  Work  ", "work", "Urgent"] });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.tags).toEqual(["work", "urgent"]);
+    }
+  });
+
+  it("rejects a whitespace-only tag rather than silently dropping it", () => {
+    const result = validateTransactionBody({ ...validBody, tags: ["work", "   "] });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects more than 10 tags", () => {
+    const tags = Array.from({ length: 11 }, (_, i) => `tag${i}`);
+    expect(validateTransactionBody({ ...validBody, tags }).success).toBe(false);
+  });
+
+  it("rejects a tag over 30 characters", () => {
+    expect(validateTransactionBody({ ...validBody, tags: ["a".repeat(31)] }).success).toBe(false);
+  });
+
+  it("accepts a tag at exactly 30 characters", () => {
+    expect(validateTransactionBody({ ...validBody, tags: ["a".repeat(30)] }).success).toBe(true);
+  });
 });
