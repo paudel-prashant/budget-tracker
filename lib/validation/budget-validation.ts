@@ -1,4 +1,6 @@
+import { z } from "zod";
 import { getCurrentMonthYear, isValidMonthYear } from "@/lib/domain/budget-calculations";
+import { toValidationResult, type ValidationResult } from "@/lib/validation/zod-helpers";
 
 export type CreateBudgetInput = {
   category: string;
@@ -7,42 +9,31 @@ export type CreateBudgetInput = {
   year: number;
 };
 
-type ValidationResult =
-  | { success: true; data: CreateBudgetInput }
-  | { success: false; error: string };
+const budgetFieldsSchema = z.object({
+  category: z.string().trim().min(1, "category is required and must be a non-empty string"),
+  monthlyLimit: z
+    .number()
+    .finite()
+    .positive("monthlyLimit is required and must be a positive number"),
+  // month/year default to the current calendar month/year when omitted (resolved below,
+  // since the default is computed at request time, not a fixed value).
+  month: z.number().optional(),
+  year: z.number().optional(),
+});
 
-export function validateCreateBudgetBody(body: unknown): ValidationResult {
+export function validateCreateBudgetBody(body: unknown): ValidationResult<CreateBudgetInput> {
   if (!body || typeof body !== "object") {
     return { success: false, error: "Request body must be a JSON object" };
   }
 
-  const { category, monthlyLimit, month, year } = body as Record<string, unknown>;
+  const parsed = toValidationResult(budgetFieldsSchema.safeParse(body));
+  if (!parsed.success) {
+    return parsed;
+  }
+
   const defaults = getCurrentMonthYear();
-
-  if (typeof category !== "string" || category.trim().length === 0) {
-    return {
-      success: false,
-      error: "category is required and must be a non-empty string",
-    };
-  }
-
-  if (
-    typeof monthlyLimit !== "number" ||
-    !Number.isFinite(monthlyLimit) ||
-    monthlyLimit <= 0
-  ) {
-    return {
-      success: false,
-      error: "monthlyLimit is required and must be a positive number",
-    };
-  }
-
-  const resolvedMonth = month === undefined ? defaults.month : month;
-  const resolvedYear = year === undefined ? defaults.year : year;
-
-  if (typeof resolvedMonth !== "number" || typeof resolvedYear !== "number") {
-    return { success: false, error: "month and year must be numbers when provided" };
-  }
+  const resolvedMonth = parsed.data.month ?? defaults.month;
+  const resolvedYear = parsed.data.year ?? defaults.year;
 
   if (!isValidMonthYear(resolvedMonth, resolvedYear)) {
     return { success: false, error: "month must be 1–12 and year must be between 2000 and 2100" };
@@ -51,8 +42,8 @@ export function validateCreateBudgetBody(body: unknown): ValidationResult {
   return {
     success: true,
     data: {
-      category: category.trim(),
-      monthlyLimit,
+      category: parsed.data.category,
+      monthlyLimit: parsed.data.monthlyLimit,
       month: resolvedMonth,
       year: resolvedYear,
     },

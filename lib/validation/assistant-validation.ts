@@ -1,25 +1,18 @@
-type ValidationResult<T> =
-  | { success: true; data: T }
-  | { success: false; error: string };
+import { z } from "zod";
+import { toValidationResult, type ValidationResult } from "@/lib/validation/zod-helpers";
+
+const assistantMessageSchema = z.object({
+  message: z
+    .string("message is required")
+    .trim()
+    .min(1, "message cannot be empty")
+    .max(500, "message must be 500 characters or fewer"),
+});
 
 export function validateAssistantBody(body: unknown): ValidationResult<{ message: string }> {
   if (!body || typeof body !== "object") {
     return { success: false, error: "Invalid request body" };
   }
 
-  const record = body as Record<string, unknown>;
-  if (typeof record.message !== "string") {
-    return { success: false, error: "message is required" };
-  }
-
-  const trimmed = record.message.trim();
-  if (!trimmed) {
-    return { success: false, error: "message cannot be empty" };
-  }
-
-  if (trimmed.length > 500) {
-    return { success: false, error: "message must be 500 characters or fewer" };
-  }
-
-  return { success: true, data: { message: trimmed } };
+  return toValidationResult(assistantMessageSchema.safeParse(body));
 }

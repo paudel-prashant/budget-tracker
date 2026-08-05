@@ -1,5 +1,7 @@
+import { z } from "zod";
 import { TransactionType } from "@prisma/client";
 import { isSupportedCurrency, normalizeCurrencyCode } from "@/lib/currency/constants";
+import { toValidationResult, type ValidationResult } from "@/lib/validation/zod-helpers";
 
 export type CreateTransactionInput = {
   title: string;
@@ -10,61 +12,44 @@ export type CreateTransactionInput = {
   date: Date;
 };
 
-type ValidationResult =
-  | { success: true; data: CreateTransactionInput }
-  | { success: false; error: string };
+// Field order mirrors the original hand-written checks (title, amount, type,
+// category, date, currency) so the first reported issue matches what callers
+// saw before this was Zod-backed.
+const transactionSchema = z.object({
+  title: z.string().trim().min(1, "title is required and must be a non-empty string"),
+  amount: z.number().finite().positive("amount is required and must be a positive number"),
+  type: z.nativeEnum(TransactionType, { message: "type must be INCOME or EXPENSE" }),
+  category: z.string().trim().min(1, "category is required and must be a non-empty string"),
+  date: z
+    .string()
+    .refine((value) => !Number.isNaN(Date.parse(value)), {
+      message: "date is required and must be a valid ISO date string",
+    }),
+  currency: z
+    .string()
+    .refine(isSupportedCurrency, { message: "currency must be a supported ISO currency code" })
+    .optional(),
+});
 
-export function validateTransactionBody(body: unknown): ValidationResult {
+export function validateTransactionBody(body: unknown): ValidationResult<CreateTransactionInput> {
   if (!body || typeof body !== "object") {
     return { success: false, error: "Request body must be a JSON object" };
   }
 
-  const { title, amount, currency, type, category, date } = body as Record<string, unknown>;
-
-  if (typeof title !== "string" || title.trim().length === 0) {
-    return { success: false, error: "title is required and must be a non-empty string" };
-  }
-
-  if (typeof amount !== "number" || !Number.isFinite(amount) || amount <= 0) {
-    return {
-      success: false,
-      error: "amount is required and must be a positive number",
-    };
-  }
-
-  if (type !== TransactionType.INCOME && type !== TransactionType.EXPENSE) {
-    return { success: false, error: "type must be INCOME or EXPENSE" };
-  }
-
-  if (typeof category !== "string" || category.trim().length === 0) {
-    return {
-      success: false,
-      error: "category is required and must be a non-empty string",
-    };
-  }
-
-  if (typeof date !== "string" || Number.isNaN(Date.parse(date))) {
-    return {
-      success: false,
-      error: "date is required and must be a valid ISO date string",
-    };
-  }
-
-  if (currency !== undefined) {
-    if (typeof currency !== "string" || !isSupportedCurrency(currency)) {
-      return { success: false, error: "currency must be a supported ISO currency code" };
-    }
+  const parsed = toValidationResult(transactionSchema.safeParse(body));
+  if (!parsed.success) {
+    return parsed;
   }
 
   return {
     success: true,
     data: {
-      title: title.trim(),
-      amount,
-      currency: currency ? normalizeCurrencyCode(currency) : undefined,
-      type,
-      category: category.trim(),
-      date: new Date(date),
+      title: parsed.data.title,
+      amount: parsed.data.amount,
+      currency: parsed.data.currency ? normalizeCurrencyCode(parsed.data.currency) : undefined,
+      type: parsed.data.type,
+      category: parsed.data.category,
+      date: new Date(parsed.data.date),
     },
   };
 }

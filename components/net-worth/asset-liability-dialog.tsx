@@ -18,7 +18,7 @@ import { FORM_STACK_SPACING } from "@/lib/config/layout-constants";
 import {
   ASSET_CATEGORIES,
   LIABILITY_CATEGORIES,
-} from "@/lib/validation/net-worth-validation";
+} from "@/lib/domain/net-worth-categories";
 import type { Asset, Liability } from "@/lib/types";
 
 type ItemKind = "asset" | "liability";

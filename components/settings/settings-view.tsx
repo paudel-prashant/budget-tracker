@@ -4,6 +4,7 @@ import { PageStack } from "@/components/shared/ui/page-stack";
 import { SurfaceCard } from "@/components/shared/ui/surface-card";
 import { ImportExportSection } from "@/components/settings/import-export-section";
 import { CurrencySettingsSection } from "@/components/settings/currency-settings-section";
+import { DangerZoneSection } from "@/components/settings/danger-zone-section";
 import { CARD_PADDING } from "@/lib/config/layout-constants";
 
 export function SettingsView() {
@@ -33,6 +34,7 @@ export function SettingsView() {
               Email and push notification settings coming soon.
             </Typography>
           </Stack>
+          <DangerZoneSection />
         </Stack>
       </SurfaceCard>
     </PageStack>

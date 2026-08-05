@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
+import { reportError } from "@/lib/utils/logger";
 
 export function jsonError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
@@ -25,7 +26,7 @@ export function handleApiError(error: unknown) {
   }
 
   if (error instanceof Prisma.PrismaClientInitializationError) {
-    console.error("[API Error] Database connection failed:", error.message);
+    reportError("Database connection failed", error, { scope: "api" });
     return jsonError(
       "Database is unavailable. Check DATABASE_URL and Postgres configuration.",
       503
@@ -36,6 +37,6 @@ export function handleApiError(error: unknown) {
     return jsonError(error.message, 503);
   }
 
-  console.error("[API Error]", error);
+  reportError("Unhandled API error", error, { scope: "api" });
   return jsonError("Internal server error", 500);
 }
