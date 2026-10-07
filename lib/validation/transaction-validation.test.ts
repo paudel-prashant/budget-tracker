@@ -112,3 +112,57 @@ describe("validateTransactionBody", () => {
     expect(validateTransactionBody({ ...validBody, tags: ["a".repeat(30)] }).success).toBe(true);
   });
 });
+
+describe("validateTransactionBody splits", () => {
+  const splitBody = {
+    ...validBody,
+    amount: 160,
+    splits: [
+      { category: "Food", amount: 120.1 },
+      { category: "Household", amount: 39.9 },
+    ],
+  };
+
+  it("accepts parts that add up to the total (to the cent, despite float noise)", () => {
+    const result = validateTransactionBody(splitBody);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.splits).toEqual(splitBody.splits);
+    }
+  });
+
+  it("rejects parts that don't add up to the total", () => {
+    const result = validateTransactionBody({ ...splitBody, amount: 161 });
+    expect(result).toEqual({
+      success: false,
+      error: "split amounts must add up to the transaction amount",
+    });
+  });
+
+  it("requires at least two parts", () => {
+    const result = validateTransactionBody({
+      ...validBody,
+      splits: [{ category: "Food", amount: 42.5 }],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a part without a category", () => {
+    const result = validateTransactionBody({
+      ...splitBody,
+      splits: [
+        { category: " ", amount: 120.1 },
+        { category: "Household", amount: 39.9 },
+      ],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("passes an explicit account through", () => {
+    const result = validateTransactionBody({ ...validBody, financeAccountId: "acct-2" });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.financeAccountId).toBe("acct-2");
+    }
+  });
+});

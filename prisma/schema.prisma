@@ -29,24 +29,32 @@ enum FinanceAccountType {
 }
 
 model User {
-  id                    String                 @id @default(cuid())
-  name                  String?
-  email                 String?                @unique
-  emailVerified         DateTime?
-  image                 String?
-  preferredCurrency     String                 @default("CAD")
-  accounts              Account[]
-  sessions              Session[]
-  transactions          Transaction[]
-  budgets               Budget[]
-  recurringTransactions RecurringTransaction[]
-  categoryMappings      CategoryMapping[]
-  assets                Asset[]
-  liabilities           Liability[]
-  netWorthSnapshots     NetWorthSnapshot[]
-  dashboardLayout       DashboardLayout?
-  financeAccounts       FinanceAccount[]
-  goals                 Goal[]
+  id                     String                 @id @default(cuid())
+  name                   String?
+  email                  String?                @unique
+  emailVerified          DateTime?
+  image                  String?
+  preferredCurrency      String                 @default("CAD")
+  /// Start each month with the most recent month's budgets when it has none.
+  budgetCarryOverEnabled Boolean                @default(true)
+  /// "YYYY-MM" of the last month carry-over ran for, so it runs at most once per month
+  /// (a user who deletes a carried-over budget doesn't get it recreated).
+  budgetCarryOverMonth   String?
+  budgetAlertsEnabled    Boolean                @default(true)
+  accounts               Account[]
+  sessions               Session[]
+  transactions           Transaction[]
+  budgets                Budget[]
+  recurringTransactions  RecurringTransaction[]
+  categoryMappings       CategoryMapping[]
+  assets                 Asset[]
+  liabilities            Liability[]
+  netWorthSnapshots      NetWorthSnapshot[]
+  dashboardLayout        DashboardLayout?
+  financeAccounts        FinanceAccount[]
+  goals                  Goal[]
+  transfers              Transfer[]
+  pushSubscriptions      PushSubscription[]
 }
 
 model DashboardLayout {
@@ -108,6 +116,8 @@ model Transaction {
   recurringTransactionId String?
   occurrenceDate         DateTime?
   importHash             String?
+  /// Shared by the rows of a split transaction (one purchase spread across categories).
+  splitGroupId           String?
   user                   User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   financeAccount         FinanceAccount?       @relation(fields: [financeAccountId], references: [id], onDelete: SetNull)
   recurringTransaction   RecurringTransaction? @relation(fields: [recurringTransactionId], references: [id], onDelete: SetNull)
@@ -118,6 +128,7 @@ model Transaction {
   @@index([userId, type])
   @@index([userId, category])
   @@index([financeAccountId])
+  @@index([splitGroupId])
 }
 
 model FinanceAccount {
@@ -125,13 +136,37 @@ model FinanceAccount {
   userId         String
   name           String
   type           FinanceAccountType @default(CHECKING)
+  /// Balance before any recorded transaction; currentBalance is derived from this.
+  openingBalance Float              @default(0)
   currentBalance Float              @default(0)
   currency       String             @default("CAD")
   createdAt      DateTime           @default(now())
   user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions   Transaction[]
+  transfersOut   Transfer[]         @relation("TransferFrom")
+  transfersIn    Transfer[]         @relation("TransferTo")
 
   @@index([userId])
+}
+
+/// Money moved between two of the user's accounts. Deliberately not a Transaction:
+/// transfers change account balances but are neither income nor spending.
+model Transfer {
+  id            String         @id @default(cuid())
+  userId        String
+  fromAccountId String
+  toAccountId   String
+  amount        Float
+  date          DateTime
+  note          String?
+  createdAt     DateTime       @default(now())
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fromAccount   FinanceAccount @relation("TransferFrom", fields: [fromAccountId], references: [id], onDelete: Cascade)
+  toAccount     FinanceAccount @relation("TransferTo", fields: [toAccountId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date(sort: Desc)])
+  @@index([fromAccountId])
+  @@index([toAccountId])
 }
 
 model RecurringTransaction {
@@ -151,17 +186,41 @@ model RecurringTransaction {
 }
 
 model Budget {
-  id              String   @id @default(cuid())
+  id              String           @id @default(cuid())
   category        String
   monthlyLimit    Float
   month           Int
   year            Int
-  rolloverEnabled Boolean  @default(false)
-  createdAt       DateTime @default(now())
+  rolloverEnabled Boolean          @default(false)
+  createdAt       DateTime         @default(now())
   userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  alertLogs       BudgetAlertLog[]
 
   @@unique([userId, category, month, year])
+}
+
+/// One row per budget per threshold crossed, so each alert is only ever sent once.
+model BudgetAlertLog {
+  id        String   @id @default(cuid())
+  budgetId  String
+  threshold Int
+  sentAt    DateTime @default(now())
+  budget    Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+
+  @@unique([budgetId, threshold])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model CategoryMapping {

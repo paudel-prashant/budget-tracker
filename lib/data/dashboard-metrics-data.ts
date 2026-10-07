@@ -53,6 +53,8 @@ const transactionSelect = {
   date: true,
   tags: true,
   createdAt: true,
+  financeAccountId: true,
+  splitGroupId: true,
 } as const;
 
 type ExpenseDayStatsRow = {

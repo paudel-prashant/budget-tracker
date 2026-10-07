@@ -96,3 +96,41 @@ export function parseMonthYearSearchParams(
 
   return { month, year };
 }
+
+export type CopyBudgetsInput = {
+  from: { month: number; year: number };
+  to: { month: number; year: number };
+};
+
+const monthYearSchema = z.object({
+  month: z.number(),
+  year: z.number(),
+});
+
+const copyBudgetsSchema = z.object({
+  from: monthYearSchema,
+  to: monthYearSchema,
+});
+
+export function validateCopyBudgetsBody(body: unknown): ValidationResult<CopyBudgetsInput> {
+  if (!body || typeof body !== "object") {
+    return { success: false, error: "Request body must be a JSON object" };
+  }
+
+  const parsed = copyBudgetsSchema.safeParse(body);
+  if (!parsed.success) {
+    return { success: false, error: "from and to must each include a numeric month and year" };
+  }
+
+  const { from, to } = parsed.data;
+
+  if (!isValidMonthYear(from.month, from.year) || !isValidMonthYear(to.month, to.year)) {
+    return { success: false, error: "month must be 1–12 and year must be between 2000 and 2100" };
+  }
+
+  if (from.month === to.month && from.year === to.year) {
+    return { success: false, error: "Source and target month must be different" };
+  }
+
+  return { success: true, data: { from, to } };
+}

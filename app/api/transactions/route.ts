@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { assertDatabaseUrl } from "@/lib/config/env";
@@ -6,7 +7,11 @@ import { requireApiUserId } from "@/lib/auth/api-auth";
 import { handleApiError, jsonError } from "@/lib/utils/api-utils";
 import { processRecurringTransactions } from "@/lib/domain/recurring-processor";
 import { revalidateFinancePages } from "@/lib/utils/revalidate-pages";
-import { syncFinanceAccountsForUser } from "@/lib/data/finance-account-data";
+import {
+  resolveTransactionAccountId,
+  syncFinanceAccountsForUser,
+} from "@/lib/data/finance-account-data";
+import { scheduleBudgetAlertCheck } from "@/lib/data/budget-alerts";
 import { upsertLearnedCategoryMapping } from "@/lib/domain/category-mapping-service";
 import {
   buildTransactionWhere,
@@ -105,30 +110,68 @@ export async function POST(request: NextRequest) {
     }
 
     await processRecurringTransactions(auth.userId);
-    const account = await syncFinanceAccountsForUser(auth.userId);
-
-    const writeData = await buildTransactionWriteData(auth.userId, validation.data);
-
-    const transaction = await prisma.transaction.create({
-      data: {
-        ...writeData,
-        userId: auth.userId,
-        financeAccountId: account.id,
-      },
-    });
-
-    await syncFinanceAccountsForUser(auth.userId);
-
-    await upsertLearnedCategoryMapping(
+    const financeAccountId = await resolveTransactionAccountId(
       auth.userId,
-      validation.data.title,
-      validation.data.category,
-      validation.data.type
+      validation.data.financeAccountId
     );
 
+    if (!financeAccountId) {
+      return jsonError("Account not found", 400);
+    }
+
+    const { splits, ...input } = validation.data;
+    let created;
+
+    if (splits) {
+      // One row per part so every category total, budget and report picks each part
+      // up without special-casing; the shared splitGroupId ties them back together.
+      const splitGroupId = randomUUID();
+      const rows = await Promise.all(
+        splits.map((split) =>
+          buildTransactionWriteData(auth.userId, {
+            ...input,
+            amount: split.amount,
+            category: split.category,
+          })
+        )
+      );
+
+      created = await prisma.$transaction(
+        rows.map((row) =>
+          prisma.transaction.create({
+            data: { ...row, userId: auth.userId, financeAccountId, splitGroupId },
+          })
+        )
+      );
+    } else {
+      const writeData = await buildTransactionWriteData(auth.userId, input);
+      created = [
+        await prisma.transaction.create({
+          data: { ...writeData, userId: auth.userId, financeAccountId },
+        }),
+      ];
+
+      await upsertLearnedCategoryMapping(
+        auth.userId,
+        validation.data.title,
+        validation.data.category,
+        validation.data.type
+      );
+    }
+
+    await syncFinanceAccountsForUser(auth.userId);
     revalidateFinancePages();
 
-    return NextResponse.json(serializeTransaction(transaction), { status: 201 });
+    if (validation.data.type === "EXPENSE") {
+      scheduleBudgetAlertCheck(auth.userId);
+    }
+
+    return NextResponse.json(
+      splits
+        ? { transactions: created.map(serializeTransaction) }
+        : serializeTransaction(created[0]),
+      { status: 201 }
+    );
   } catch (error) {
     return handleApiError(error);
   }

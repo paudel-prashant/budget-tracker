@@ -26,6 +26,9 @@ export type Transaction = {
   date: string;
   tags: string[];
   createdAt: string;
+  financeAccountId: string | null;
+  /** Shared by the parts of a split transaction; null for ordinary transactions. */
+  splitGroupId: string | null;
 };
 
 export type TransactionFilters = {
@@ -136,6 +139,42 @@ export type BudgetWithProgress = Budget & {
   rolloverAmount: number;
   /** monthlyLimit + rolloverAmount — the limit actually used for spent/remaining/percentUsed. */
   effectiveLimit: number;
+};
+
+/** One month that has at least one budget configured — an entry in the budget history. */
+export type BudgetHistoryMonth = {
+  month: number;
+  year: number;
+  budgetCount: number;
+  totalLimit: number;
+  categories: string[];
+};
+
+export type CopyBudgetsResult = {
+  created: number;
+  skipped: number;
+};
+
+export type FinanceAccountType = "CHECKING" | "SAVINGS" | "CASH" | "CREDIT" | "OTHER";
+
+export type FinanceAccountSummary = {
+  id: string;
+  name: string;
+  type: FinanceAccountType;
+  openingBalance: number;
+  currentBalance: number;
+  isPrimary: boolean;
+  transactionCount: number;
+  createdAt: string;
+};
+
+export type Transfer = {
+  id: string;
+  fromAccountId: string;
+  toAccountId: string;
+  amount: number;
+  date: string;
+  note: string | null;
 };
 
 export type BudgetHealth = {

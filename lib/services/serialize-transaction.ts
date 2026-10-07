@@ -13,6 +13,8 @@ type TransactionRow = Pick<
   | "date"
   | "tags"
   | "createdAt"
+  | "financeAccountId"
+  | "splitGroupId"
 >;
 
 export function serializeTransaction(row: TransactionRow) {
@@ -27,6 +29,8 @@ export function serializeTransaction(row: TransactionRow) {
     date: row.date.toISOString(),
     tags: row.tags,
     createdAt: row.createdAt.toISOString(),
+    financeAccountId: row.financeAccountId,
+    splitGroupId: row.splitGroupId,
   };
 }
 

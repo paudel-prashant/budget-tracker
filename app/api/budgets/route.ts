@@ -3,7 +3,7 @@ import { assertDatabaseUrl } from "@/lib/config/env";
 import { prisma } from "@/lib/db/prisma";
 import { requireApiUserId } from "@/lib/auth/api-auth";
 import { handleApiError, jsonError } from "@/lib/utils/api-utils";
-import { getBudgetsWithProgress } from "@/lib/data/budget-data";
+import { ensureBudgetCarryOver, getBudgetsWithProgress } from "@/lib/data/budget-data";
 import { revalidateFinancePages } from "@/lib/utils/revalidate-pages";
 import {
   parseMonthYearSearchParams,
@@ -23,6 +23,8 @@ export async function GET(request: NextRequest) {
     if ("error" in parsed) {
       return jsonError(parsed.error, 400);
     }
+
+    await ensureBudgetCarryOver(auth.userId);
 
     const budgets = await getBudgetsWithProgress(
       auth.userId,

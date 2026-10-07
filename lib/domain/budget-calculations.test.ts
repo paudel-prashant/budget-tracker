@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  compareMonthYear,
   computeBudgetHealth,
   computeBudgetProgress,
   computeRolloverAmount,
   getCurrentMonthYear,
   getMonthDateRange,
+  getNextMonthYear,
   getPreviousMonthYear,
   getProgressBarColor,
   getProgressBarValue,
@@ -178,5 +180,23 @@ describe("getProgressBarValue", () => {
     expect(getProgressBarValue(-10)).toBe(0);
     expect(getProgressBarValue(150)).toBe(100);
     expect(getProgressBarValue(42)).toBe(42);
+  });
+});
+
+describe("getNextMonthYear", () => {
+  it("advances within a year", () => {
+    expect(getNextMonthYear(6, 2026)).toEqual({ month: 7, year: 2026 });
+  });
+
+  it("rolls December over to January of the next year", () => {
+    expect(getNextMonthYear(12, 2026)).toEqual({ month: 1, year: 2027 });
+  });
+});
+
+describe("compareMonthYear", () => {
+  it("orders by year, then month", () => {
+    expect(compareMonthYear({ month: 12, year: 2025 }, { month: 1, year: 2026 })).toBeLessThan(0);
+    expect(compareMonthYear({ month: 3, year: 2026 }, { month: 2, year: 2026 })).toBeGreaterThan(0);
+    expect(compareMonthYear({ month: 3, year: 2026 }, { month: 3, year: 2026 })).toBe(0);
   });
 });

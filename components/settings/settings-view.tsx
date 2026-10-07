@@ -5,6 +5,7 @@ import { SurfaceCard } from "@/components/shared/ui/surface-card";
 import { ImportExportSection } from "@/components/settings/import-export-section";
 import { CurrencySettingsSection } from "@/components/settings/currency-settings-section";
 import { DangerZoneSection } from "@/components/settings/danger-zone-section";
+import { BudgetNotificationsSection } from "@/components/settings/budget-notifications-section";
 import { CARD_PADDING } from "@/lib/config/layout-constants";
 
 export function SettingsView() {
@@ -26,14 +27,7 @@ export function SettingsView() {
           </Stack>
           <ImportExportSection />
           <CurrencySettingsSection />
-          <Stack sx={{ p: CARD_PADDING }} spacing={0.75}>
-            <Typography variant="subtitle1">
-              Notifications
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Email and push notification settings coming soon.
-            </Typography>
-          </Stack>
+          <BudgetNotificationsSection />
           <DangerZoneSection />
         </Stack>
       </SurfaceCard>

@@ -19,6 +19,7 @@ export async function buildUserDataExport(userId: string) {
     liabilities,
     netWorthSnapshots,
     financeAccounts,
+    transfers,
     dashboardLayout,
   ] = await Promise.all([
     prisma.user.findUnique({
@@ -33,6 +34,7 @@ export async function buildUserDataExport(userId: string) {
     prisma.liability.findMany({ where: { userId }, orderBy: { asOfDate: "desc" } }),
     prisma.netWorthSnapshot.findMany({ where: { userId }, orderBy: { month: "desc" } }),
     prisma.financeAccount.findMany({ where: { userId } }),
+    prisma.transfer.findMany({ where: { userId }, orderBy: { date: "desc" } }),
     prisma.dashboardLayout.findUnique({ where: { userId } }),
   ]);
 
@@ -49,6 +51,7 @@ export async function buildUserDataExport(userId: string) {
     liabilities,
     netWorthSnapshots,
     financeAccounts,
+    transfers,
     dashboardLayout,
   };
 }
@@ -57,7 +60,8 @@ export async function buildUserDataExport(userId: string) {
  * Permanently deletes a user and every row that references them. Relies on the
  * `onDelete: Cascade` relations declared in prisma/schema.prisma (Transaction,
  * Budget, RecurringTransaction, CategoryMapping, Asset, Liability,
- * NetWorthSnapshot, FinanceAccount, DashboardLayout, Account, Session all
+ * NetWorthSnapshot, FinanceAccount, Transfer, PushSubscription, DashboardLayout,
+ * Account, Session all
  * cascade from User) — a single delete is sufficient, no manual cleanup needed.
  */
 export async function deleteUserAccount(userId: string): Promise<void> {

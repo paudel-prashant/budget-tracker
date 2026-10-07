@@ -3,6 +3,13 @@
  * Uses a direct Neon URL; pooler URLs are auto-converted. Disables advisory lock to avoid P1002 on Neon.
  */
 import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
+
+// Plain `node` doesn't read .env (the Prisma CLI does, which is why `prisma migrate dev`
+// finds the database but this script didn't). Variables already set — e.g. in CI — win.
+if (existsSync(".env") && typeof process.loadEnvFile === "function") {
+  process.loadEnvFile(".env");
+}
 
 function normalizeUrl(url) {
   return url.replace(/^postgres:/, "postgresql:");

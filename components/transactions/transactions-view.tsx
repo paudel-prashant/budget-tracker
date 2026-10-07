@@ -617,7 +617,12 @@ export function TransactionsView() {
                           variant="outlined"
                         />
                       </TableCell>
-                      <TableCell>{transaction.category}</TableCell>
+                      <TableCell>
+                        {transaction.category}
+                        {transaction.splitGroupId && (
+                          <Chip label="Split" size="small" sx={{ ml: 1, height: 20 }} />
+                        )}
+                      </TableCell>
                       <TableCell>{formatDate(transaction.date)}</TableCell>
                       <TableCell align="right">
                         <Stack direction="row" spacing={0.5} justifyContent="flex-end">

@@ -11,8 +11,18 @@ export type CreateTransactionInput = {
   category: string;
   date: Date;
   tags: string[];
+  /** Omitted → the user's primary account. */
+  financeAccountId?: string;
+  /** Present → create one transaction per part (same title/date/account), sharing a splitGroupId. */
+  splits?: TransactionSplitInput[];
 };
 
+export type TransactionSplitInput = {
+  category: string;
+  amount: number;
+};
+
+const MAX_SPLITS = 10;
 const MAX_TAGS = 10;
 const MAX_TAG_LENGTH = 30;
 
@@ -50,7 +60,24 @@ const transactionSchema = z.object({
     .array(z.string().trim().min(1).max(MAX_TAG_LENGTH, `tags must be ${MAX_TAG_LENGTH} characters or fewer`))
     .max(MAX_TAGS, `no more than ${MAX_TAGS} tags per transaction`)
     .optional(),
+  financeAccountId: z.string().min(1, "financeAccountId must be a non-empty string").optional(),
+  splits: z
+    .array(
+      z.object({
+        category: z.string().trim().min(1, "each split needs a category"),
+        amount: z.number().finite().positive("each split amount must be a positive number"),
+      })
+    )
+    .min(2, "a split needs at least 2 parts")
+    .max(MAX_SPLITS, `no more than ${MAX_SPLITS} split parts`)
+    .optional(),
 });
+
+/** Split parts must add up to the transaction total (to the cent). */
+export function splitsMatchTotal(splits: TransactionSplitInput[], amount: number): boolean {
+  const totalCents = splits.reduce((sum, split) => sum + Math.round(split.amount * 100), 0);
+  return totalCents === Math.round(amount * 100);
+}
 
 export function validateTransactionBody(body: unknown): ValidationResult<CreateTransactionInput> {
   if (!body || typeof body !== "object") {
@@ -60,6 +87,10 @@ export function validateTransactionBody(body: unknown): ValidationResult<CreateT
   const parsed = toValidationResult(transactionSchema.safeParse(body));
   if (!parsed.success) {
     return parsed;
+  }
+
+  if (parsed.data.splits && !splitsMatchTotal(parsed.data.splits, parsed.data.amount)) {
+    return { success: false, error: "split amounts must add up to the transaction amount" };
   }
 
   return {
@@ -72,6 +103,8 @@ export function validateTransactionBody(body: unknown): ValidationResult<CreateT
       category: parsed.data.category,
       date: new Date(parsed.data.date),
       tags: normalizeTags(parsed.data.tags ?? []),
+      financeAccountId: parsed.data.financeAccountId,
+      splits: parsed.data.splits,
     },
   };
 }

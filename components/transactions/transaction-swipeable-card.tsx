@@ -91,7 +91,8 @@ export function TransactionSwipeableCard({
                 {transaction.title}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {transaction.category} · {formatDate(transaction.date)}
+                {transaction.category}
+                {transaction.splitGroupId ? " (split)" : ""} · {formatDate(transaction.date)}
               </Typography>
               {transaction.tags.length > 0 && (
                 <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap sx={{ mt: 0.5 }}>

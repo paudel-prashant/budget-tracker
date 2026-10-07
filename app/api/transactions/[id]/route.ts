@@ -4,7 +4,11 @@ import { prisma } from "@/lib/db/prisma";
 import { requireApiUserId } from "@/lib/auth/api-auth";
 import { handleApiError, jsonError } from "@/lib/utils/api-utils";
 import { revalidateFinancePages } from "@/lib/utils/revalidate-pages";
-import { syncFinanceAccountsForUser } from "@/lib/data/finance-account-data";
+import {
+  resolveTransactionAccountId,
+  syncFinanceAccountsForUser,
+} from "@/lib/data/finance-account-data";
+import { scheduleBudgetAlertCheck } from "@/lib/data/budget-alerts";
 import { computeTransactionImportHash } from "@/lib/domain/transaction-import-hash";
 import { buildTransactionWriteData } from "@/lib/currency/transaction-write";
 import { upsertLearnedCategoryMapping } from "@/lib/domain/category-mapping-service";
@@ -57,6 +61,20 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return jsonError(validation.error, 400);
     }
 
+    if (validation.data.splits) {
+      return jsonError("Splits can only be set when creating a transaction", 400);
+    }
+
+    // Keep the current account unless the request moves the transaction to another one.
+    const financeAccountId =
+      validation.data.financeAccountId === undefined
+        ? owned.transaction!.financeAccountId
+        : await resolveTransactionAccountId(auth.userId, validation.data.financeAccountId);
+
+    if (validation.data.financeAccountId !== undefined && !financeAccountId) {
+      return jsonError("Account not found", 400);
+    }
+
     const writeData = await buildTransactionWriteData(auth.userId, validation.data);
 
     const importHash = computeTransactionImportHash({
@@ -72,6 +90,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       data: {
         ...writeData,
         importHash,
+        financeAccountId,
       },
     });
 
@@ -84,6 +103,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     await syncFinanceAccountsForUser(auth.userId);
     revalidateFinancePages();
+
+    if (writeData.type === "EXPENSE") {
+      scheduleBudgetAlertCheck(auth.userId);
+    }
 
     return NextResponse.json(serializeTransaction(transaction));
   } catch (error) {

@@ -18,19 +18,20 @@ import {
 } from "@mui/material";
 import { CategorySelectField } from "@/components/shared/ui/category-select-field";
 import { formTextFieldProps } from "@/lib/theme/form-field";
-import { getCurrentMonthYear } from "@/lib/domain/budget-calculations";
+import { formatMonthYear } from "@/lib/utils/format";
 import { FORM_STACK_SPACING } from "@/lib/config/layout-constants";
 import type { BudgetWithProgress } from "@/lib/types";
 
 type BudgetFormDialogProps = {
   open: boolean;
   budget?: BudgetWithProgress | null;
+  /** Month/year a new budget is created for (edits always keep the budget's own month). */
+  month: number;
+  year: number;
   extraCategories?: string[];
   onClose: () => void;
   onSuccess: () => void | Promise<void>;
 };
-
-const { month, year } = getCurrentMonthYear();
 
 type FormState = {
   category: string;
@@ -55,6 +56,8 @@ function formFromBudget(budget: BudgetWithProgress): FormState {
 export function BudgetFormDialog({
   open,
   budget,
+  month,
+  year,
   extraCategories = [],
   onClose,
   onSuccess,
@@ -136,7 +139,12 @@ export function BudgetFormDialog({
       sx={{ "& .MuiDialog-paper": { m: { xs: 2, sm: 3 } } }}
     >
       <form onSubmit={handleSubmit}>
-        <DialogTitle>{isEdit ? "Edit Budget" : "Add Category Budget"}</DialogTitle>
+        <DialogTitle>
+          {isEdit ? "Edit Budget" : "Add Category Budget"}
+          <Typography variant="body2" color="text.secondary">
+            {formatMonthYear(budget?.month ?? month, budget?.year ?? year)}
+          </Typography>
+        </DialogTitle>
         <DialogContent dividers>
           <Stack spacing={FORM_STACK_SPACING} sx={{ py: 1 }}>
             {error && <Alert severity="error">{error}</Alert>}

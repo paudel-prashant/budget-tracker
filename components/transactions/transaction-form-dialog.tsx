@@ -8,10 +8,17 @@ import {
   CircularProgress,
   DialogActions,
   DialogContent,
+  FormControlLabel,
+  IconButton,
   MenuItem,
   Stack,
+  Switch,
   TextField,
+  Tooltip,
+  Typography,
 } from "@mui/material";
+import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
+import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DialogDatePicker } from "@/components/shared/ui/dialog-date-picker";
@@ -23,7 +30,8 @@ import { TagInput } from "@/components/shared/ui/tag-input";
 import { useCategorySuggestion } from "@/hooks/use-category-suggestion";
 import { formFieldSx, formTextFieldProps } from "@/lib/theme/form-field";
 import { FORM_STACK_SPACING } from "@/lib/config/layout-constants";
-import type { Transaction, TransactionType } from "@/lib/types";
+import { formatCurrency } from "@/lib/utils/format";
+import type { FinanceAccountSummary, Transaction, TransactionType } from "@/lib/types";
 
 type TransactionFormDialogProps = {
   open: boolean;
@@ -41,7 +49,20 @@ type FormState = {
   category: string;
   date: Dayjs;
   tags: string[];
+  /** "" → the primary account. */
+  financeAccountId: string;
+  splitEnabled: boolean;
+  splits: SplitRow[];
 };
+
+type SplitRow = { category: string; amount: string };
+
+const emptySplits = (): SplitRow[] => [
+  { category: "", amount: "" },
+  { category: "", amount: "" },
+];
+
+const MAX_SPLITS = 10;
 
 const emptyForm = (): FormState => ({
   title: "",
@@ -50,7 +71,15 @@ const emptyForm = (): FormState => ({
   category: "",
   date: dayjs(),
   tags: [],
+  financeAccountId: "",
+  splitEnabled: false,
+  splits: emptySplits(),
 });
+
+function toCents(value: string): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? Math.round(parsed * 100) : 0;
+}
 
 function formFromTransaction(transaction: Transaction): FormState {
   return {
@@ -60,6 +89,9 @@ function formFromTransaction(transaction: Transaction): FormState {
     category: transaction.category,
     date: dayjs(transaction.date),
     tags: transaction.tags ?? [],
+    financeAccountId: transaction.financeAccountId ?? "",
+    splitEnabled: false,
+    splits: emptySplits(),
   };
 }
 
@@ -80,6 +112,7 @@ export function TransactionFormDialog({
   const [form, setForm] = useState<FormState>(emptyForm);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [accounts, setAccounts] = useState<FinanceAccountSummary[]>([]);
   const categoryTouchedRef = useRef(false);
   const applyingSuggestionRef = useRef(false);
 
@@ -96,6 +129,34 @@ export function TransactionFormDialog({
     setError(null);
     categoryTouchedRef.current = Boolean(transaction?.category);
   }, [open, transaction]);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+
+    // The account picker is optional UI — if this fails the transaction still saves
+    // to the primary account.
+    fetch("/api/accounts")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: { accounts: FinanceAccountSummary[] } | null) => {
+        if (!cancelled && data) setAccounts(data.accounts);
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
+  const splitRemainingCents =
+    toCents(form.amount) - form.splits.reduce((sum, split) => sum + toCents(split.amount), 0);
+
+  const updateSplit = (index: number, patch: Partial<SplitRow>) => {
+    setForm((prev) => ({
+      ...prev,
+      splits: prev.splits.map((split, i) => (i === index ? { ...split, ...patch } : split)),
+    }));
+  };
 
   const applySuggestion = useCallback(
     (category: string) => {
@@ -126,20 +187,41 @@ export function TransactionFormDialog({
     setError(null);
 
     const amount = Number(form.amount);
+    const splitting = !isEdit && form.splitEnabled;
+    const splits = form.splits.map((split) => ({
+      category: split.category.trim(),
+      amount: Number(split.amount),
+    }));
+    const category = splitting ? (splits[0]?.category ?? "") : form.category.trim();
 
-    if (!form.title.trim() || !form.category.trim() || !Number.isFinite(amount) || amount <= 0) {
+    if (!form.title.trim() || !category || !Number.isFinite(amount) || amount <= 0) {
       setError("Please fill in all fields with valid values.");
       setSubmitting(false);
       return;
+    }
+
+    if (splitting) {
+      if (splits.some((split) => !split.category || !(split.amount > 0))) {
+        setError("Each split needs a category and a positive amount.");
+        setSubmitting(false);
+        return;
+      }
+      if (splitRemainingCents !== 0) {
+        setError("Split amounts must add up to the total amount.");
+        setSubmitting(false);
+        return;
+      }
     }
 
     const payload = {
       title: form.title.trim(),
       amount,
       type: form.type,
-      category: form.category.trim(),
+      category,
       date: form.date.toISOString(),
       tags: form.tags,
+      ...(form.financeAccountId ? { financeAccountId: form.financeAccountId } : {}),
+      ...(splitting ? { splits } : {}),
     };
 
     try {
@@ -235,28 +317,145 @@ export function TransactionFormDialog({
                 <MenuItem value="EXPENSE">Expense</MenuItem>
               </TextField>
 
-              <CategorySuggestionBanner
-                suggestion={suggestion}
-                currentCategory={form.category}
-                loading={suggestionLoading}
-                onApply={() => {
-                  if (suggestion?.category) {
-                    applySuggestion(suggestion.category);
+              {!isEdit && (
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={form.splitEnabled}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          splitEnabled: e.target.checked,
+                          // Seed the first part with whatever was already chosen.
+                          splits: e.target.checked
+                            ? [{ category: prev.category, amount: prev.amount }, { category: "", amount: "" }]
+                            : prev.splits,
+                        }))
+                      }
+                    />
                   }
-                }}
-              />
+                  label="Split across categories"
+                />
+              )}
 
-              <CategorySelectField
-                value={form.category}
-                onChange={(category) => {
-                  if (!applyingSuggestionRef.current) {
-                    categoryTouchedRef.current = true;
-                  }
-                  setForm((prev) => ({ ...prev, category }));
-                }}
-                extraCategories={extraCategories}
-                transactionType={form.type}
-              />
+              {!isEdit && form.splitEnabled ? (
+                <Stack spacing={1.5}>
+                  {form.splits.map((split, index) => (
+                    <Stack key={index} direction="row" spacing={1} alignItems="flex-start">
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <CategorySelectField
+                          value={split.category}
+                          onChange={(category) => updateSplit(index, { category })}
+                          extraCategories={extraCategories}
+                          transactionType={form.type}
+                        />
+                      </Box>
+                      <TextField
+                        {...formTextFieldProps}
+                        label="Amount"
+                        type="number"
+                        value={split.amount}
+                        onChange={(e) => updateSplit(index, { amount: e.target.value })}
+                        slotProps={{
+                          ...formTextFieldProps.slotProps,
+                          htmlInput: { min: 0, step: "0.01" },
+                        }}
+                        sx={{ width: 130, flexShrink: 0 }}
+                      />
+                      <Tooltip title="Remove part">
+                        <span>
+                          <IconButton
+                            aria-label="Remove split part"
+                            disabled={form.splits.length <= 2}
+                            onClick={() =>
+                              setForm((prev) => ({
+                                ...prev,
+                                splits: prev.splits.filter((_, i) => i !== index),
+                              }))
+                            }
+                            sx={{ mt: 1 }}
+                          >
+                            <CloseOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                    </Stack>
+                  ))}
+                  <Stack direction="row" justifyContent="space-between" alignItems="center">
+                    <Button
+                      size="small"
+                      startIcon={<AddOutlinedIcon />}
+                      disabled={form.splits.length >= MAX_SPLITS}
+                      onClick={() =>
+                        setForm((prev) => ({
+                          ...prev,
+                          splits: [
+                            ...prev.splits,
+                            {
+                              category: "",
+                              // Pre-fill the new part with whatever is left to allocate.
+                              amount: splitRemainingCents > 0 ? (splitRemainingCents / 100).toFixed(2) : "",
+                            },
+                          ],
+                        }))
+                      }
+                    >
+                      Add part
+                    </Button>
+                    <Typography
+                      variant="body2"
+                      color={splitRemainingCents === 0 ? "success.main" : "warning.main"}
+                    >
+                      {splitRemainingCents === 0
+                        ? "Fully allocated"
+                        : splitRemainingCents > 0
+                          ? `${formatCurrency(splitRemainingCents / 100)} left to allocate`
+                          : `${formatCurrency(-splitRemainingCents / 100)} over the total`}
+                    </Typography>
+                  </Stack>
+                </Stack>
+              ) : (
+                <>
+                  <CategorySuggestionBanner
+                    suggestion={suggestion}
+                    currentCategory={form.category}
+                    loading={suggestionLoading}
+                    onApply={() => {
+                      if (suggestion?.category) {
+                        applySuggestion(suggestion.category);
+                      }
+                    }}
+                  />
+
+                  <CategorySelectField
+                    value={form.category}
+                    onChange={(category) => {
+                      if (!applyingSuggestionRef.current) {
+                        categoryTouchedRef.current = true;
+                      }
+                      setForm((prev) => ({ ...prev, category }));
+                    }}
+                    extraCategories={extraCategories}
+                    transactionType={form.type}
+                  />
+                </>
+              )}
+
+              {accounts.length > 1 && (
+                <TextField
+                  {...formTextFieldProps}
+                  select
+                  label="Account"
+                  value={form.financeAccountId || accounts.find((a) => a.isPrimary)?.id || ""}
+                  onChange={(e) => setForm((prev) => ({ ...prev, financeAccountId: e.target.value }))}
+                >
+                  {accounts.map((account) => (
+                    <MenuItem key={account.id} value={account.id}>
+                      {account.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
 
               <Box sx={formFieldSx}>
                 <DialogDatePicker

@@ -3,7 +3,11 @@ import { processRecurringTransactions } from "@/lib/domain/recurring-processor";
 import { startOfUtcDay } from "@/lib/domain/recurrence-dates";
 import { assertDatabaseUrl } from "@/lib/config/env";
 import { prisma } from "@/lib/db/prisma";
-import { ensureDefaultFinanceAccount } from "@/lib/data/finance-account-data";
+import {
+  ensureDefaultFinanceAccount,
+  syncAllFinanceAccountBalances,
+} from "@/lib/data/finance-account-data";
+import { roundMoney } from "@/lib/forecasting/types";
 import {
   buildHistoricalBalancePoints,
   calculateSpendingTrends,
@@ -20,6 +24,10 @@ async function loadForecastInput(userId: string, timeframe: ForecastTimeframe) {
   await processRecurringTransactions(userId);
 
   const account = await ensureDefaultFinanceAccount(userId);
+  // Cash flow is forecast across all accounts: transfers between them cancel out, so the
+  // combined balance plus every income/expense is the user's overall cash position.
+  const balances = await syncAllFinanceAccountBalances(userId);
+  const combinedBalance = roundMoney([...balances.values()].reduce((sum, value) => sum + value, 0));
   const today = startOfUtcDay(new Date());
   const forecastDays =
     timeframe === "7d" ? 7 : timeframe === "30d" ? 30 : timeframe === "90d" ? 90 : 180;
@@ -29,7 +37,7 @@ async function loadForecastInput(userId: string, timeframe: ForecastTimeframe) {
 
   const [transactions, recurring] = await Promise.all([
     prisma.transaction.findMany({
-      where: { userId, financeAccountId: account.id },
+      where: { userId },
       select: {
         date: true,
         amount: true,
@@ -79,7 +87,7 @@ async function loadForecastInput(userId: string, timeframe: ForecastTimeframe) {
 
   return runForecastEngine({
     timeframe,
-    currentBalance: account.currentBalance,
+    currentBalance: combinedBalance,
     currency: account.currency,
     historicalPoints,
     recurringEvents,

@@ -28,6 +28,19 @@ export function getPreviousMonthYear(month: number, year: number): { month: numb
   return month === 1 ? { month: 12, year: year - 1 } : { month: month - 1, year };
 }
 
+/** Next calendar month, handling the December → January/next-year rollover. */
+export function getNextMonthYear(month: number, year: number): { month: number; year: number } {
+  return month === 12 ? { month: 1, year: year + 1 } : { month: month + 1, year };
+}
+
+/** Negative when a is before b, positive when after, 0 when the same month. */
+export function compareMonthYear(
+  a: { month: number; year: number },
+  b: { month: number; year: number }
+): number {
+  return a.year !== b.year ? a.year - b.year : a.month - b.month;
+}
+
 /**
  * Unused (positive) or overspent (negative) amount from the previous month's budget
  * for the same category, applied to this month's effective limit. Zero when rollover
