@@ -5,6 +5,7 @@ import {
   type CategorySuggestion,
   type LearnedCategoryMapping,
 } from "@/lib/domain/category-suggestion-engine";
+import type { CategoryRuleLike } from "@/lib/domain/category-rules";
 import type { TransactionType } from "@/lib/types";
 
 export async function getLearnedMappingsForUser(
@@ -22,13 +23,23 @@ export async function getLearnedMappingsForUser(
   }));
 }
 
+export async function getCategoryRulesForUser(userId: string): Promise<CategoryRuleLike[]> {
+  return prisma.categoryRule.findMany({
+    where: { userId },
+    select: { id: true, pattern: true, matchType: true, type: true, category: true, tags: true },
+  });
+}
+
 export async function suggestCategoryForUser(
   userId: string,
   title: string,
   type: TransactionType
 ): Promise<CategorySuggestion | null> {
-  const learned = await getLearnedMappingsForUser(userId);
-  return suggestCategory(title, type, learned);
+  const [learned, rules] = await Promise.all([
+    getLearnedMappingsForUser(userId),
+    getCategoryRulesForUser(userId),
+  ]);
+  return suggestCategory(title, type, learned, rules);
 }
 
 /** Persist user override / learned mapping from a saved transaction. */

@@ -242,6 +242,8 @@ export type ImportPreviewRowResponse = {
     category: string;
     date: string;
     importHash: string;
+    tags: string[];
+    categorySource: "csv" | "rule" | "suggested";
   } | null;
 };
 

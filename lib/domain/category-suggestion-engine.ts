@@ -1,12 +1,15 @@
 import type { TransactionType } from "@/lib/types";
+import { findMatchingRule, type CategoryRuleLike } from "@/lib/domain/category-rules";
 
-export type CategorySuggestionSource = "learned" | "keyword";
+export type CategorySuggestionSource = "rule" | "learned" | "keyword";
 
 export type CategorySuggestion = {
   category: string;
   source: CategorySuggestionSource;
-  /** Matched keyword or learned title key (for display/debug). */
+  /** Matched keyword, learned title key, or rule pattern (for display/debug). */
   matchedOn?: string;
+  /** Tags a matching rule adds (rules only). */
+  tags?: string[];
 };
 
 export type LearnedCategoryMapping = {
@@ -288,12 +291,18 @@ export function suggestFromLearnedMappings(
   return null;
 }
 
-/** Learned mappings override built-in keywords. */
+/** User rules beat learned mappings, which beat built-in keywords. */
 export function suggestCategory(
   title: string,
   type: TransactionType,
-  learnedMappings: LearnedCategoryMapping[] = []
+  learnedMappings: LearnedCategoryMapping[] = [],
+  rules: CategoryRuleLike[] = []
 ): CategorySuggestion | null {
+  const rule = findMatchingRule(rules, title, type);
+  if (rule) {
+    return { category: rule.category, source: "rule", matchedOn: rule.pattern, tags: rule.tags };
+  }
+
   const learned = suggestFromLearnedMappings(title, type, learnedMappings);
   if (learned) return learned;
 

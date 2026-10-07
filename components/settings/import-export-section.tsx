@@ -210,7 +210,7 @@ export function ImportExportSection() {
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
             Back up transactions as CSV or bulk-import from a spreadsheet. Required columns:
-            title, amount, type, category, date.
+            title, amount, type, date. Category is optional — your category rules fill it in.
           </Typography>
         </Box>
 
@@ -290,8 +290,10 @@ export function ImportExportSection() {
           <Stack spacing={2} sx={{ py: 1 }}>
             {importError && <Alert severity="error">{importError}</Alert>}
             <Alert severity="info" variant="outlined">
-              Upload a CSV with columns: title, amount, type (INCOME/EXPENSE), category, date
-              (YYYY-MM-DD). You will preview rows before anything is saved.
+              Upload a CSV with columns: title, amount, type (INCOME/EXPENSE), date (YYYY-MM-DD),
+              and optionally category. Your category rules are applied automatically, and rows
+              without a category get a suggested one. You will preview rows before anything is
+              saved.
             </Alert>
             <Button variant="outlined" component="label">
               {selectedFile ? selectedFile.name : "Choose CSV file"}
@@ -397,7 +399,18 @@ export function ImportExportSection() {
                           {row.data ? formatCurrency(row.data.amount) : "—"}
                         </TableCell>
                         <TableCell>{row.data?.type ?? "—"}</TableCell>
-                        <TableCell>{row.data?.category ?? "—"}</TableCell>
+                        <TableCell>
+                          {row.data?.category ?? "—"}
+                          {row.data && row.data.categorySource !== "csv" && (
+                            <Chip
+                              label={row.data.categorySource === "rule" ? "rule" : "suggested"}
+                              size="small"
+                              color={row.data.categorySource === "rule" ? "primary" : "default"}
+                              variant="outlined"
+                              sx={{ ml: 1, height: 20 }}
+                            />
+                          )}
+                        </TableCell>
                         <TableCell>
                           {row.data ? formatDate(row.data.date) : "—"}
                         </TableCell>

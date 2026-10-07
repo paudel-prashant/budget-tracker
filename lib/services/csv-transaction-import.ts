@@ -3,6 +3,8 @@ import type { CsvTransactionRow } from "@/lib/services/csv-utils";
 import { computeTransactionImportHash } from "@/lib/domain/transaction-import-hash";
 import { startOfUtcDay } from "@/lib/domain/recurrence-dates";
 
+export type CategorySource = "csv" | "rule" | "suggested";
+
 export type ParsedTransactionRow = {
   title: string;
   amount: number;
@@ -10,7 +12,20 @@ export type ParsedTransactionRow = {
   category: string;
   date: Date;
   importHash: string;
+  tags: string[];
+  /** Where the category came from, so the preview can show what a rule changed. */
+  categorySource: CategorySource;
 };
+
+/**
+ * Decides a row's category. Returning null keeps the CSV's own category (or marks the
+ * row invalid when it has none). Supplied by the caller so this module stays pure.
+ */
+export type RowCategorizer = (
+  title: string,
+  type: TransactionType,
+  csvCategory: string
+) => { category: string; tags: string[]; source: CategorySource } | null;
 
 export type ImportRowStatus = "valid" | "invalid" | "duplicate";
 
@@ -76,18 +91,22 @@ function parseDate(value: string): Date | null {
 
 export function validateCsvTransactionRow(
   row: CsvTransactionRow,
-  rowNumber: number
+  rowNumber: number,
+  categorize?: RowCategorizer
 ): ImportPreviewRow {
   const errors: string[] = [];
 
   const title = (row.title ?? "").trim();
-  const category = (row.category ?? "").trim();
+  const csvCategory = (row.category ?? "").trim();
   const type = parseTransactionType(row.type ?? "");
   const amount = parseAmount(row.amount ?? "");
   const date = parseDate(row.date ?? "");
 
+  const categorized = title && type ? (categorize?.(title, type, csvCategory) ?? null) : null;
+  const category = categorized?.category ?? csvCategory;
+
   if (!title) errors.push("title is required");
-  if (!category) errors.push("category is required");
+  if (!category) errors.push("category is required (no category rule matched this title)");
   if (!type) errors.push("type must be INCOME or EXPENSE");
   if (amount === null) errors.push("amount must be a positive number");
   if (!date) errors.push("date must be a valid date (YYYY-MM-DD recommended)");
@@ -114,6 +133,8 @@ export function validateCsvTransactionRow(
       category,
       date,
     }),
+    tags: categorized?.tags ?? [],
+    categorySource: categorized?.source ?? "csv",
   };
 
   return {

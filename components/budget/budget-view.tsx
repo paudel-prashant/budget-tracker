@@ -21,7 +21,7 @@ import { SectionPanel } from "@/components/shared/ui/section-panel";
 import { BudgetCard } from "@/components/budget/budget-card";
 import { BudgetFormDialog } from "@/components/budget/budget-form-dialog";
 import { BudgetHistoryPanel } from "@/components/budget/budget-history-panel";
-import { BudgetMonthNavigator } from "@/components/budget/budget-month-navigator";
+import { MonthNavigator } from "@/components/shared/ui/month-navigator";
 import { DeleteBudgetDialog } from "@/components/budget/delete-budget-dialog";
 import { useSnackbar } from "@/components/shared/providers/snackbar-provider";
 import { compareMonthYear, getCurrentMonthYear } from "@/lib/domain/budget-calculations";
@@ -230,7 +230,7 @@ export function BudgetView() {
       />
 
       <Box sx={{ mb: 2 }}>
-        <BudgetMonthNavigator value={selected} onChange={setSelected} disabled={copying} />
+        <MonthNavigator value={selected} onChange={setSelected} disabled={copying} />
       </Box>
 
       {error && (

@@ -24,6 +24,8 @@ function serializePreviewRow(row: ImportPreviewRow) {
           category: row.data.category,
           date: row.data.date.toISOString(),
           importHash: row.data.importHash,
+          tags: row.data.tags,
+          categorySource: row.data.categorySource,
         }
       : null,
   };

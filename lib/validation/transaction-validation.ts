@@ -23,11 +23,11 @@ export type TransactionSplitInput = {
 };
 
 const MAX_SPLITS = 10;
-const MAX_TAGS = 10;
-const MAX_TAG_LENGTH = 30;
+export const MAX_TAGS = 10;
+export const MAX_TAG_LENGTH = 30;
 
 /** Lowercased + de-duplicated so "Work" and "work" collapse to one filterable tag. */
-function normalizeTags(tags: string[]): string[] {
+export function normalizeTags(tags: string[]): string[] {
   const seen = new Set<string>();
   const normalized: string[] = [];
   for (const tag of tags) {

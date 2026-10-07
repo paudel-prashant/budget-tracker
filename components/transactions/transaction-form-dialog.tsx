@@ -31,6 +31,7 @@ import { useCategorySuggestion } from "@/hooks/use-category-suggestion";
 import { formFieldSx, formTextFieldProps } from "@/lib/theme/form-field";
 import { FORM_STACK_SPACING } from "@/lib/config/layout-constants";
 import { formatCurrency } from "@/lib/utils/format";
+import { mergeTags } from "@/lib/domain/category-rules";
 import type { FinanceAccountSummary, Transaction, TransactionType } from "@/lib/types";
 
 type TransactionFormDialogProps = {
@@ -159,9 +160,10 @@ export function TransactionFormDialog({
   };
 
   const applySuggestion = useCallback(
-    (category: string) => {
+    (category: string, tags: string[] = []) => {
       applyingSuggestionRef.current = true;
-      setForm((prev) => ({ ...prev, category }));
+      // A matching category rule can also add tags (e.g. "uber" -> Transportation, #work).
+      setForm((prev) => ({ ...prev, category, tags: mergeTags(prev.tags, tags) }));
       applyingSuggestionRef.current = false;
     },
     []
@@ -171,7 +173,7 @@ export function TransactionFormDialog({
     if (!open || isEdit || categoryTouchedRef.current || !suggestion?.category) return;
     if (form.category.trim()) return;
 
-    applySuggestion(suggestion.category);
+    applySuggestion(suggestion.category, suggestion.tags);
   }, [open, isEdit, suggestion, form.category, applySuggestion]);
 
   const handleClose = () => {
@@ -422,7 +424,7 @@ export function TransactionFormDialog({
                     loading={suggestionLoading}
                     onApply={() => {
                       if (suggestion?.category) {
-                        applySuggestion(suggestion.category);
+                        applySuggestion(suggestion.category, suggestion.tags);
                       }
                     }}
                   />

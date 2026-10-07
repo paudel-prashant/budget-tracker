@@ -6,6 +6,7 @@ import { ImportExportSection } from "@/components/settings/import-export-section
 import { CurrencySettingsSection } from "@/components/settings/currency-settings-section";
 import { DangerZoneSection } from "@/components/settings/danger-zone-section";
 import { BudgetNotificationsSection } from "@/components/settings/budget-notifications-section";
+import { CategoryRulesSection } from "@/components/settings/category-rules-section";
 import { CARD_PADDING } from "@/lib/config/layout-constants";
 
 export function SettingsView() {
@@ -27,6 +28,7 @@ export function SettingsView() {
           </Stack>
           <ImportExportSection />
           <CurrencySettingsSection />
+          <CategoryRulesSection />
           <BudgetNotificationsSection />
           <DangerZoneSection />
         </Stack>

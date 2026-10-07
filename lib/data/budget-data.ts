@@ -7,6 +7,11 @@ import {
   getMonthDateRange,
   getPreviousMonthYear,
 } from "@/lib/domain/budget-calculations";
+import {
+  buildBudgetSuggestions,
+  countLookbackMonths,
+  type BudgetSuggestion,
+} from "@/lib/domain/budget-suggestions";
 import { assertDatabaseUrl } from "@/lib/config/env";
 import { prisma } from "@/lib/db/prisma";
 import type {
@@ -270,4 +275,42 @@ export async function ensureBudgetCarryOver(userId: string): Promise<number> {
 
   const { created } = await copyBudgetsToMonth(userId, source, { month, year });
   return created;
+}
+
+/**
+ * Per-category average monthly spending over the (up to) 3 full months before the target
+ * month — used to pre-fill a sensible limit when creating a budget.
+ */
+export async function getBudgetSuggestions(
+  userId: string,
+  month: number,
+  year: number
+): Promise<BudgetSuggestion[]> {
+  assertDatabaseUrl();
+
+  const firstTransaction = await prisma.transaction.findFirst({
+    where: { userId, type: TransactionType.EXPENSE },
+    orderBy: { date: "asc" },
+    select: { date: true },
+  });
+
+  const monthsCounted = countLookbackMonths({ month, year }, firstTransaction?.date ?? null);
+  if (monthsCounted === 0) return [];
+
+  // [start of the earliest counted month, start of the target month)
+  let earliest = { month, year };
+  for (let i = 0; i < monthsCounted; i += 1) {
+    earliest = getPreviousMonthYear(earliest.month, earliest.year);
+  }
+  const { start } = getMonthDateRange(earliest.month, earliest.year);
+  const { start: end } = getMonthDateRange(month, year);
+
+  const grouped = await prisma.transaction.groupBy({
+    by: ["category"],
+    where: { userId, type: TransactionType.EXPENSE, date: { gte: start, lt: end } },
+    _sum: { baseAmount: true },
+  });
+
+  const totals = new Map(grouped.map((row) => [row.category, row._sum.baseAmount ?? 0]));
+  return buildBudgetSuggestions(totals, monthsCounted);
 }

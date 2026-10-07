@@ -12,13 +12,13 @@ import { formatMonthYear } from "@/lib/utils/format";
 
 type MonthYear = { month: number; year: number };
 
-type BudgetMonthNavigatorProps = {
+type MonthNavigatorProps = {
   value: MonthYear;
   onChange: (value: MonthYear) => void;
   disabled?: boolean;
 };
 
-export function BudgetMonthNavigator({ value, onChange, disabled }: BudgetMonthNavigatorProps) {
+export function MonthNavigator({ value, onChange, disabled }: MonthNavigatorProps) {
   const current = getCurrentMonthYear();
   const isCurrent = value.month === current.month && value.year === current.year;
 

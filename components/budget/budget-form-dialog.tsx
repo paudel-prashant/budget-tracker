@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Alert,
   Box,
@@ -18,7 +18,8 @@ import {
 } from "@mui/material";
 import { CategorySelectField } from "@/components/shared/ui/category-select-field";
 import { formTextFieldProps } from "@/lib/theme/form-field";
-import { formatMonthYear } from "@/lib/utils/format";
+import { formatCurrency, formatMonthYear } from "@/lib/utils/format";
+import type { BudgetSuggestion } from "@/lib/domain/budget-suggestions";
 import { FORM_STACK_SPACING } from "@/lib/config/layout-constants";
 import type { BudgetWithProgress } from "@/lib/types";
 
@@ -66,12 +67,65 @@ export function BudgetFormDialog({
   const [form, setForm] = useState<FormState>(emptyForm);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<BudgetSuggestion[]>([]);
+  // The limit the form last pre-filled itself; while the field still holds it, picking
+  // another category may replace it. Anything the user typed is never overwritten.
+  const autoFilledLimitRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
     setForm(budget ? formFromBudget(budget) : emptyForm());
     setError(null);
+    autoFilledLimitRef.current = null;
   }, [open, budget]);
+
+  const targetMonth = budget?.month ?? month;
+  const targetYear = budget?.year ?? year;
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+
+    // Suggestions are a convenience; the form works the same without them.
+    fetch(`/api/budgets/suggestions?month=${targetMonth}&year=${targetYear}`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: { suggestions: BudgetSuggestion[] } | null) => {
+        if (!cancelled) setSuggestions(data?.suggestions ?? []);
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, targetMonth, targetYear]);
+
+  const selectedCategory = (budget?.category ?? form.category).trim().toLowerCase();
+  const suggestion = selectedCategory
+    ? suggestions.find((item) => item.category.toLowerCase() === selectedCategory) ?? null
+    : null;
+
+  const applySuggestedLimit = (value: BudgetSuggestion) => {
+    const limit = String(value.suggestedLimit);
+    autoFilledLimitRef.current = limit;
+    setForm((prev) => ({ ...prev, monthlyLimit: limit }));
+  };
+
+  const handleCategoryChange = (category: string) => {
+    setForm((prev) => {
+      const match = suggestions.find(
+        (item) => item.category.toLowerCase() === category.trim().toLowerCase()
+      );
+      const limitIsUntouched =
+        prev.monthlyLimit === "" || prev.monthlyLimit === autoFilledLimitRef.current;
+
+      if (match && limitIsUntouched) {
+        const limit = String(match.suggestedLimit);
+        autoFilledLimitRef.current = limit;
+        return { ...prev, category, monthlyLimit: limit };
+      }
+      return { ...prev, category };
+    });
+  };
 
   const handleClose = () => {
     if (submitting) return;
@@ -161,7 +215,7 @@ export function BudgetFormDialog({
             ) : (
               <CategorySelectField
                 value={form.category}
-                onChange={(category) => setForm((prev) => ({ ...prev, category }))}
+                onChange={handleCategoryChange}
                 extraCategories={extraCategories}
                 transactionType="EXPENSE"
               />
@@ -179,6 +233,24 @@ export function BudgetFormDialog({
               }}
               required
             />
+
+            {suggestion && (
+              <Alert
+                severity="info"
+                variant="outlined"
+                action={
+                  form.monthlyLimit !== String(suggestion.suggestedLimit) ? (
+                    <Button color="inherit" size="small" onClick={() => applySuggestedLimit(suggestion)}>
+                      Use {formatCurrency(suggestion.suggestedLimit)}
+                    </Button>
+                  ) : undefined
+                }
+              >
+                You&apos;ve averaged {formatCurrency(suggestion.averageMonthly)} on{" "}
+                {suggestion.category} over the last{" "}
+                {suggestion.monthsCounted === 1 ? "month" : `${suggestion.monthsCounted} months`}.
+              </Alert>
+            )}
 
             <Box>
               <FormControlLabel

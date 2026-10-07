@@ -10,6 +10,7 @@ import { normalizeTitleKey } from "@/lib/domain/category-suggestion-engine";
 import { getUserPreferredCurrency } from "@/lib/data/user-settings-data";
 import { revalidateFinancePages } from "@/lib/utils/revalidate-pages";
 import { startOfUtcDay } from "@/lib/domain/recurrence-dates";
+import { MAX_TAGS, MAX_TAG_LENGTH, normalizeTags } from "@/lib/validation/transaction-validation";
 
 export const runtime = "nodejs";
 
@@ -22,6 +23,8 @@ type ImportCommitRow = {
   category: string;
   date: string;
   importHash: string;
+  /** From a matching category rule; not part of the import hash. */
+  tags: string[];
 };
 
 function validateCommitRow(row: unknown, index: number): ImportCommitRow | string {
@@ -29,7 +32,7 @@ function validateCommitRow(row: unknown, index: number): ImportCommitRow | strin
     return `Row ${index + 1}: must be an object`;
   }
 
-  const { title, amount, type, category, date, importHash } = row as Record<string, unknown>;
+  const { title, amount, type, category, date, importHash, tags } = row as Record<string, unknown>;
 
   if (typeof title !== "string" || title.trim().length === 0) {
     return `Row ${index + 1}: invalid title`;
@@ -55,6 +58,15 @@ function validateCommitRow(row: unknown, index: number): ImportCommitRow | strin
     return `Row ${index + 1}: invalid importHash`;
   }
 
+  if (
+    tags !== undefined &&
+    (!Array.isArray(tags) ||
+      tags.length > MAX_TAGS ||
+      tags.some((tag) => typeof tag !== "string" || tag.trim().length === 0 || tag.length > MAX_TAG_LENGTH))
+  ) {
+    return `Row ${index + 1}: invalid tags`;
+  }
+
   const parsedDate = startOfUtcDay(new Date(date));
   const expectedHash = computeTransactionImportHash({
     title: title.trim(),
@@ -75,6 +87,7 @@ function validateCommitRow(row: unknown, index: number): ImportCommitRow | strin
     category: category.trim(),
     date: parsedDate.toISOString(),
     importHash,
+    tags: normalizeTags((tags as string[] | undefined) ?? []),
   };
 }
 
@@ -164,6 +177,7 @@ export async function POST(request: NextRequest) {
         category: row.category,
         date: new Date(row.date),
         importHash: row.importHash,
+        tags: row.tags,
       })),
       skipDuplicates: true,
     });

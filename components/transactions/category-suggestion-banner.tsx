@@ -24,7 +24,11 @@ export function CategorySuggestionBanner({
   const alreadyApplied = normalizedCurrent === normalizedSuggested;
 
   const sourceLabel =
-    suggestion.source === "learned" ? "From your saved choices" : "Based on title keywords";
+    suggestion.source === "rule"
+      ? "From your category rule"
+      : suggestion.source === "learned"
+        ? "From your saved choices"
+        : "Based on title keywords";
 
   return (
     <Alert

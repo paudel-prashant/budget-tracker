@@ -50,6 +50,15 @@ export function formatDate(date: string | Date): string {
   }).format(value);
 }
 
+/**
+ * Formats a calendar-day key ("2026-10-05") as that day everywhere. formatDate would
+ * parse it as UTC midnight, which shows as the previous day west of UTC.
+ */
+export function formatDayKey(dayKey: string): string {
+  const [year, month, day] = dayKey.slice(0, 10).split("-").map(Number);
+  return formatDate(new Date(year, month - 1, day));
+}
+
 export function formatChartDate(date: string): string {
   const value = new Date(date);
   return new Intl.DateTimeFormat("en-US", {

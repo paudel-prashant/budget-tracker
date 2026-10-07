@@ -1,4 +1,5 @@
-const REQUIRED_HEADERS = ["title", "amount", "type", "category", "date"] as const;
+// category is optional: category rules and learned suggestions fill it in on import.
+const REQUIRED_HEADERS = ["title", "amount", "type", "date"] as const;
 
 export type CsvTransactionRow = Record<string, string>;
 

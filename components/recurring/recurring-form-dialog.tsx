@@ -26,9 +26,20 @@ import type { RecurrenceFrequency, RecurringTransaction, TransactionType } from 
 type RecurringFormDialogProps = {
   open: boolean;
   recurring?: RecurringTransaction | null;
+  /** Pre-filled values for a new item (e.g. from a detected subscription). */
+  prefill?: RecurringPrefill | null;
   extraCategories?: string[];
   onClose: () => void;
   onSuccess: () => void | Promise<void>;
+};
+
+export type RecurringPrefill = {
+  title: string;
+  amount: number;
+  category: string;
+  frequency: RecurrenceFrequency;
+  /** YYYY-MM-DD */
+  startDate: string;
 };
 
 type FormState = {
@@ -70,6 +81,7 @@ const datePickerFieldProps = {
 export function RecurringFormDialog({
   open,
   recurring,
+  prefill,
   extraCategories = [],
   onClose,
   onSuccess,
@@ -81,9 +93,22 @@ export function RecurringFormDialog({
 
   useEffect(() => {
     if (!open) return;
-    setForm(recurring ? formFromRecurring(recurring) : emptyForm());
+    setForm(
+      recurring
+        ? formFromRecurring(recurring)
+        : prefill
+          ? {
+              ...emptyForm(),
+              title: prefill.title,
+              amount: String(prefill.amount),
+              category: prefill.category,
+              frequency: prefill.frequency,
+              startDate: dayjs(prefill.startDate),
+            }
+          : emptyForm()
+    );
     setError(null);
-  }, [open, recurring]);
+  }, [open, recurring, prefill]);
 
   const handleClose = () => {
     if (submitting) return;
