@@ -31,6 +31,8 @@ enum FinanceAccountType {
   SAVINGS
   CASH
   CREDIT
+  /// TFSA, RRSP, brokerage — counts toward net worth but not spendable cash.
+  INVESTMENT
   OTHER
 }
 
@@ -146,6 +148,8 @@ model FinanceAccount {
   type           FinanceAccountType @default(CHECKING)
   /// Balance before any recorded transaction; currentBalance is derived from this.
   openingBalance Float              @default(0)
+  /// Credit cards only: the provider's limit, for utilization.
+  creditLimit    Float?
   currentBalance Float              @default(0)
   currency       String             @default("CAD")
   createdAt      DateTime           @default(now())

@@ -6,6 +6,8 @@ export type AccountInput = {
   name: string;
   type: FinanceAccountType;
   openingBalance: number;
+  /** Always null for non-credit accounts. */
+  creditLimit: number | null;
 };
 
 const accountSchema = z.object({
@@ -15,10 +17,15 @@ const accountSchema = z.object({
     .min(1, "name is required and must be a non-empty string")
     .max(60, "name must be 60 characters or fewer"),
   type: z.nativeEnum(FinanceAccountType, {
-    message: "type must be CHECKING, SAVINGS, CASH, CREDIT, or OTHER",
+    message: "type must be CHECKING, SAVINGS, CASH, CREDIT, INVESTMENT, or OTHER",
   }),
   // Negative is allowed: a credit card or overdraft can start below zero.
   openingBalance: z.number().finite("openingBalance must be a number").optional().default(0),
+  creditLimit: z
+    .number()
+    .finite()
+    .positive("creditLimit must be a positive number")
+    .nullish(),
 });
 
 export function validateAccountBody(body: unknown): ValidationResult<AccountInput> {
@@ -26,7 +33,34 @@ export function validateAccountBody(body: unknown): ValidationResult<AccountInpu
     return { success: false, error: "Request body must be a JSON object" };
   }
 
-  return toValidationResult(accountSchema.safeParse(body));
+  const parsed = toValidationResult(accountSchema.safeParse(body));
+  if (!parsed.success) return parsed;
+
+  return {
+    success: true,
+    data: {
+      name: parsed.data.name,
+      type: parsed.data.type,
+      openingBalance: parsed.data.openingBalance,
+      creditLimit:
+        parsed.data.type === FinanceAccountType.CREDIT ? (parsed.data.creditLimit ?? null) : null,
+    },
+  };
+}
+
+const balanceSchema = z.object({
+  balance: z.number().finite("balance must be a number"),
+});
+
+/** "Set the current balance" — e.g. an investment account's market value. */
+export function validateBalanceUpdateBody(body: unknown): ValidationResult<{ balance: number }> {
+  if (!body || typeof body !== "object") {
+    return { success: false, error: "Request body must be a JSON object" };
+  }
+
+  const parsed = toValidationResult(balanceSchema.safeParse(body));
+  if (!parsed.success) return parsed;
+  return { success: true, data: { balance: Math.round(parsed.data.balance * 100) / 100 } };
 }
 
 export type TransferInput = {

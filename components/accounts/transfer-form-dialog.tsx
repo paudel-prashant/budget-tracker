@@ -24,11 +24,19 @@ import type { FinanceAccountSummary } from "@/lib/types";
 type TransferFormDialogProps = {
   open: boolean;
   accounts: FinanceAccountSummary[];
+  /** Pre-selects the destination and amount, e.g. paying off a credit card. */
+  prefill?: { toAccountId: string; amount: number } | null;
   onClose: () => void;
   onSuccess: () => void | Promise<void>;
 };
 
-export function TransferFormDialog({ open, accounts, onClose, onSuccess }: TransferFormDialogProps) {
+export function TransferFormDialog({
+  open,
+  accounts,
+  prefill,
+  onClose,
+  onSuccess,
+}: TransferFormDialogProps) {
   const [fromAccountId, setFromAccountId] = useState("");
   const [toAccountId, setToAccountId] = useState("");
   const [amount, setAmount] = useState("");
@@ -39,13 +47,19 @@ export function TransferFormDialog({ open, accounts, onClose, onSuccess }: Trans
 
   useEffect(() => {
     if (!open) return;
-    setFromAccountId(accounts[0]?.id ?? "");
-    setToAccountId(accounts[1]?.id ?? "");
-    setAmount("");
+    const to = prefill?.toAccountId ?? accounts[1]?.id ?? "";
+    // Pay from the primary account (or the first other account) by default.
+    const from =
+      accounts.find((account) => account.isPrimary && account.id !== to)?.id ??
+      accounts.find((account) => account.id !== to)?.id ??
+      "";
+    setFromAccountId(from);
+    setToAccountId(to);
+    setAmount(prefill && prefill.amount > 0 ? prefill.amount.toFixed(2) : "");
     setDate(dayjs());
     setNote("");
     setError(null);
-  }, [open, accounts]);
+  }, [open, accounts, prefill]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();

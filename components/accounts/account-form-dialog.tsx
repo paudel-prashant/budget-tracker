@@ -20,6 +20,7 @@ export const ACCOUNT_TYPE_LABELS: Record<FinanceAccountType, string> = {
   SAVINGS: "Savings",
   CASH: "Cash",
   CREDIT: "Credit card",
+  INVESTMENT: "Investment (TFSA, RRSP…)",
   OTHER: "Other",
 };
 
@@ -35,6 +36,7 @@ export function AccountFormDialog({ open, account, onClose, onSuccess }: Account
   const [name, setName] = useState("");
   const [type, setType] = useState<FinanceAccountType>("CHECKING");
   const [openingBalance, setOpeningBalance] = useState("0");
+  const [creditLimit, setCreditLimit] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,15 +45,21 @@ export function AccountFormDialog({ open, account, onClose, onSuccess }: Account
     setName(account?.name ?? "");
     setType(account?.type ?? "CHECKING");
     setOpeningBalance(String(account?.openingBalance ?? 0));
+    setCreditLimit(account?.creditLimit ? String(account.creditLimit) : "");
     setError(null);
   }, [open, account]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     const balance = Number(openingBalance || 0);
+    const limit = creditLimit.trim() ? Number(creditLimit) : null;
 
     if (!name.trim() || !Number.isFinite(balance)) {
       setError("Enter a name and a valid opening balance.");
+      return;
+    }
+    if (limit !== null && (!Number.isFinite(limit) || limit <= 0)) {
+      setError("The credit limit must be a positive number.");
       return;
     }
 
@@ -62,7 +70,12 @@ export function AccountFormDialog({ open, account, onClose, onSuccess }: Account
       const response = await fetch(isEdit ? `/api/accounts/${account!.id}` : "/api/accounts", {
         method: isEdit ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), type, openingBalance: balance }),
+        body: JSON.stringify({
+          name: name.trim(),
+          type,
+          openingBalance: balance,
+          creditLimit: type === "CREDIT" ? limit : null,
+        }),
       });
 
       if (!response.ok) {
@@ -122,10 +135,23 @@ export function AccountFormDialog({ open, account, onClose, onSuccess }: Account
               helperText={
                 type === "CREDIT"
                   ? "Enter money owed as a negative number."
-                  : "The balance before any transaction recorded here."
+                  : type === "INVESTMENT"
+                    ? "Current value. Use “Update balance” later as the market moves."
+                    : "The balance before any transaction recorded here."
               }
               slotProps={{ ...formTextFieldProps.slotProps, htmlInput: { step: "0.01" } }}
             />
+            {type === "CREDIT" && (
+              <TextField
+                {...formTextFieldProps}
+                label="Credit limit (optional)"
+                type="number"
+                value={creditLimit}
+                onChange={(e) => setCreditLimit(e.target.value)}
+                helperText="The maximum your card provider allows — used to show utilization."
+                slotProps={{ ...formTextFieldProps.slotProps, htmlInput: { min: 0, step: "0.01" } }}
+              />
+            )}
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>

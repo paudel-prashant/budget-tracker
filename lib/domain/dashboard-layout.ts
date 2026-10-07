@@ -4,6 +4,7 @@ export const DASHBOARD_WIDGET_IDS = [
   "charts",
   "forecast",
   "budgets",
+  "credit",
   "goals",
   "insights",
 ] as const;
@@ -47,6 +48,11 @@ export const DASHBOARD_WIDGET_META: Record<
   budgets: {
     label: "Budgets",
     description: "Budget health and overspend warnings",
+    fullWidth: true,
+  },
+  credit: {
+    label: "Credit utilization",
+    description: "How much of each credit card's limit you're using",
     fullWidth: true,
   },
   goals: {

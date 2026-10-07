@@ -22,6 +22,7 @@ import { DashboardGettingStarted } from "@/components/dashboard/dashboard-gettin
 import { DashboardMetricsTransition } from "@/components/dashboard/dashboard-metrics-transition";
 import { DashboardInsightsWidget } from "@/components/dashboard/dashboard-insights-widget";
 import { GoalsWidget } from "@/components/dashboard/goals-widget";
+import { CreditUtilizationWidget } from "@/components/dashboard/credit-utilization-widget";
 import { DashboardForecastWidget } from "@/components/dashboard/dashboard-forecast-widget";
 import { DashboardCustomizeDialog } from "@/components/dashboard/dashboard-customize-dialog";
 import {
@@ -113,6 +114,15 @@ export function DashboardView({ data, initialLayout }: DashboardViewProps) {
               <BudgetHealthWidget health={data.budgetHealth} embedded />
             </Stack>
           );
+        case "credit":
+          // Offline copies cached before this widget existed have no creditCards.
+          return (
+            <CreditUtilizationWidget
+              summary={
+                data.creditCards ?? { cards: [], totalOwed: 0, totalLimit: 0, overallUtilization: null }
+              }
+            />
+          );
         case "goals":
           return metricsContent(
             <GoalsWidget
@@ -136,7 +146,7 @@ export function DashboardView({ data, initialLayout }: DashboardViewProps) {
           return null;
       }
     },
-    [data.budgetHealth, data.budgetWarnings, metrics, metricsLoading]
+    [data.budgetHealth, data.budgetWarnings, data.creditCards, metrics, metricsLoading]
   );
 
   return (

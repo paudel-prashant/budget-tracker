@@ -6,7 +6,7 @@ describe("validateAccountBody", () => {
     const result = validateAccountBody({ name: "  Savings  ", type: "SAVINGS" });
     expect(result).toEqual({
       success: true,
-      data: { name: "Savings", type: "SAVINGS", openingBalance: 0 },
+      data: { name: "Savings", type: "SAVINGS", openingBalance: 0, creditLimit: null },
     });
   });
 
@@ -17,6 +17,19 @@ describe("validateAccountBody", () => {
 
   it("rejects an unknown account type", () => {
     expect(validateAccountBody({ name: "X", type: "BROKERAGE" }).success).toBe(false);
+  });
+
+  it("keeps a credit limit for credit cards and drops it for other types", () => {
+    const card = validateAccountBody({ name: "Visa", type: "CREDIT", creditLimit: 5000 });
+    expect(card.success && card.data.creditLimit).toBe(5000);
+
+    const savings = validateAccountBody({ name: "Savings", type: "SAVINGS", creditLimit: 5000 });
+    expect(savings.success && savings.data.creditLimit).toBeNull();
+  });
+
+  it("accepts investment accounts and rejects a non-positive credit limit", () => {
+    expect(validateAccountBody({ name: "TFSA", type: "INVESTMENT" }).success).toBe(true);
+    expect(validateAccountBody({ name: "Visa", type: "CREDIT", creditLimit: 0 }).success).toBe(false);
   });
 
   it("rejects an empty name", () => {

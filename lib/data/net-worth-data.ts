@@ -4,9 +4,12 @@ import { getCurrentMonthKey, getMonthDateRange } from "@/lib/domain/monthly-repo
 import { buildMonthlyIncomeExpenseData } from "@/lib/domain/chart-data";
 import { prisma } from "@/lib/db/prisma";
 import { serializeTransaction } from "@/lib/services/serialize-transaction";
+import { listFinanceAccounts } from "@/lib/data/finance-account-data";
+import { accountNetWorthContribution } from "@/lib/domain/account-net-worth";
 import type {
   Asset,
   Liability,
+  NetWorthAccountItem,
   NetWorthDashboardData,
   NetWorthHistoryPoint,
   Transaction,
@@ -213,7 +216,7 @@ export async function getNetWorthDashboardData(
 
   const currentMonth = getCurrentMonthKey();
 
-  const [assets, liabilities, transactions, snapshots] = await Promise.all([
+  const [assets, liabilities, transactions, accounts] = await Promise.all([
     prisma.asset.findMany({
       where: { userId },
       orderBy: [{ value: "desc" }, { name: "asc" }],
@@ -226,14 +229,26 @@ export async function getNetWorthDashboardData(
       where: { userId },
       orderBy: { date: "asc" },
     }),
-    prisma.netWorthSnapshot.findMany({
-      where: { userId },
-      orderBy: { month: "asc" },
-    }),
+    // Also syncs balances, so net worth always reflects the latest transactions/transfers.
+    listFinanceAccounts(userId),
   ]);
 
-  const totalAssets = roundMoney(assets.reduce((sum, a) => sum + a.value, 0));
-  const totalLiabilities = roundMoney(liabilities.reduce((sum, l) => sum + l.value, 0));
+  // Accounts (chequing, savings, TFSA, credit cards…) count toward net worth alongside the
+  // manually-entered items, so the two pages never disagree.
+  const accountItems: NetWorthAccountItem[] = accounts.map((account) => ({
+    id: account.id,
+    name: account.name,
+    type: account.type,
+    balance: account.currentBalance,
+    ...accountNetWorthContribution(account.currentBalance),
+  }));
+  const accountAssets = roundMoney(accountItems.reduce((sum, a) => sum + a.asset, 0));
+  const accountLiabilities = roundMoney(accountItems.reduce((sum, a) => sum + a.liability, 0));
+
+  const totalAssets = roundMoney(assets.reduce((sum, a) => sum + a.value, 0) + accountAssets);
+  const totalLiabilities = roundMoney(
+    liabilities.reduce((sum, l) => sum + l.value, 0) + accountLiabilities
+  );
   const netWorth = roundMoney(totalAssets - totalLiabilities);
 
   await upsertNetWorthSnapshot(userId, currentMonth, totalAssets, totalLiabilities);
@@ -274,9 +289,12 @@ export async function getNetWorthDashboardData(
       monthlyExpenses: currentMonthTotals.expenses,
       monthlySavings: currentMonthTotals.savings,
       netWorthChangePercent: netWorthChange,
+      accountAssets,
+      accountLiabilities,
     },
     assets: assets.map(serializeAsset),
     liabilities: liabilities.map(serializeLiability),
+    accounts: accountItems,
     history,
   };
 }

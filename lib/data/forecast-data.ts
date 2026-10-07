@@ -24,10 +24,22 @@ async function loadForecastInput(userId: string, timeframe: ForecastTimeframe) {
   await processRecurringTransactions(userId);
 
   const account = await ensureDefaultFinanceAccount(userId);
-  // Cash flow is forecast across all accounts: transfers between them cancel out, so the
-  // combined balance plus every income/expense is the user's overall cash position.
-  const balances = await syncAllFinanceAccountBalances(userId);
-  const combinedBalance = roundMoney([...balances.values()].reduce((sum, value) => sum + value, 0));
+  // Cash flow is forecast across all spendable accounts: transfers between them cancel out,
+  // so their combined balance plus every income/expense is the user's cash position.
+  // Investment accounts (TFSA, RRSP) are wealth, not cash flow, so they're left out.
+  const [balances, investmentAccounts] = await Promise.all([
+    syncAllFinanceAccountBalances(userId),
+    prisma.financeAccount.findMany({
+      where: { userId, type: "INVESTMENT" },
+      select: { id: true },
+    }),
+  ]);
+  const investmentIds = investmentAccounts.map((row) => row.id);
+  const combinedBalance = roundMoney(
+    [...balances.entries()]
+      .filter(([id]) => !investmentIds.includes(id))
+      .reduce((sum, [, value]) => sum + value, 0)
+  );
   const today = startOfUtcDay(new Date());
   const forecastDays =
     timeframe === "7d" ? 7 : timeframe === "30d" ? 30 : timeframe === "90d" ? 90 : 180;
@@ -37,7 +49,13 @@ async function loadForecastInput(userId: string, timeframe: ForecastTimeframe) {
 
   const [transactions, recurring] = await Promise.all([
     prisma.transaction.findMany({
-      where: { userId },
+      where:
+        investmentIds.length > 0
+          ? {
+              userId,
+              OR: [{ financeAccountId: null }, { financeAccountId: { notIn: investmentIds } }],
+            }
+          : { userId },
       select: {
         date: true,
         amount: true,

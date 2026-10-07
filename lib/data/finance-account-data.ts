@@ -2,6 +2,7 @@ import { assertDatabaseUrl } from "@/lib/config/env";
 import { prisma } from "@/lib/db/prisma";
 import { roundMoney } from "@/lib/forecasting/types";
 import { computeAccountBalance } from "@/lib/domain/account-balance";
+import { summarizeCreditCards, type CreditCardSummary } from "@/lib/domain/account-net-worth";
 
 const DEFAULT_ACCOUNT_NAME = "Primary Account";
 
@@ -148,9 +149,22 @@ export async function listFinanceAccounts(userId: string) {
     type: account.type,
     openingBalance: account.openingBalance,
     currentBalance: account.currentBalance,
+    creditLimit: account.creditLimit,
     isPrimary: account.id === primary.id,
     transactionCount:
       transactionCounts.find((row) => row.financeAccountId === account.id)?._count._all ?? 0,
     createdAt: account.createdAt.toISOString(),
   }));
+}
+
+/** Credit card balances and utilization. Reads stored balances — sync first if stale. */
+export async function getCreditCardSummary(userId: string): Promise<CreditCardSummary> {
+  assertDatabaseUrl();
+
+  const cards = await prisma.financeAccount.findMany({
+    where: { userId, type: "CREDIT" },
+    select: { id: true, name: true, currentBalance: true, creditLimit: true },
+  });
+
+  return summarizeCreditCards(cards);
 }

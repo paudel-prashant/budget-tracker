@@ -1,3 +1,4 @@
+import type { CreditCardSummary } from "@/lib/domain/account-net-worth";
 export type TransactionType = "INCOME" | "EXPENSE";
 
 export type RecurrenceFrequency = "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
@@ -155,7 +156,13 @@ export type CopyBudgetsResult = {
   skipped: number;
 };
 
-export type FinanceAccountType = "CHECKING" | "SAVINGS" | "CASH" | "CREDIT" | "OTHER";
+export type FinanceAccountType =
+  | "CHECKING"
+  | "SAVINGS"
+  | "CASH"
+  | "CREDIT"
+  | "INVESTMENT"
+  | "OTHER";
 
 export type FinanceAccountSummary = {
   id: string;
@@ -163,6 +170,8 @@ export type FinanceAccountSummary = {
   type: FinanceAccountType;
   openingBalance: number;
   currentBalance: number;
+  /** Credit cards only. */
+  creditLimit: number | null;
   isPrimary: boolean;
   transactionCount: number;
   createdAt: string;
@@ -312,12 +321,26 @@ export type NetWorthSummary = {
   monthlyExpenses: number;
   monthlySavings: number;
   netWorthChangePercent: number | null;
+  /** Portion of totalAssets / totalLiabilities that comes from the Accounts page. */
+  accountAssets: number;
+  accountLiabilities: number;
+};
+
+/** A finance account as it counts toward net worth (read-only on the Net Worth page). */
+export type NetWorthAccountItem = {
+  id: string;
+  name: string;
+  type: FinanceAccountType;
+  balance: number;
+  asset: number;
+  liability: number;
 };
 
 export type NetWorthDashboardData = {
   current: NetWorthSummary;
   assets: Asset[];
   liabilities: Liability[];
+  accounts: NetWorthAccountItem[];
   history: NetWorthHistoryPoint[];
 };
 
@@ -380,7 +403,10 @@ export type DashboardData = DashboardMetrics & {
   budgetHealth: BudgetHealth;
   budgetWarnings: BudgetWithProgress[];
   netWorth: NetWorthDashboardData;
+  creditCards: CreditCardSummary;
 };
+
+export type { CreditCardSummary, CreditCardUtilization } from "@/lib/domain/account-net-worth";
 
 export type {
   DashboardLayoutPreferences,

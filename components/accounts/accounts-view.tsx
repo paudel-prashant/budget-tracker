@@ -17,6 +17,7 @@ import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import SwapHorizOutlinedIcon from "@mui/icons-material/SwapHorizOutlined";
+import TuneOutlinedIcon from "@mui/icons-material/TuneOutlined";
 import { PageHeader } from "@/components/shared/ui/page-header";
 import { PageStack } from "@/components/shared/ui/page-stack";
 import { ResponsiveColumns } from "@/components/shared/ui/responsive-columns";
@@ -25,6 +26,8 @@ import { SurfaceCard } from "@/components/shared/ui/surface-card";
 import { useSnackbar } from "@/components/shared/providers/snackbar-provider";
 import { AccountFormDialog, ACCOUNT_TYPE_LABELS } from "@/components/accounts/account-form-dialog";
 import { TransferFormDialog } from "@/components/accounts/transfer-form-dialog";
+import { UpdateBalanceDialog } from "@/components/accounts/update-balance-dialog";
+import { UtilizationMeter } from "@/components/accounts/utilization-meter";
 import { CARD_PADDING } from "@/lib/config/layout-constants";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import type { FinanceAccountSummary, Transfer } from "@/lib/types";
@@ -47,6 +50,10 @@ export function AccountsView() {
   const [accountDialogOpen, setAccountDialogOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<FinanceAccountSummary | null>(null);
   const [transferDialogOpen, setTransferDialogOpen] = useState(false);
+  const [transferPrefill, setTransferPrefill] = useState<{ toAccountId: string; amount: number } | null>(
+    null
+  );
+  const [balanceTarget, setBalanceTarget] = useState<FinanceAccountSummary | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -122,7 +129,10 @@ export function AccountsView() {
               variant="outlined"
               startIcon={<SwapHorizOutlinedIcon />}
               disabled={accounts.length < 2}
-              onClick={() => setTransferDialogOpen(true)}
+              onClick={() => {
+                setTransferPrefill(null);
+                setTransferDialogOpen(true);
+              }}
             >
               Transfer
             </Button>
@@ -167,6 +177,14 @@ export function AccountsView() {
                   </Stack>
                 </Box>
                 <Stack direction="row">
+                  <Tooltip title={account.type === "INVESTMENT" ? "Update market value" : "Update balance"}>
+                    <IconButton
+                      aria-label={`Update balance of ${account.name}`}
+                      onClick={() => setBalanceTarget(account)}
+                    >
+                      <TuneOutlinedIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
                   <Tooltip title="Edit account">
                     <IconButton
                       aria-label={`Edit ${account.name}`}
@@ -193,16 +211,30 @@ export function AccountsView() {
                   )}
                 </Stack>
               </Stack>
-              <Typography
-                variant="h5"
-                sx={{ mt: 2 }}
-                color={account.currentBalance < 0 ? "error.main" : "text.primary"}
-              >
-                {formatCurrency(account.currentBalance)}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {account.transactionCount} {account.transactionCount === 1 ? "transaction" : "transactions"}
-              </Typography>
+              {account.type === "CREDIT" ? (
+                <CreditCardDetails
+                  account={account}
+                  onPay={(owed) => {
+                    setTransferPrefill({ toAccountId: account.id, amount: owed });
+                    setTransferDialogOpen(true);
+                  }}
+                  canPay={accounts.length > 1}
+                />
+              ) : (
+                <>
+                  <Typography
+                    variant="h5"
+                    sx={{ mt: 2 }}
+                    color={account.currentBalance < 0 ? "error.main" : "text.primary"}
+                  >
+                    {formatCurrency(account.currentBalance)}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {account.transactionCount}{" "}
+                    {account.transactionCount === 1 ? "transaction" : "transactions"}
+                  </Typography>
+                </>
+              )}
             </SurfaceCard>
           ))}
         </ResponsiveColumns>
@@ -268,9 +300,19 @@ export function AccountsView() {
         }}
       />
 
+      <UpdateBalanceDialog
+        account={balanceTarget}
+        onClose={() => setBalanceTarget(null)}
+        onSuccess={async () => {
+          showSuccess("Balance updated");
+          await load();
+        }}
+      />
+
       <TransferFormDialog
         open={transferDialogOpen}
         accounts={accounts}
+        prefill={transferPrefill}
         onClose={() => setTransferDialogOpen(false)}
         onSuccess={async () => {
           showSuccess("Transfer recorded");
@@ -278,5 +320,51 @@ export function AccountsView() {
         }}
       />
     </PageStack>
+  );
+}
+
+function CreditCardDetails({
+  account,
+  onPay,
+  canPay,
+}: {
+  account: FinanceAccountSummary;
+  onPay: (owed: number) => void;
+  canPay: boolean;
+}) {
+  const owed = Math.max(0, -account.currentBalance);
+  const limit = account.creditLimit;
+
+  return (
+    <Box sx={{ mt: 2 }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="flex-end">
+        <Box>
+          <Typography variant="caption" color="text.secondary">
+            {account.currentBalance > 0 ? "Credit balance" : "Owed"}
+          </Typography>
+          <Typography variant="h5">
+            {formatCurrency(account.currentBalance > 0 ? account.currentBalance : owed)}
+          </Typography>
+        </Box>
+        {owed > 0 && canPay && (
+          <Button size="small" variant="outlined" onClick={() => onPay(owed)}>
+            Pay
+          </Button>
+        )}
+      </Stack>
+      {limit ? (
+        <Box sx={{ mt: 1 }}>
+          <UtilizationMeter
+            owed={owed}
+            creditLimit={limit}
+            utilization={Math.round((owed / limit) * 1000) / 10}
+          />
+        </Box>
+      ) : (
+        <Typography variant="caption" color="text.secondary">
+          Add a credit limit (edit) to track utilization.
+        </Typography>
+      )}
+    </Box>
   );
 }

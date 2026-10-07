@@ -21,9 +21,14 @@ import { NetWorthGrowthChart } from "@/components/dashboard/net-worth-growth-cha
 import { NetWorthItemCard } from "@/components/net-worth/net-worth-item-card";
 import { AssetLiabilityDialog } from "@/components/net-worth/asset-liability-dialog";
 import { DeleteNetWorthItemDialog } from "@/components/net-worth/delete-net-worth-item-dialog";
+import { MoveToAccountDialog, type MoveTarget } from "@/components/net-worth/move-to-account-dialog";
+import { SectionPanel } from "@/components/shared/ui/section-panel";
+import { ACCOUNT_TYPE_LABELS } from "@/components/accounts/account-form-dialog";
+import { suggestAccountTypeForNetWorthItem } from "@/lib/domain/account-net-worth";
+import Link from "next/link";
 import { useSnackbar } from "@/components/shared/providers/snackbar-provider";
 import { formatCurrency, formatPercent } from "@/lib/utils/format";
-import type { Asset, Liability, NetWorthDashboardData } from "@/lib/types";
+import type { Asset, Liability, NetWorthAccountItem, NetWorthDashboardData } from "@/lib/types";
 import SavingsOutlinedIcon from "@mui/icons-material/SavingsOutlined";
 import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
 import TrendingDownOutlinedIcon from "@mui/icons-material/TrendingDownOutlined";
@@ -37,6 +42,8 @@ export function NetWorthView() {
   const [liabilities, setLiabilities] = useState<Liability[]>([]);
   const [summary, setSummary] = useState<NetWorthDashboardData["current"] | null>(null);
   const [history, setHistory] = useState<NetWorthDashboardData["history"]>([]);
+  const [accounts, setAccounts] = useState<NetWorthAccountItem[]>([]);
+  const [moveTarget, setMoveTarget] = useState<MoveTarget | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -73,6 +80,7 @@ export function NetWorthView() {
         const dashboard: NetWorthDashboardData = await dashboardRes.json();
         setSummary(dashboard.current);
         setHistory(dashboard.history);
+        setAccounts(dashboard.accounts ?? []); // absent in responses cached by older versions
       } else {
         const totalAssets = assetsData.reduce((sum, a) => sum + a.value, 0);
         const totalLiabilities = liabilitiesData.reduce((sum, l) => sum + l.value, 0);
@@ -85,6 +93,8 @@ export function NetWorthView() {
           monthlyExpenses: 0,
           monthlySavings: 0,
           netWorthChangePercent: null,
+          accountAssets: 0,
+          accountLiabilities: 0,
         });
         setHistory([]);
       }
@@ -103,6 +113,23 @@ export function NetWorthView() {
 
   const activeItems = tab === "assets" ? assets : liabilities;
   const activeKind = tab === "assets" ? "asset" : "liability";
+  const assetAccounts = accounts.filter((account) => account.asset > 0);
+  const liabilityAccounts = accounts.filter((account) => account.liability > 0);
+  const activeAccounts = tab === "assets" ? assetAccounts : liabilityAccounts;
+
+  /** A manual item named like an account ("TFSA" vs "TFSA") is probably double-counted. */
+  const findDuplicateAccount = (item: Asset | Liability): string | null => {
+    const name = item.name.trim().toLowerCase();
+    const match = accounts.find((account) => {
+      const accountName = account.name.trim().toLowerCase();
+      if (accountName === name) return true;
+      // Containment only for real words, so "a" or "TD" don't match everything.
+      const [shorter, longer] =
+        accountName.length < name.length ? [accountName, name] : [name, accountName];
+      return shorter.length >= 4 && longer.includes(shorter);
+    });
+    return match?.name ?? null;
+  };
 
   const computedSummary = useMemo(() => {
     if (summary) return summary;
@@ -117,6 +144,8 @@ export function NetWorthView() {
       monthlyExpenses: 0,
       monthlySavings: 0,
       netWorthChangePercent: null,
+      accountAssets: 0,
+      accountLiabilities: 0,
     };
   }, [summary, assets, liabilities]);
 
@@ -248,8 +277,11 @@ export function NetWorthView() {
         onChange={(_, value: TabValue) => setTab(value)}
         sx={{ borderBottom: 1, borderColor: "divider", mt: 1 }}
       >
-        <Tab label={`Assets (${assets.length})`} value="assets" />
-        <Tab label={`Liabilities (${liabilities.length})`} value="liabilities" />
+        <Tab label={`Assets (${assets.length + assetAccounts.length})`} value="assets" />
+        <Tab
+          label={`Liabilities (${liabilities.length + liabilityAccounts.length})`}
+          value="liabilities"
+        />
       </Tabs>
 
       {loading ? (
@@ -258,7 +290,7 @@ export function NetWorthView() {
             <Skeleton key={key} variant="rounded" height={180} />
           ))}
         </ResponsiveColumns>
-      ) : activeItems.length === 0 ? (
+      ) : activeItems.length === 0 && activeAccounts.length === 0 ? (
         <EmptyState
           icon={AccountBalanceWalletOutlinedIcon}
           title={tab === "assets" ? "No assets yet" : "No liabilities yet"}
@@ -271,22 +303,90 @@ export function NetWorthView() {
           onAction={openAdd}
         />
       ) : (
-        <ResponsiveColumns columns={{ xs: 1, sm: 2, md: 3 }}>
-          {activeItems.map((item) => (
-            <NetWorthItemCard
-              key={item.id}
-              item={item}
-              variant={activeKind}
-              onEdit={openEdit}
-              onDelete={openDelete}
-            />
-          ))}
-        </ResponsiveColumns>
+        <>
+          {activeAccounts.length > 0 && (
+            <SectionPanel>
+              <Box
+                sx={{
+                  px: 2,
+                  py: 1.5,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: 1,
+                }}
+              >
+                <Box>
+                  <Typography variant="subtitle2">From your accounts</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Balances update automatically from transactions and transfers.
+                  </Typography>
+                </Box>
+                <Button component={Link} href="/accounts" size="small">
+                  Manage
+                </Button>
+              </Box>
+              {activeAccounts.map((account) => (
+                <Box
+                  key={account.id}
+                  sx={{
+                    px: 2,
+                    py: 1.25,
+                    borderTop: 1,
+                    borderColor: "divider",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 2,
+                  }}
+                >
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography variant="body2" fontWeight={600} noWrap>
+                      {account.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {ACCOUNT_TYPE_LABELS[account.type]}
+                    </Typography>
+                  </Box>
+                  <Typography
+                    variant="body1"
+                    fontWeight={700}
+                    color={tab === "assets" ? "success.main" : "error.main"}
+                  >
+                    {formatCurrency(tab === "assets" ? account.asset : account.liability)}
+                  </Typography>
+                </Box>
+              ))}
+            </SectionPanel>
+          )}
+
+          {activeItems.length > 0 && (
+            <ResponsiveColumns columns={{ xs: 1, sm: 2, md: 3 }}>
+              {activeItems.map((item) => (
+                <NetWorthItemCard
+                  key={item.id}
+                  item={item}
+                  variant={activeKind}
+                  onEdit={openEdit}
+                  onDelete={openDelete}
+                  onMoveToAccounts={
+                    // Not when it already looks like an account — moving would duplicate it.
+                    suggestAccountTypeForNetWorthItem(activeKind, item.category) &&
+                    !findDuplicateAccount(item)
+                      ? (target) => setMoveTarget({ kind: activeKind, item: target })
+                      : undefined
+                  }
+                  possibleDuplicateOf={findDuplicateAccount(item)}
+                />
+              ))}
+            </ResponsiveColumns>
+          )}
+        </>
       )}
 
       <Typography variant="caption" color="text.secondary" sx={{ mt: 2 }}>
-        Savings rate is based on income and expense transactions for the current month. Net worth
-        snapshots update when you add or edit assets and liabilities.
+        Net worth combines your accounts (chequing, savings, investments, credit cards) with the
+        items you add here — use this page for things without transactions, like a home, car, or
+        mortgage. Savings rate is based on this month&apos;s income and expense transactions.
       </Typography>
 
       <AssetLiabilityDialog
@@ -298,6 +398,15 @@ export function NetWorthView() {
           setEditItem(null);
         }}
         onSuccess={handleSaveSuccess}
+      />
+
+      <MoveToAccountDialog
+        target={moveTarget}
+        onClose={() => setMoveTarget(null)}
+        onSuccess={async () => {
+          showSuccess("Moved to Accounts — it now updates with your transactions");
+          await loadData();
+        }}
       />
 
       <DeleteNetWorthItemDialog
