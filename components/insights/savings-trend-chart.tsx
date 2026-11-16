@@ -3,16 +3,23 @@
 import { useTheme } from "@mui/material";
 import { ChartPlotShimmer } from "@/components/shared/ui/chart-shimmer";
 import {
-  Area,
-  AreaChart,
+  Bar,
+  BarChart,
   CartesianGrid,
+  Cell,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
 import { ChartCard } from "@/components/dashboard/chart-card";
-import { getChartGridStroke, getChartTooltipStyle } from "@/lib/theme/chart-styles";
+import {
+  currencyAxisTick,
+  getAxisTick,
+  getChartGridStroke,
+  getChartTooltipStyle,
+} from "@/lib/theme/chart-styles";
 import { formatCurrency, formatMonth } from "@/lib/utils/format";
 import { useChartPlotHeight } from "@/hooks/use-chart-plot-height";
 import { useMounted } from "@/hooks/use-mounted";
@@ -22,11 +29,14 @@ type SavingsTrendChartProps = {
   data: MonthlySavingsPoint[];
 };
 
+/**
+ * Net savings per month as bars diverging from zero: months you kept money rise in green,
+ * months you overspent drop in red. The zero line is the reference, so sign reads instantly.
+ */
 export function SavingsTrendChart({ data }: SavingsTrendChartProps) {
   const theme = useTheme();
   const mounted = useMounted();
   const plotHeight = useChartPlotHeight();
-  const gradientId = "savingsAreaGradient";
 
   const chartData = data.map((point) => ({
     ...point,
@@ -34,61 +44,56 @@ export function SavingsTrendChart({ data }: SavingsTrendChartProps) {
   }));
 
   const isEmpty = chartData.length === 0;
+  const positiveMonths = data.filter((point) => point.savings > 0).length;
 
   return (
     <ChartCard
-      title="Monthly Savings Trend"
-      subtitle="Net savings (income minus expenses) by month"
+      title="Monthly savings"
+      subtitle={
+        isEmpty
+          ? "Net savings (income minus expenses) by month"
+          : `Income minus expenses · you saved in ${positiveMonths} of ${data.length} months`
+      }
       isEmpty={isEmpty}
     >
       {!mounted && !isEmpty ? (
-        <ChartPlotShimmer variant="line" height={plotHeight} />
+        <ChartPlotShimmer variant="bar" height={plotHeight} />
       ) : mounted && !isEmpty ? (
         <ResponsiveContainer width="100%" height={plotHeight} minWidth={0}>
-          <AreaChart data={chartData} margin={{ top: 12, right: 16, left: 4, bottom: 4 }}>
-            <defs>
-              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={theme.palette.success.main} stopOpacity={0.4} />
-                <stop offset="100%" stopColor={theme.palette.success.main} stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="4 4" stroke={getChartGridStroke(theme)} vertical={false} />
+          <BarChart data={chartData} margin={{ top: 12, right: 16, left: 4, bottom: 4 }}>
+            <CartesianGrid stroke={getChartGridStroke(theme)} vertical={false} />
             <XAxis
               dataKey="label"
-              tick={{ fill: theme.palette.text.secondary, fontSize: 11 }}
+              tick={getAxisTick(theme)}
               axisLine={false}
               tickLine={false}
               tickMargin={10}
             />
             <YAxis
-              tick={{ fill: theme.palette.text.secondary, fontSize: 11 }}
+              tick={getAxisTick(theme)}
               axisLine={false}
               tickLine={false}
-              tickFormatter={(value) => `$${value}`}
+              tickFormatter={currencyAxisTick}
               width={76}
             />
+            <ReferenceLine y={0} stroke={theme.palette.text.secondary} strokeOpacity={0.5} />
             <Tooltip
-              formatter={(value, name) => {
-                const label =
-                  name === "savings" ? "Savings" : name === "income" ? "Income" : "Expenses";
-                return [
-                  formatCurrency(typeof value === "number" ? value : Number(value ?? 0)),
-                  label,
-                ];
+              formatter={(value) => {
+                const num = typeof value === "number" ? value : Number(value ?? 0);
+                return [formatCurrency(num), num >= 0 ? "Saved" : "Overspent"];
               }}
               contentStyle={getChartTooltipStyle(theme)}
-              cursor={{ stroke: theme.palette.success.main, strokeWidth: 1, strokeDasharray: "4 4" }}
+              cursor={{ fill: theme.palette.action.hover }}
             />
-            <Area
-              type="monotone"
-              dataKey="savings"
-              name="savings"
-              stroke={theme.palette.success.main}
-              fill={`url(#${gradientId})`}
-              strokeWidth={2.5}
-              activeDot={{ r: 6, strokeWidth: 2, stroke: theme.palette.background.paper }}
-            />
-          </AreaChart>
+            <Bar dataKey="savings" name="Savings" maxBarSize={36} radius={[4, 4, 4, 4]}>
+              {chartData.map((point) => (
+                <Cell
+                  key={point.month}
+                  fill={point.savings >= 0 ? theme.palette.success.main : theme.palette.error.main}
+                />
+              ))}
+            </Bar>
+          </BarChart>
         </ResponsiveContainer>
       ) : null}
     </ChartCard>

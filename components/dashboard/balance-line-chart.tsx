@@ -12,7 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { ChartCard } from "@/components/dashboard/chart-card";
-import { getChartGridStroke, getChartTooltipStyle } from "@/lib/theme/chart-styles";
+import { getChartGridStroke, getChartTooltipStyle, currencyAxisTick } from "@/lib/theme/chart-styles";
 import { formatChartDate, formatCurrency } from "@/lib/utils/format";
 import { useChartPlotHeight } from "@/hooks/use-chart-plot-height";
 import type { BalanceChartPoint } from "@/lib/types";
@@ -51,7 +51,7 @@ export function BalanceLineChart({ data, chartReady = true }: BalanceLineChartPr
                 <stop offset="100%" stopColor={theme.palette.primary.main} stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="4 4" stroke={getChartGridStroke(theme)} vertical={false} />
+            <CartesianGrid stroke={getChartGridStroke(theme)} vertical={false} />
             <XAxis
               dataKey="label"
               tick={{ fill: theme.palette.text.secondary, fontSize: 11 }}
@@ -63,7 +63,7 @@ export function BalanceLineChart({ data, chartReady = true }: BalanceLineChartPr
               tick={{ fill: theme.palette.text.secondary, fontSize: 11 }}
               axisLine={false}
               tickLine={false}
-              tickFormatter={(value) => `$${value}`}
+              tickFormatter={currencyAxisTick}
               width={76}
             />
             <Tooltip
@@ -79,9 +79,9 @@ export function BalanceLineChart({ data, chartReady = true }: BalanceLineChartPr
               dataKey="balance"
               name="Balance"
               stroke={theme.palette.primary.main}
-              strokeWidth={2.5}
+              strokeWidth={2}
               fill={`url(#${gradientId})`}
-              dot={{ r: 3, fill: theme.palette.primary.main, strokeWidth: 0 }}
+              dot={false}
               activeDot={{ r: 6, strokeWidth: 2, stroke: theme.palette.background.paper }}
             />
           </AreaChart>

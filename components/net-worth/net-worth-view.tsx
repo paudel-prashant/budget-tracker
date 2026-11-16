@@ -16,7 +16,9 @@ import { PageHeader } from "@/components/shared/ui/page-header";
 import { PageStack } from "@/components/shared/ui/page-stack";
 import { ResponsiveColumns } from "@/components/shared/ui/responsive-columns";
 import { EmptyState } from "@/components/shared/ui/empty-state";
-import { StatCard } from "@/components/shared/ui/stat-card";
+import { HeroBanner } from "@/components/shared/ui/viz/hero-banner";
+import { MiniStat } from "@/components/shared/ui/viz/mini-stat";
+import { NetWorthComposition } from "@/components/net-worth/net-worth-composition";
 import { NetWorthGrowthChart } from "@/components/dashboard/net-worth-growth-chart";
 import { NetWorthItemCard } from "@/components/net-worth/net-worth-item-card";
 import { AssetLiabilityDialog } from "@/components/net-worth/asset-liability-dialog";
@@ -37,6 +39,15 @@ import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
 import TrendingDownOutlinedIcon from "@mui/icons-material/TrendingDownOutlined";
 
 type TabValue = "assets" | "liabilities";
+
+/** A friendly one-liner under the headline number. */
+function netWorthMood(netWorth: number, changePercent: number | null): string {
+  if (netWorth < 0) return "Every payment gets you closer to zero 💪";
+  if (changePercent !== null && changePercent >= 5) return "Big month. Your money is growing 🌱";
+  if (changePercent !== null && changePercent > 0) return "Moving in the right direction 📈";
+  if (changePercent !== null && changePercent < 0) return "A dip this month. It happens.";
+  return "Assets minus liabilities, including your accounts";
+}
 
 export function NetWorthView() {
   const { showSuccess, showError } = useSnackbar();
@@ -234,9 +245,6 @@ export function NetWorthView() {
     }
   };
 
-  const savingsTint =
-    computedSummary.monthlySavings >= 0 ? ("success" as const) : ("error" as const);
-
   return (
     <PageStack>
       <PageHeader
@@ -261,42 +269,70 @@ export function NetWorthView() {
       )}
 
       {loading ? (
-        <ResponsiveColumns columns={{ xs: 1, sm: 2, lg: 4 }}>
-          {[1, 2, 3, 4].map((key) => (
-            <Skeleton key={key} variant="rounded" height={100} />
-          ))}
-        </ResponsiveColumns>
+        <Skeleton variant="rounded" height={220} />
       ) : (
-        <ResponsiveColumns columns={{ xs: 1, sm: 2, lg: 4 }}>
-          <StatCard
-            title="Net worth"
-            value={formatCurrency(computedSummary.netWorth)}
-            icon={AccountBalanceWalletOutlinedIcon}
-            tint="primary"
-          />
-          <StatCard
-            title="Total assets"
-            value={formatCurrency(computedSummary.totalAssets)}
-            icon={TrendingUpOutlinedIcon}
-            tint="success"
-          />
-          <StatCard
-            title="Total liabilities"
-            value={formatCurrency(computedSummary.totalLiabilities)}
-            icon={TrendingDownOutlinedIcon}
-            tint="error"
-          />
-          <StatCard
-            title="Savings rate"
-            value={
-              computedSummary.savingsRate !== null
-                ? formatPercent(computedSummary.savingsRate)
-                : "—"
-            }
-            icon={SavingsOutlinedIcon}
-            tint="primary"
-          />
-        </ResponsiveColumns>
+        <HeroBanner
+          eyebrow="Your net worth"
+          icon={AccountBalanceWalletOutlinedIcon}
+          tone={computedSummary.netWorth >= 0 ? "primary" : "error"}
+          value={computedSummary.netWorth}
+          format={formatCurrency}
+          delta={
+            computedSummary.netWorthChangePercent !== null
+              ? {
+                  label: `${computedSummary.netWorthChangePercent > 0 ? "+" : ""}${formatPercent(computedSummary.netWorthChangePercent)} vs last month`,
+                  direction:
+                    computedSummary.netWorthChangePercent > 0
+                      ? "up"
+                      : computedSummary.netWorthChangePercent < 0
+                        ? "down"
+                        : "flat",
+                  sentiment:
+                    computedSummary.netWorthChangePercent > 0
+                      ? "good"
+                      : computedSummary.netWorthChangePercent < 0
+                        ? "bad"
+                        : "neutral",
+                }
+              : null
+          }
+          caption={netWorthMood(computedSummary.netWorth, computedSummary.netWorthChangePercent)}
+          trend={history.slice(-12).map((point) => point.netWorth)}
+          trendLabel={history.length > 1 ? `Last ${Math.min(12, history.length)} months` : undefined}
+        >
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))" },
+              gap: 2,
+            }}
+          >
+            <MiniStat
+              icon={TrendingUpOutlinedIcon}
+              label="Total assets"
+              value={formatCurrency(computedSummary.totalAssets)}
+              color="success.main"
+            />
+            <MiniStat
+              icon={TrendingDownOutlinedIcon}
+              label="Total liabilities"
+              value={formatCurrency(computedSummary.totalLiabilities)}
+              color="error.main"
+            />
+            <MiniStat
+              icon={SavingsOutlinedIcon}
+              label="Savings rate (this month)"
+              value={
+                computedSummary.savingsRate !== null ? formatPercent(computedSummary.savingsRate) : "—"
+              }
+              color="primary.main"
+            />
+          </Box>
+        </HeroBanner>
+      )}
+
+      {!loading && (
+        <NetWorthComposition assets={assets} liabilities={liabilities} accounts={accounts} />
       )}
 
       <GoldPriceCard

@@ -71,7 +71,6 @@ export function ForecastChart({ points, loading = false }: ForecastChartProps) {
         <ResponsiveContainer width="100%" height={plotHeight}>
           <ComposedChart data={chartData} margin={{ top: 12, right: 16, left: 4, bottom: 4 }}>
             <CartesianGrid
-              strokeDasharray="4 4"
               stroke={getChartGridStroke(theme)}
               vertical={false}
             />

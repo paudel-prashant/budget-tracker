@@ -76,6 +76,8 @@ export type ForecastEngineResult = {
   projectedRange: { low: number; high: number };
   /** Lowest projected balance in the timeframe and when it happens. */
   lowestPoint: { date: string; balance: number } | null;
+  /** Next scheduled recurring items in the timeframe (max 8), soonest first. */
+  upcomingEvents: RecurringForecastEvent[];
   forecastChange: number;
   confidence: ForecastConfidence;
   forecastPoints: ForecastPoint[];

@@ -1,10 +1,11 @@
 "use client";
 
-import { Box, ButtonBase, Typography, alpha, useTheme } from "@mui/material";
+import { Box, ButtonBase, Typography, useTheme } from "@mui/material";
 import type { SvgIconComponent } from "@mui/icons-material";
 import { SurfaceCard } from "@/components/shared/ui/surface-card";
 import { CARD_PADDING } from "@/lib/config/layout-constants";
 import { statValueSx, widgetLabelSx } from "@/lib/theme/typography";
+import { playfulCardSx, playfulIconSx } from "@/lib/theme/playful";
 
 type StatCardProps = {
   title: string;
@@ -40,6 +41,7 @@ export function StatCard({
         height: "100%",
         width: "100%",
         opacity: disabled ? 0.65 : 1,
+        ...playfulCardSx(palette.main, theme.palette.mode === "dark"),
       }}
     >
       <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 2 }}>
@@ -49,21 +51,7 @@ export function StatCard({
           </Typography>
           <Typography sx={statValueSx}>{value}</Typography>
         </Box>
-        <Box
-          sx={{
-            width: 48,
-            height: 48,
-            borderRadius: 2.5,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-            background: `linear-gradient(135deg, ${alpha(palette.main, 0.2)} 0%, ${alpha(palette.main, 0.06)} 100%)`,
-            color: palette.main,
-            border: 1,
-            borderColor: alpha(palette.main, 0.2),
-          }}
-        >
+        <Box className="playful-icon" sx={playfulIconSx(palette.main, theme.palette.mode === "dark")}>
           <Icon sx={{ fontSize: 26 }} />
         </Box>
       </Box>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Chip, Stack, Typography, alpha, useTheme, type Theme } from "@mui/material";
+import { Box, Chip, Stack, Typography, useTheme, type Theme } from "@mui/material";
 import type { SvgIconComponent } from "@mui/icons-material";
 import TrendingDownOutlinedIcon from "@mui/icons-material/TrendingDownOutlined";
 import TrendingFlatOutlinedIcon from "@mui/icons-material/TrendingFlatOutlined";
@@ -8,6 +8,7 @@ import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
 import { SurfaceCard } from "@/components/shared/ui/surface-card";
 import { CARD_PADDING } from "@/lib/config/layout-constants";
 import { statValueSx, widgetLabelSx } from "@/lib/theme/typography";
+import { playfulCardSx, playfulIconSx } from "@/lib/theme/playful";
 import type { TrendDirection } from "@/lib/types";
 
 function resolveThemeColor(theme: Theme, color: string) {
@@ -98,24 +99,11 @@ export function InsightCard({
         minHeight: { xs: 148, sm: 168 },
         display: "flex",
         flexDirection: "column",
+        ...playfulCardSx(resolvedIconColor, theme.palette.mode === "dark"),
       }}
     >
       <Stack direction="row" spacing={1.75} alignItems="flex-start" sx={{ mb: 2 }}>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 48,
-            height: 48,
-            borderRadius: 2.5,
-            flexShrink: 0,
-            background: `linear-gradient(135deg, ${alpha(resolvedIconColor, 0.22)} 0%, ${alpha(resolvedIconColor, 0.06)} 100%)`,
-            color: resolvedIconColor,
-            border: 1,
-            borderColor: alpha(resolvedIconColor, 0.25),
-          }}
-        >
+        <Box className="playful-icon" sx={playfulIconSx(resolvedIconColor, theme.palette.mode === "dark")}>
           <Icon sx={{ fontSize: 26 }} />
         </Box>
         <Box sx={{ minWidth: 0, flex: 1 }}>

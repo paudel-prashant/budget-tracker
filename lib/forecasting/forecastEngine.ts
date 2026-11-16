@@ -88,6 +88,10 @@ export class DefaultForecastEngine implements ForecastEngine {
         high: roundMoney(finalPoint?.upper ?? projectedBalance),
       },
       lowestPoint: lowest ? { date: lowest.date, balance: lowest.balance } : null,
+      // Projection starts tomorrow, so only events from the first projected day count.
+      upcomingEvents: input.recurringEvents
+        .filter((event) => !projected[0] || event.date >= projected[0].date)
+        .slice(0, 8),
       forecastChange,
       confidence,
       forecastPoints,

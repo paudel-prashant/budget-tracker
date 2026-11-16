@@ -1,4 +1,6 @@
-import { Box, Typography } from "@mui/material";
+"use client";
+
+import { Box, Typography, useTheme } from "@mui/material";
 import { SurfaceCard } from "@/components/shared/ui/surface-card";
 import { PageStack } from "@/components/shared/ui/page-stack";
 import { ResponsiveColumns } from "@/components/shared/ui/responsive-columns";
@@ -9,10 +11,15 @@ import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
 import PaymentsOutlinedIcon from "@mui/icons-material/PaymentsOutlined";
 import SavingsOutlinedIcon from "@mui/icons-material/SavingsOutlined";
 import { PageHeader } from "@/components/shared/ui/page-header";
-import { CARD_PADDING } from "@/lib/config/layout-constants";
 import { InsightCard } from "@/components/insights/insight-card";
 import { SavingsTrendChart } from "@/components/insights/savings-trend-chart";
-import { CategorySpendingChart } from "@/components/insights/category-spending-chart";
+import { HeroBanner } from "@/components/shared/ui/viz/hero-banner";
+import { MiniStat } from "@/components/shared/ui/viz/mini-stat";
+import { RankedBars } from "@/components/shared/ui/viz/ranked-bars";
+import { VizCard } from "@/components/shared/ui/viz/viz-card";
+import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
+import TrendingDownOutlinedIcon from "@mui/icons-material/TrendingDownOutlined";
+import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
 import { SpendingSpikesPanel } from "@/components/insights/spending-spikes-panel";
 import { formatCurrency, formatMonth, formatPercent } from "@/lib/utils/format";
 import type { FinancialInsights } from "@/lib/types";
@@ -33,8 +40,19 @@ function formatSavingsTrendLabel(
   return `${prefix}${formatPercent(changePercent)} vs last month`;
 }
 
+/** A light-hearted read of the income/expense ratio. */
+function moneyPersona(ratio: number | null): string {
+  if (ratio === null) return "Log some expenses to meet your money persona";
+  if (ratio >= 1.5) return "Persona: The Squirrel 🐿️ stashing plenty away";
+  if (ratio >= 1.1) return "Persona: The Steady Saver 🐢 slow and sure";
+  if (ratio >= 1) return "Persona: The Tightrope Walker 🎪 just about balanced";
+  return "Persona: The Free Spirit 🎈 spending more than earning";
+}
+
 export function InsightsContent({ insights }: InsightsContentProps) {
   const hasData = insights.totalIncome > 0 || insights.totalExpenses > 0;
+  const netPosition = insights.totalIncome - insights.totalExpenses;
+  const theme = useTheme();
 
   const savingsTrendLabel = formatSavingsTrendLabel(
     insights.savingsTrendChangePercent,
@@ -58,6 +76,52 @@ export function InsightsContent({ insights }: InsightsContentProps) {
             Add transactions to unlock personalized financial insights and charts.
           </Typography>
         </SurfaceCard>
+      )}
+
+      {hasData && (
+        <HeroBanner
+          eyebrow="Net position, all time"
+          icon={AccountBalanceWalletOutlinedIcon}
+          tone={netPosition >= 0 ? "success" : "error"}
+          value={netPosition}
+          format={formatCurrency}
+          delta={
+            savingsTrendLabel
+              ? {
+                  label: `Savings ${savingsTrendLabel}`,
+                  direction: insights.savingsTrendDirection,
+                  sentiment:
+                    insights.savingsTrendDirection === "up"
+                      ? "good"
+                      : insights.savingsTrendDirection === "down"
+                        ? "bad"
+                        : "neutral",
+                }
+              : null
+          }
+          caption={moneyPersona(insights.incomeExpenseRatio)}
+          trend={insights.monthlySavingsTrend.slice(-12).map((point) => point.savings)}
+          trendLabel={
+            insights.monthlySavingsTrend.length > 1 ? "Monthly savings, recent months" : undefined
+          }
+        >
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))" },
+              gap: 2,
+            }}
+          >
+            <MiniStat icon={TrendingUpOutlinedIcon} label="Total income" value={formatCurrency(insights.totalIncome)} color="success.main" />
+            <MiniStat icon={TrendingDownOutlinedIcon} label="Total expenses" value={formatCurrency(insights.totalExpenses)} color="error.main" />
+            <MiniStat
+              icon={CompareArrowsOutlinedIcon}
+              label="Earned per $1 spent"
+              value={insights.incomeExpenseRatio !== null ? `${insights.incomeExpenseRatio.toFixed(2)}×` : "—"}
+              color="primary.main"
+            />
+          </Box>
+        </HeroBanner>
       )}
 
       <ResponsiveColumns columns={{ xs: 1, sm: 2, lg: 3 }}>
@@ -177,54 +241,22 @@ export function InsightsContent({ insights }: InsightsContentProps) {
         templateColumns={{ xs: "1fr", lg: "minmax(0, 2fr) minmax(0, 1fr)" }}
       >
         <SavingsTrendChart data={insights.monthlySavingsTrend} />
-        <CategorySpendingChart data={insights.categoryBreakdown} />
+        <VizCard title="Spending by category" subtitle="All-time, top categories">
+          <RankedBars
+            format={formatCurrency}
+            color={theme.palette.error.main}
+            emptyMessage="No expense categories to chart yet."
+            maxItems={7}
+            items={insights.categoryBreakdown.map((row) => ({
+              key: row.category,
+              label: row.category,
+              value: row.amount,
+            }))}
+          />
+        </VizCard>
       </ResponsiveColumns>
 
-      <ResponsiveColumns columns={{ xs: 1, md: 2 }}>
-        <SpendingSpikesPanel spikes={insights.spendingSpikes} />
-          <SurfaceCard sx={{ p: { xs: 2.5, sm: 3 }, height: "100%" }}>
-            <Typography variant="h6" fontWeight={600} sx={{ mb: 0.5 }}>
-              Income vs Expenses
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
-              Lifetime totals from your transaction history
-            </Typography>
-            <ResponsiveColumns columns={{ xs: 2 }}>
-              <Box>
-                <Typography variant="caption" color="text.secondary" display="block">
-                  Total income
-                </Typography>
-                <Typography variant="h5" fontWeight={700} color="success.main">
-                  {formatCurrency(insights.totalIncome)}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="caption" color="text.secondary" display="block">
-                  Total expenses
-                </Typography>
-                <Typography variant="h5" fontWeight={700} color="error.main">
-                  {formatCurrency(insights.totalExpenses)}
-                </Typography>
-              </Box>
-            </ResponsiveColumns>
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="caption" color="text.secondary" display="block">
-                Net position
-              </Typography>
-              <Typography
-                variant="h5"
-                fontWeight={700}
-                color={
-                  insights.totalIncome - insights.totalExpenses >= 0
-                    ? "success.main"
-                    : "error.main"
-                }
-              >
-                {formatCurrency(insights.totalIncome - insights.totalExpenses)}
-              </Typography>
-            </Box>
-          </SurfaceCard>
-      </ResponsiveColumns>
+      <SpendingSpikesPanel spikes={insights.spendingSpikes} />
     </PageStack>
   );
 }

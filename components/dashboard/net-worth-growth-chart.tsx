@@ -7,14 +7,13 @@ import {
   Area,
   AreaChart,
   CartesianGrid,
-  Legend,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
 import { ChartCard } from "@/components/dashboard/chart-card";
-import { getChartGridStroke, getChartTooltipStyle } from "@/lib/theme/chart-styles";
+import { getChartGridStroke, getChartTooltipStyle, currencyAxisTick } from "@/lib/theme/chart-styles";
 import { formatCurrency, formatMonth, formatPercent } from "@/lib/utils/format";
 import type { NetWorthHistoryPoint } from "@/lib/types";
 
@@ -40,7 +39,7 @@ export function NetWorthGrowthChart({ data }: NetWorthGrowthChartProps) {
   return (
     <ChartCard
       title="Net worth over time"
-      subtitle="Monthly net worth and savings rate from your records"
+      subtitle="Month-end net worth from your records"
       isEmpty={isEmpty}
       emptyMessage="Add assets and liabilities to see net worth growth."
     >
@@ -55,7 +54,7 @@ export function NetWorthGrowthChart({ data }: NetWorthGrowthChartProps) {
                 <stop offset="100%" stopColor={theme.palette.primary.main} stopOpacity={0.02} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="4 4" stroke={getChartGridStroke(theme)} vertical={false} />
+            <CartesianGrid stroke={getChartGridStroke(theme)} vertical={false} />
             <XAxis
               dataKey="label"
               tick={{ fill: theme.palette.text.secondary, fontSize: 11 }}
@@ -67,7 +66,7 @@ export function NetWorthGrowthChart({ data }: NetWorthGrowthChartProps) {
               tick={{ fill: theme.palette.text.secondary, fontSize: 11 }}
               axisLine={false}
               tickLine={false}
-              tickFormatter={(v) => `$${v}`}
+              tickFormatter={currencyAxisTick}
               width={76}
             />
             <Tooltip
@@ -80,7 +79,6 @@ export function NetWorthGrowthChart({ data }: NetWorthGrowthChartProps) {
               }}
               contentStyle={getChartTooltipStyle(theme)}
             />
-            <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} iconType="circle" iconSize={8} />
             <Area
               yAxisId="left"
               type="monotone"
@@ -88,7 +86,8 @@ export function NetWorthGrowthChart({ data }: NetWorthGrowthChartProps) {
               name="Net worth"
               stroke={theme.palette.primary.main}
               fill="url(#netWorthFill)"
-              strokeWidth={2.5}
+              strokeWidth={2}
+              activeDot={{ r: 5, strokeWidth: 2, stroke: theme.palette.background.paper }}
             />
           </AreaChart>
         </ResponsiveContainer>

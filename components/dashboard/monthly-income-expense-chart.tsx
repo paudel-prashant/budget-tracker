@@ -13,7 +13,7 @@ import {
   YAxis,
 } from "recharts";
 import { ChartCard } from "@/components/dashboard/chart-card";
-import { getChartGridStroke, getChartTooltipStyle } from "@/lib/theme/chart-styles";
+import { getChartGridStroke, getChartTooltipStyle, currencyAxisTick } from "@/lib/theme/chart-styles";
 import { formatCurrency, formatMonth } from "@/lib/utils/format";
 import { useChartPlotHeight } from "@/hooks/use-chart-plot-height";
 import type { MonthlyChartPoint } from "@/lib/types";
@@ -48,7 +48,7 @@ export function MonthlyIncomeExpenseChart({
       ) : (
         <ResponsiveContainer width="100%" height={plotHeight}>
           <BarChart data={chartData} margin={{ top: 12, right: 16, left: 4, bottom: 4 }} barGap={6}>
-            <CartesianGrid strokeDasharray="4 4" stroke={getChartGridStroke(theme)} vertical={false} />
+            <CartesianGrid stroke={getChartGridStroke(theme)} vertical={false} />
             <XAxis
               dataKey="label"
               tick={{ fill: theme.palette.text.secondary, fontSize: 11 }}
@@ -60,7 +60,7 @@ export function MonthlyIncomeExpenseChart({
               tick={{ fill: theme.palette.text.secondary, fontSize: 11 }}
               axisLine={false}
               tickLine={false}
-              tickFormatter={(value) => `$${value}`}
+              tickFormatter={currencyAxisTick}
               width={76}
             />
             <Tooltip

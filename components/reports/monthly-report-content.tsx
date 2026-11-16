@@ -20,14 +20,15 @@ import SavingsOutlinedIcon from "@mui/icons-material/SavingsOutlined";
 import TrendingDownOutlinedIcon from "@mui/icons-material/TrendingDownOutlined";
 import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
 import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
-import { CategorySpendingChart } from "@/components/insights/category-spending-chart";
-import { ReportCategoryTable } from "@/components/reports/report-category-table";
-import { ReportDailySpendingChart } from "@/components/reports/report-daily-spending-chart";
-import { ReportMonthSummaryChart } from "@/components/reports/report-month-summary-chart";
+import { ReportMoneySplit } from "@/components/reports/report-money-split";
+import { HeroBanner } from "@/components/shared/ui/viz/hero-banner";
+import { MiniStat } from "@/components/shared/ui/viz/mini-stat";
+import { RankedBars } from "@/components/shared/ui/viz/ranked-bars";
+import { CalendarHeatmap } from "@/components/shared/ui/viz/calendar-heatmap";
+import { VizCard } from "@/components/shared/ui/viz/viz-card";
 import { PageHeader } from "@/components/shared/ui/page-header";
 import { PageStack } from "@/components/shared/ui/page-stack";
 import { ResponsiveColumns } from "@/components/shared/ui/responsive-columns";
-import { StatCard } from "@/components/shared/ui/stat-card";
 import { SurfaceCard } from "@/components/shared/ui/surface-card";
 import { useSnackbar } from "@/components/shared/providers/snackbar-provider";
 import { APP_NAME } from "@/lib/config/app";
@@ -121,9 +122,6 @@ export function MonthlyReportContent({ initial }: MonthlyReportContentProps) {
     }
   };
 
-  const savingsTint =
-    report.summary.savings >= 0 ? ("success" as const) : ("error" as const);
-
   return (
     <PageStack>
       <PageHeader
@@ -214,80 +212,105 @@ export function MonthlyReportContent({ initial }: MonthlyReportContentProps) {
         </Box>
 
         <Box sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
-          <ResponsiveColumns columns={{ xs: 1, sm: 2, lg: 4 }}>
-            <StatCard
-              title="Total income"
-              value={formatCurrency(report.summary.totalIncome)}
-              icon={TrendingUpOutlinedIcon}
-              tint="success"
-            />
-            <StatCard
-              title="Total expenses"
-              value={formatCurrency(report.summary.totalExpenses)}
-              icon={TrendingDownOutlinedIcon}
-              tint="error"
-            />
-            <StatCard
-              title="Savings"
-              value={formatCurrency(report.summary.savings)}
-              icon={SavingsOutlinedIcon}
-              tint={savingsTint}
-            />
-            <StatCard
-              title="Savings rate"
-              value={
-                report.summary.savingsRate !== null
-                  ? formatPercent(report.summary.savingsRate)
-                  : "—"
-              }
-              icon={AccountBalanceWalletOutlinedIcon}
-              tint="primary"
-            />
-          </ResponsiveColumns>
-
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              Compared to {report.comparison.previousMonthLabel}
-            </Typography>
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} flexWrap="wrap" useFlexGap>
-              <ChangeLabel label="Income" value={report.comparison.incomeChangePercent} />
-              <ChangeLabel
-                label="Expenses"
-                value={report.comparison.expenseChangePercent}
-                positiveIsGood={false}
+          <HeroBanner
+            eyebrow={`Saved in ${report.monthLabel}`}
+            icon={SavingsOutlinedIcon}
+            tone={report.summary.savings >= 0 ? "success" : "error"}
+            value={report.summary.savings}
+            format={formatCurrency}
+            delta={
+              report.comparison.savingsChangePercent !== null
+                ? {
+                    label: `${report.comparison.savingsChangePercent > 0 ? "+" : ""}${formatPercent(report.comparison.savingsChangePercent)} vs ${report.comparison.previousMonthLabel}`,
+                    direction:
+                      report.comparison.savingsChangePercent > 0
+                        ? "up"
+                        : report.comparison.savingsChangePercent < 0
+                          ? "down"
+                          : "flat",
+                    sentiment:
+                      report.comparison.savingsChangePercent > 0
+                        ? "good"
+                        : report.comparison.savingsChangePercent < 0
+                          ? "bad"
+                          : "neutral",
+                  }
+                : null
+            }
+            caption={
+              report.summary.savingsRate !== null
+                ? `Savings rate ${formatPercent(report.summary.savingsRate)}`
+                : undefined
+            }
+          >
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "repeat(2, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))" },
+                gap: 2,
+              }}
+            >
+              <Box>
+                <MiniStat icon={TrendingUpOutlinedIcon} label="Income" value={formatCurrency(report.summary.totalIncome)} color="success.main" />
+                <ChangeLabel label="Income" value={report.comparison.incomeChangePercent} />
+              </Box>
+              <Box>
+                <MiniStat icon={TrendingDownOutlinedIcon} label="Expenses" value={formatCurrency(report.summary.totalExpenses)} color="error.main" />
+                <ChangeLabel label="Expenses" value={report.comparison.expenseChangePercent} positiveIsGood={false} />
+              </Box>
+              <MiniStat
+                icon={AccountBalanceWalletOutlinedIcon}
+                label="Transactions"
+                value={String(report.summary.transactionCount)}
+                color="primary.main"
               />
-              <ChangeLabel label="Savings" value={report.comparison.savingsChangePercent} />
-            </Stack>
-          </Box>
+            </Box>
+          </HeroBanner>
 
           <Box sx={{ mt: 3 }}>
-            <ResponsiveColumns columns={{ xs: 1, lg: 2 }}>
-              <ReportMonthSummaryChart
-                monthLabel={report.monthLabel}
+            <ResponsiveColumns templateColumns={{ xs: "1fr", lg: "minmax(0, 1fr) minmax(0, 1.4fr)" }}>
+              <ReportMoneySplit
                 income={report.charts.incomeVsExpenses.income}
                 expenses={report.charts.incomeVsExpenses.expenses}
               />
-              <CategorySpendingChart data={report.charts.expenseByCategory} />
+              <VizCard title="Daily spending" subtitle="Each day shaded by how much you spent">
+                <CalendarHeatmap
+                  month={report.month}
+                  days={report.charts.dailyExpenses}
+                  format={formatCurrency}
+                />
+              </VizCard>
             </ResponsiveColumns>
           </Box>
 
           <Box sx={{ mt: 3 }}>
-            <ReportDailySpendingChart data={report.charts.dailyExpenses} />
-          </Box>
-
-          <Box sx={{ mt: 3 }}>
             <ResponsiveColumns columns={{ xs: 1, md: 2 }}>
-              <ReportCategoryTable
-                title="Top expense categories"
-                subtitle="Ranked by total spent"
-                rows={report.topExpenseCategories}
-              />
-              <ReportCategoryTable
-                title="Top income categories"
-                subtitle="Ranked by total received"
-                rows={report.topIncomeCategories}
-                emptyMessage="No income recorded this month."
-              />
+              <VizCard title="Top expense categories" subtitle="Ranked by total spent">
+                <RankedBars
+                  format={formatCurrency}
+                  color={theme.palette.error.main}
+                  emptyMessage="No expenses recorded this month."
+                  items={report.topExpenseCategories.map((row) => ({
+                    key: row.category,
+                    label: row.category,
+                    value: row.amount,
+                    detail: `${row.transactionCount} transaction${row.transactionCount === 1 ? "" : "s"}`,
+                  }))}
+                />
+              </VizCard>
+              <VizCard title="Top income categories" subtitle="Ranked by total received">
+                <RankedBars
+                  format={formatCurrency}
+                  color={theme.palette.success.main}
+                  emptyMessage="No income recorded this month."
+                  items={report.topIncomeCategories.map((row) => ({
+                    key: row.category,
+                    label: row.category,
+                    value: row.amount,
+                    detail: `${row.transactionCount} transaction${row.transactionCount === 1 ? "" : "s"}`,
+                  }))}
+                />
+              </VizCard>
             </ResponsiveColumns>
           </Box>
         </Box>

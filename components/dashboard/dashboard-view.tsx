@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Alert,
   Button,
@@ -53,7 +53,20 @@ function metricsFromDashboardData(data: DashboardData): DashboardMetrics {
   };
 }
 
+/** Time-of-day greeting; computed after mount so server and client markup match. */
+function useGreeting(): string {
+  const [greeting, setGreeting] = useState("Welcome back 👋");
+  useEffect(() => {
+    const hour = new Date().getHours();
+    setGreeting(
+      hour < 5 ? "Burning the midnight oil? 🌙" : hour < 12 ? "Good morning ☀️" : hour < 18 ? "Good afternoon 👋" : "Good evening 🌆"
+    );
+  }, []);
+  return greeting;
+}
+
 export function DashboardView({ data, initialLayout }: DashboardViewProps) {
+  const greeting = useGreeting();
   const [layout, setLayout] = useState(() => normalizeDashboardLayout(initialLayout));
   const [customizeMode, setCustomizeMode] = useState(false);
   const [customizeOpen, setCustomizeOpen] = useState(false);
@@ -152,8 +165,8 @@ export function DashboardView({ data, initialLayout }: DashboardViewProps) {
   return (
     <PageStack>
       <PageHeader
-        title="Dashboard"
-        description="Overview of your financial activity. Use the date range filter to analyze any period."
+        title={greeting}
+        description="Here's your money at a glance. Use the date range filter to look at any period."
         action={
           <Stack
             direction={{ xs: "column", sm: "row" }}
