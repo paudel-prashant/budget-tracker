@@ -28,6 +28,7 @@ import { compareMonthYear, getCurrentMonthYear } from "@/lib/domain/budget-calcu
 import { CARD_PADDING } from "@/lib/config/layout-constants";
 import { formatMonthYear } from "@/lib/utils/format";
 import type { BudgetHistoryMonth, BudgetWithProgress, CopyBudgetsResult } from "@/lib/types";
+import { SpendingPowerGauge } from "@/components/budget/spending-power-gauge";
 
 type MonthYear = { month: number; year: number };
 
@@ -283,6 +284,8 @@ export function BudgetView() {
           onAction={handleAddClick}
         />
       ) : (
+        <>
+        <SpendingPowerGauge budgets={budgets} month={month} year={year} />
         <ResponsiveColumns columns={{ xs: 1, sm: 2, md: 3 }}>
           {budgets.map((budget) => (
             <BudgetCard
@@ -293,6 +296,7 @@ export function BudgetView() {
             />
           ))}
         </ResponsiveColumns>
+        </>
       )}
 
       <Box sx={{ mt: 3 }}>

@@ -120,7 +120,7 @@ export function TransferFormDialog({
       subtitle="Moves money between your accounts. Transfers aren't counted as income or spending."
     >
       <form onSubmit={handleSubmit}>
-        <DialogContent sx={{ overflow: "visible" }}>
+        <DialogContent>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <Stack spacing={FORM_STACK_SPACING} sx={{ py: 1 }}>
               {error && <Alert severity="error">{error}</Alert>}

@@ -23,7 +23,7 @@ function calculateConfidence(input: ForecastEngineInput): ForecastConfidence {
   const stableIncome = hasRecurring && trends.averageDailyIncome > 0;
   const moderateVolatility = trends.spendingVolatility > 25;
 
-  if (stableIncome && !volatile && transactionCount >= 20) {
+  if (stableIncome && !volatile && transactionCount >= 20 && trends.historyDays >= 30) {
     return "HIGH";
   }
 
@@ -31,7 +31,8 @@ function calculateConfidence(input: ForecastEngineInput): ForecastConfidence {
     return "LOW";
   }
 
-  if (moderateVolatility) {
+  // Under a month of history can't show a full pay/bill cycle.
+  if (moderateVolatility || trends.historyDays < 30) {
     return "MEDIUM";
   }
 
@@ -68,9 +69,13 @@ export class DefaultForecastEngine implements ForecastEngine {
       trends: input.trends,
     });
 
-    const projectedBalance =
-      forecastPoints.filter((point) => point.isProjected).at(-1)?.balance ??
-      input.currentBalance;
+    const projected = forecastPoints.filter((point) => point.isProjected);
+    const finalPoint = projected.at(-1);
+    const projectedBalance = finalPoint?.balance ?? input.currentBalance;
+    const lowest = projected.reduce<(typeof projected)[number] | null>(
+      (min, point) => (!min || point.balance < min.balance ? point : min),
+      null
+    );
 
     const forecastChange = roundMoney(projectedBalance - input.currentBalance);
 
@@ -78,6 +83,11 @@ export class DefaultForecastEngine implements ForecastEngine {
       timeframe: input.timeframe,
       currentBalance: roundMoney(input.currentBalance),
       projectedBalance: roundMoney(projectedBalance),
+      projectedRange: {
+        low: roundMoney(finalPoint?.lower ?? projectedBalance),
+        high: roundMoney(finalPoint?.upper ?? projectedBalance),
+      },
+      lowestPoint: lowest ? { date: lowest.date, balance: lowest.balance } : null,
       forecastChange,
       confidence,
       forecastPoints,

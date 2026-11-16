@@ -14,7 +14,9 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { SurfaceCard } from "@/components/shared/ui/surface-card";
 import { CARD_PADDING } from "@/lib/config/layout-constants";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
+import { purityLabel } from "@/lib/domain/gold";
 import type { Asset, Liability } from "@/lib/types";
+import { CategoryIcon } from "@/components/shared/ui/category-icon";
 
 type NetWorthItem = Asset | Liability;
 
@@ -38,6 +40,11 @@ export function NetWorthItemCard({
   possibleDuplicateOf,
 }: NetWorthItemCardProps) {
   const valueColor = variant === "asset" ? "success.main" : "error.main";
+  const asset = variant === "asset" ? (item as Asset) : null;
+  const goldGrams = asset?.goldGrams ?? null;
+  const goldPurity = asset?.goldPurity ?? null;
+  const costBasis = asset?.costBasis ?? null;
+  const gain = costBasis !== null ? item.value - costBasis : null;
 
   return (
     <SurfaceCard hover sx={{ p: CARD_PADDING, height: "100%" }}>
@@ -46,7 +53,19 @@ export function NetWorthItemCard({
           <Typography variant="h6" fontWeight={700} noWrap>
             {item.name}
           </Typography>
-          <Chip label={item.category} size="small" variant="outlined" sx={{ mt: 1 }} />
+          <Chip
+            icon={<CategoryIcon category={item.category} size="small" sx={{ ml: 0.5, width: 18, height: 18, "& svg": { fontSize: 12 } }} />}
+            label={item.category}
+            size="small"
+            variant="outlined"
+            sx={{ mt: 1 }}
+          />
+          {goldGrams !== null && goldPurity !== null && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
+              {goldGrams.toLocaleString(undefined, { maximumFractionDigits: 3 })} g ·{" "}
+              {purityLabel(goldPurity)} · live price
+            </Typography>
+          )}
           {item.notes && (
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
               {item.notes}
@@ -94,6 +113,19 @@ export function NetWorthItemCard({
       <Typography variant="h5" fontWeight={700} color={valueColor} sx={{ mt: 2.5 }}>
         {formatCurrency(item.value)}
       </Typography>
+      {gain !== null && (
+        <Typography
+          variant="body2"
+          fontWeight={600}
+          color={gain >= 0 ? "success.main" : "error.main"}
+          sx={{ mt: 0.5 }}
+        >
+          {gain >= 0 ? "+" : "−"}
+          {formatCurrency(Math.abs(gain))}
+          {costBasis ? ` (${((gain / costBasis) * 100).toFixed(1)}%)` : ""} vs.{" "}
+          {formatCurrency(costBasis!)} paid
+        </Typography>
+      )}
       {possibleDuplicateOf && (
         <Typography variant="caption" color="warning.main" sx={{ display: "block", mt: 1 }}>
           Your “{possibleDuplicateOf}” account may be the same thing. If so, it&apos;s counted

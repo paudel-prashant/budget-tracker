@@ -13,6 +13,7 @@ import {
 import { formatCurrency, formatPercent } from "@/lib/utils/format";
 import { DataTableHeadCell } from "@/components/shared/ui/data-table-head-cell";
 import type { MonthlyReportCategoryRow } from "@/lib/types";
+import { CategoryLabel } from "@/components/shared/ui/category-icon";
 
 type ReportCategoryTableProps = {
   title: string;
@@ -55,7 +56,9 @@ export function ReportCategoryTable({
             <TableBody>
               {rows.map((row) => (
                 <TableRow key={row.category} hover>
-                  <TableCell>{row.category}</TableCell>
+                  <TableCell>
+                    <CategoryLabel category={row.category} />
+                  </TableCell>
                   <TableCell align="right" sx={{ fontWeight: 600 }}>
                     {formatCurrency(row.amount)}
                   </TableCell>

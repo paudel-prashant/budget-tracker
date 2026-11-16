@@ -275,7 +275,7 @@ export function TransactionFormDialog({
       }
     >
       <form onSubmit={handleSubmit}>
-        <DialogContent sx={{ overflow: "visible", borderBottom: 1, borderColor: "divider" }}>
+        <DialogContent sx={{ borderBottom: 1, borderColor: "divider" }}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <Stack spacing={FORM_STACK_SPACING} sx={{ py: 1 }}>
               {error && <Alert severity="error">{error}</Alert>}

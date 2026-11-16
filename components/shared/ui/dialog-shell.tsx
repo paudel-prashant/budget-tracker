@@ -59,6 +59,14 @@ export function DialogShell({ title, subtitle, children, sx, ...props }: DialogS
                 ? "0 24px 48px rgba(15, 23, 42, 0.14)"
                 : "0 24px 48px rgba(0, 0, 0, 0.5)",
           },
+          // Forms wrap DialogContent + DialogActions; let the form shrink so the content
+          // scrolls and the actions stay visible instead of being clipped by the paper.
+          "& .MuiDialog-paper > form": {
+            display: "flex",
+            flexDirection: "column",
+            flex: "1 1 auto",
+            minHeight: 0,
+          },
         },
         ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
       ]}

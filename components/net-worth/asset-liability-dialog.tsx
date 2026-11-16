@@ -12,6 +12,7 @@ import {
   MenuItem,
   Stack,
   TextField,
+  Typography,
 } from "@mui/material";
 import { formTextFieldProps } from "@/lib/theme/form-field";
 import { FORM_STACK_SPACING } from "@/lib/config/layout-constants";
@@ -19,6 +20,16 @@ import {
   ASSET_CATEGORIES,
   LIABILITY_CATEGORIES,
 } from "@/lib/domain/net-worth-categories";
+import {
+  GOLD_PURITIES,
+  GOLD_WEIGHT_UNITS,
+  goldHoldingValue,
+  isGoldCategory,
+  toGrams,
+  type GoldWeightUnit,
+} from "@/lib/domain/gold";
+import { useGoldPrice } from "@/hooks/use-gold-price";
+import { formatCurrency } from "@/lib/utils/format";
 import type { Asset, Liability } from "@/lib/types";
 
 type ItemKind = "asset" | "liability";
@@ -27,6 +38,8 @@ type AssetLiabilityDialogProps = {
   kind: ItemKind;
   open: boolean;
   item?: Asset | Liability | null;
+  /** Category preselected when adding (e.g. "Gold" from the gold price card). */
+  initialCategory?: string;
   onClose: () => void;
   onSuccess: () => void | Promise<void>;
 };
@@ -45,12 +58,17 @@ const initialForm = {
   value: "",
   asOfDate: todayInputValue(),
   notes: "",
+  goldWeight: "",
+  goldUnit: "g" as GoldWeightUnit,
+  goldPurity: String(GOLD_PURITIES[1].value),
+  costBasis: "",
 };
 
 export function AssetLiabilityDialog({
   kind,
   open,
   item,
+  initialCategory,
   onClose,
   onSuccess,
 }: AssetLiabilityDialogProps) {
@@ -62,22 +80,38 @@ export function AssetLiabilityDialog({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isGold = kind === "asset" && isGoldCategory(form.category);
+  const { quote } = useGoldPrice(open && isGold);
+  const goldGrams = toGrams(Number(form.goldWeight) || 0, form.goldUnit);
+  const goldPurity = Number(form.goldPurity) || 0;
+  const goldValue =
+    quote && goldGrams > 0 ? goldHoldingValue(goldGrams, goldPurity, quote.pricePerOunce) : null;
+
   useEffect(() => {
     if (!open) return;
 
     if (item) {
+      const asset = kind === "asset" ? (item as Asset) : null;
       setForm({
         name: item.name,
         category: item.category,
         value: String(item.value),
         asOfDate: toInputDate(item.asOfDate),
         notes: item.notes ?? "",
+        goldWeight: asset?.goldGrams != null ? String(asset.goldGrams) : "",
+        goldUnit: "g",
+        goldPurity: String(asset?.goldPurity ?? GOLD_PURITIES[1].value),
+        costBasis: asset?.costBasis != null ? String(asset.costBasis) : "",
       });
     } else {
-      setForm({ ...initialForm, asOfDate: todayInputValue(), category: categories[0] });
+      setForm({
+        ...initialForm,
+        asOfDate: todayInputValue(),
+        category: initialCategory ?? categories[0],
+      });
     }
     setError(null);
-  }, [open, item, categories]);
+  }, [open, item, kind, categories, initialCategory]);
 
   const handleClose = () => {
     if (submitting) return;
@@ -89,9 +123,15 @@ export function AssetLiabilityDialog({
     setSubmitting(true);
     setError(null);
 
-    const value = Number(form.value);
+    // Gold is valued from weight x purity x live price; the server re-prices it on save.
+    const value = isGold ? (goldValue ?? (Number(form.value) || 0)) : Number(form.value);
     if (!form.name.trim() || !form.category || !Number.isFinite(value) || value < 0 || !form.asOfDate) {
       setError("Please fill in name, category, value, and date.");
+      setSubmitting(false);
+      return;
+    }
+    if (isGold && !(goldGrams > 0)) {
+      setError("Enter how much gold you hold.");
       setSubmitting(false);
       return;
     }
@@ -102,6 +142,13 @@ export function AssetLiabilityDialog({
       value,
       asOfDate: form.asOfDate,
       notes: form.notes.trim() || null,
+      ...(isGold
+        ? {
+            goldGrams,
+            goldPurity,
+            costBasis: form.costBasis.trim() === "" ? null : Number(form.costBasis),
+          }
+        : {}),
     };
 
     try {
@@ -168,15 +215,90 @@ export function AssetLiabilityDialog({
               ))}
             </TextField>
 
-            <TextField
-              label="Value"
-              type="number"
-              inputProps={{ min: 0, step: "0.01" }}
-              value={form.value}
-              onChange={(e) => setForm((prev) => ({ ...prev, value: e.target.value }))}
-              required
-              {...formTextFieldProps}
-            />
+            {isGold ? (
+              <>
+                <Stack direction="row" spacing={1.5}>
+                  <TextField
+                    label="Weight"
+                    type="number"
+                    inputProps={{ min: 0, step: "any" }}
+                    value={form.goldWeight}
+                    onChange={(e) => setForm((prev) => ({ ...prev, goldWeight: e.target.value }))}
+                    required
+                    {...formTextFieldProps}
+                    sx={{ flex: 1 }}
+                  />
+                  <TextField
+                    select
+                    label="Unit"
+                    value={form.goldUnit}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, goldUnit: e.target.value as GoldWeightUnit }))
+                    }
+                    {...formTextFieldProps}
+                    sx={{ width: 150, flexShrink: 0 }}
+                  >
+                    {GOLD_WEIGHT_UNITS.map((unit) => (
+                      <MenuItem key={unit.value} value={unit.value}>
+                        {unit.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Stack>
+
+                <TextField
+                  select
+                  label="Purity"
+                  value={form.goldPurity}
+                  onChange={(e) => setForm((prev) => ({ ...prev, goldPurity: e.target.value }))}
+                  {...formTextFieldProps}
+                >
+                  {GOLD_PURITIES.map((purity) => (
+                    <MenuItem key={purity.value} value={String(purity.value)}>
+                      {purity.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+
+                <TextField
+                  label="Total purchase cost (optional)"
+                  type="number"
+                  inputProps={{ min: 0, step: "0.01" }}
+                  value={form.costBasis}
+                  onChange={(e) => setForm((prev) => ({ ...prev, costBasis: e.target.value }))}
+                  helperText="Used to show your gain or loss. Include any premium you paid."
+                  {...formTextFieldProps}
+                />
+
+                <Alert severity="info" variant="outlined" icon={false}>
+                  <Typography variant="body2">
+                    {goldValue !== null ? (
+                      <>
+                        Current value:{" "}
+                        <strong>{formatCurrency(goldValue, quote?.currency)}</strong>
+                      </>
+                    ) : quote ? (
+                      "Enter a weight to see the current value."
+                    ) : (
+                      "Fetching the live gold price…"
+                    )}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Updates automatically with the live gold price.
+                  </Typography>
+                </Alert>
+              </>
+            ) : (
+              <TextField
+                label="Value"
+                type="number"
+                inputProps={{ min: 0, step: "0.01" }}
+                value={form.value}
+                onChange={(e) => setForm((prev) => ({ ...prev, value: e.target.value }))}
+                required
+                {...formTextFieldProps}
+              />
+            )}
 
             <TextField
               label="As of date"

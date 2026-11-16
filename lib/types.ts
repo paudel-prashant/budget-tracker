@@ -288,6 +288,10 @@ export type Asset = {
   value: number;
   asOfDate: string;
   notes: string | null;
+  /** Gold holdings only (see lib/domain/gold.ts). */
+  goldGrams: number | null;
+  goldPurity: number | null;
+  costBasis: number | null;
   createdAt: string;
   updatedAt: string;
 };

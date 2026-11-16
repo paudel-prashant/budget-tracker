@@ -256,6 +256,12 @@ model Asset {
   value     Float
   asOfDate  DateTime
   notes     String?
+  /// Gold holdings only: pure weight is goldGrams × goldPurity; value is revalued from the live price.
+  goldGrams  Float?
+  /// Fineness, e.g. 0.999 (24K), 0.9167 (22K).
+  goldPurity Float?
+  /// What was paid in total, for gain/loss tracking (optional).
+  costBasis  Float?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)

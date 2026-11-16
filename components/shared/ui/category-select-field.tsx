@@ -18,6 +18,7 @@ import {
   resolveCategorySelectState,
 } from "@/lib/domain/transaction-categories";
 import type { TransactionType } from "@/lib/types";
+import { CategoryLabel } from "@/components/shared/ui/category-icon";
 
 /** MUI MenuItem row height (px) — keep in sync with theme if customized. */
 const MENU_ITEM_HEIGHT = 48;
@@ -117,6 +118,15 @@ export function CategorySelectField({
           onChange={handleSelectChange}
           displayEmpty
           notched
+          renderValue={(selected) =>
+            !selected ? (
+              <em>Select a category</em>
+            ) : selected === OTHER_SELECT_VALUE ? (
+              OTHER_CATEGORY_OPTION
+            ) : (
+              <CategoryLabel category={selected} />
+            )
+          }
           MenuProps={categoryMenuProps}
         >
           <MenuItem value="" disabled>
@@ -124,7 +134,7 @@ export function CategorySelectField({
           </MenuItem>
           {options.map((category) => (
             <MenuItem key={category} value={category}>
-              {category}
+              <CategoryLabel category={category} />
             </MenuItem>
           ))}
           <MenuItem value={OTHER_SELECT_VALUE}>{OTHER_CATEGORY_OPTION}</MenuItem>

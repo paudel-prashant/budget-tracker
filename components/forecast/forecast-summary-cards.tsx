@@ -7,16 +7,26 @@ import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalance
 import { Box, Typography } from "@mui/material";
 import { StatCard } from "@/components/shared/ui/stat-card";
 import { ResponsiveColumns } from "@/components/shared/ui/responsive-columns";
-import { formatCurrency } from "@/lib/utils/format";
-import type { ForecastConfidence } from "@/lib/forecasting";
+import { formatChartDate, formatCurrency } from "@/lib/utils/format";
+import type { ForecastConfidence, ForecastEngineResult } from "@/lib/forecasting";
 
 type ForecastSummaryCardsProps = {
   currentBalance: number;
   projectedBalance: number;
   forecastChange: number;
   confidence: ForecastConfidence;
+  projectedRange?: ForecastEngineResult["projectedRange"];
+  lowestPoint?: ForecastEngineResult["lowestPoint"];
   dimmed?: boolean;
 };
+
+function CardNote({ children, color = "text.secondary" }: { children: React.ReactNode; color?: string }) {
+  return (
+    <Typography variant="caption" color={color} sx={{ mt: 1, px: 0.5, lineHeight: 1.45 }}>
+      {children}
+    </Typography>
+  );
+}
 
 const CONFIDENCE_COLOR: Record<
   ForecastConfidence,
@@ -38,8 +48,16 @@ export function ForecastSummaryCards({
   projectedBalance,
   forecastChange,
   confidence,
+  projectedRange,
+  lowestPoint,
   dimmed = false,
 }: ForecastSummaryCardsProps) {
+  const showRange =
+    projectedRange && projectedRange.high - projectedRange.low >= 1;
+  // Only call out the low point when it dips meaningfully below where you start and end.
+  const showLowest =
+    lowestPoint &&
+    lowestPoint.balance < Math.min(currentBalance, projectedBalance) - 1;
   const changeTint = forecastChange >= 0 ? "success" : "error";
   const changePrefix = forecastChange >= 0 ? "+" : "";
 
@@ -52,18 +70,32 @@ export function ForecastSummaryCards({
           icon={AccountBalanceWalletOutlinedIcon}
           tint="primary"
         />
-        <StatCard
-          title="Projected Balance"
-          value={formatCurrency(projectedBalance)}
-          icon={TrendingUpOutlinedIcon}
-          tint={projectedBalance >= currentBalance ? "success" : "warning"}
-        />
-        <StatCard
-          title="Forecast Change"
-          value={`${changePrefix}${formatCurrency(forecastChange)}`}
-          icon={forecastChange >= 0 ? TrendingUpOutlinedIcon : TrendingDownOutlinedIcon}
-          tint={changeTint}
-        />
+        <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+          <StatCard
+            title="Projected Balance"
+            value={formatCurrency(projectedBalance)}
+            icon={TrendingUpOutlinedIcon}
+            tint={projectedBalance >= currentBalance ? "success" : "warning"}
+          />
+          {showRange && (
+            <CardNote>
+              Likely range {formatCurrency(projectedRange.low)} – {formatCurrency(projectedRange.high)}
+            </CardNote>
+          )}
+        </Box>
+        <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+          <StatCard
+            title="Forecast Change"
+            value={`${changePrefix}${formatCurrency(forecastChange)}`}
+            icon={forecastChange >= 0 ? TrendingUpOutlinedIcon : TrendingDownOutlinedIcon}
+            tint={changeTint}
+          />
+          {showLowest && (
+            <CardNote color={lowestPoint.balance < 0 ? "error.main" : "text.secondary"}>
+              Lowest point {formatCurrency(lowestPoint.balance)} on {formatChartDate(lowestPoint.date)}
+            </CardNote>
+          )}
+        </Box>
         <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
           <StatCard
             title="Forecast Confidence"

@@ -100,3 +100,33 @@ describe("validateLiabilityBody", () => {
     expect(validateLiabilityBody(rest).success).toBe(false);
   });
 });
+
+describe("validateAssetBody — gold holdings", () => {
+  const gold = { name: "Bullion", category: "gold", amount: 0, asOfDate: "2026-11-16" };
+
+  it("requires a positive weight and a purity in (0, 1]", () => {
+    expect(validateAssetBody(gold).success).toBe(false);
+    expect(validateAssetBody({ ...gold, goldGrams: 10 }).success).toBe(false);
+    expect(validateAssetBody({ ...gold, goldGrams: 10, goldPurity: 1.5 }).success).toBe(false);
+  });
+
+  it("accepts a valid holding and normalizes the category", () => {
+    const result = validateAssetBody({ ...gold, goldGrams: "31.1", goldPurity: 0.9999, costBasis: 5400 });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.category).toBe("Gold");
+      expect(result.data.goldGrams).toBe(31.1);
+      expect(result.data.goldPurity).toBe(0.9999);
+      expect(result.data.costBasis).toBe(5400);
+    }
+  });
+
+  it("drops gold fields from non-gold assets", () => {
+    const result = validateAssetBody({ ...validAsset, goldGrams: 10, goldPurity: 0.999 });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.goldGrams).toBeNull();
+      expect(result.data.goldPurity).toBeNull();
+    }
+  });
+});

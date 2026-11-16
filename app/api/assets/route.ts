@@ -7,6 +7,7 @@ import { listAssets, upsertNetWorthSnapshot } from "@/lib/data/net-worth-data";
 import { getCurrentMonthKey } from "@/lib/domain/monthly-report";
 import { revalidateFinancePages } from "@/lib/utils/revalidate-pages";
 import { validateAssetBody } from "@/lib/validation/net-worth-validation";
+import { priceGoldInput } from "@/lib/data/gold-holdings-data";
 
 export const runtime = "nodejs";
 
@@ -54,8 +55,9 @@ export async function POST(request: NextRequest) {
       return jsonError(validation.error, 400);
     }
 
+    const data = await priceGoldInput(auth.userId, validation.data);
     const asset = await prisma.asset.create({
-      data: { ...validation.data, userId: auth.userId },
+      data: { ...data, userId: auth.userId },
     });
 
     await refreshSnapshot(auth.userId);

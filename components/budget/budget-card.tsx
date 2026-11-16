@@ -21,6 +21,7 @@ import { SurfaceCard } from "@/components/shared/ui/surface-card";
 import { CARD_PADDING } from "@/lib/config/layout-constants";
 import { formatCurrency, formatPercent } from "@/lib/utils/format";
 import type { BudgetWithProgress } from "@/lib/types";
+import { CategoryIcon } from "@/components/shared/ui/category-icon";
 
 type BudgetCardProps = {
   budget: BudgetWithProgress;
@@ -65,14 +66,17 @@ export function BudgetCard({ budget, onEdit, onDelete }: BudgetCardProps) {
       }}
     >
       <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
-        <Box sx={{ minWidth: 0, flex: 1 }}>
-          <Typography variant="h6" fontWeight={700} noWrap>
-            {budget.category}
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Limit {formatCurrency(budget.monthlyLimit)}
-          </Typography>
-        </Box>
+        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0, flex: 1 }}>
+          <CategoryIcon category={budget.category} size="large" />
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="h6" fontWeight={700} noWrap>
+              {budget.category}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+              Limit {formatCurrency(budget.monthlyLimit)}
+            </Typography>
+          </Box>
+        </Stack>
         <Stack direction="row" alignItems="center" spacing={0.5}>
           <Chip label={statusLabel} color={statusColor} size="small" variant="outlined" />
           <Tooltip title="Edit budget">

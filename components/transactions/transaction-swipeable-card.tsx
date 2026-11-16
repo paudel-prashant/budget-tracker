@@ -17,6 +17,7 @@ import { touchIconButtonSx } from "@/lib/theme/touch-targets";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 import { cardTitleSx } from "@/lib/theme/typography";
 import type { Transaction } from "@/lib/types";
+import { CategoryIcon } from "@/components/shared/ui/category-icon";
 
 export const SWIPE_HINT_STORAGE_KEY = "budgetrax-swipe-hint-seen";
 
@@ -86,7 +87,8 @@ export function TransactionSwipeableCard({
       >
         <Stack spacing={1.5}>
           <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1 }}>
-            <Box sx={{ minWidth: 0 }}>
+            <CategoryIcon category={transaction.category} size="medium" sx={{ mt: 0.25 }} />
+            <Box sx={{ minWidth: 0, flex: 1 }}>
               <Typography variant="subtitle1" noWrap sx={cardTitleSx}>
                 {transaction.title}
               </Typography>

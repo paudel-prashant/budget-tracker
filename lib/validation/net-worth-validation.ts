@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ASSET_CATEGORIES, LIABILITY_CATEGORIES } from "@/lib/domain/net-worth-categories";
+import { isGoldCategory } from "@/lib/domain/gold";
 import { toValidationResult, type ValidationResult } from "@/lib/validation/zod-helpers";
 
 export type AssetInput = {
@@ -8,6 +9,10 @@ export type AssetInput = {
   value: number;
   asOfDate: Date;
   notes: string | null;
+  /** Set only for Gold assets. */
+  goldGrams: number | null;
+  goldPurity: number | null;
+  costBasis: number | null;
 };
 
 export type LiabilityInput = {
@@ -91,8 +96,49 @@ function validateNetWorthItemBody(
   };
 }
 
+/** Blank/absent → null; otherwise must be a finite number. */
+function optionalNumber(value: unknown): number | null | "invalid" {
+  if (value === undefined || value === null || value === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : "invalid";
+}
+
 export function validateAssetBody(body: unknown): ValidationResult<AssetInput> {
-  return validateNetWorthItemBody(body, assetSchema);
+  const base = validateNetWorthItemBody(body, assetSchema);
+  if (!base.success) return base;
+
+  const record = body as Record<string, unknown>;
+  const costBasis = optionalNumber(record.costBasis);
+  if (costBasis === "invalid" || (costBasis !== null && costBasis < 0)) {
+    return { success: false, error: "Purchase cost must be a non-negative number" };
+  }
+
+  if (!isGoldCategory(base.data.category)) {
+    return {
+      success: true,
+      data: { ...base.data, goldGrams: null, goldPurity: null, costBasis },
+    };
+  }
+
+  const goldGrams = optionalNumber(record.goldGrams);
+  if (goldGrams === null || goldGrams === "invalid" || goldGrams <= 0) {
+    return { success: false, error: "Gold weight must be greater than zero" };
+  }
+
+  const goldPurity = optionalNumber(record.goldPurity);
+  if (goldPurity === null || goldPurity === "invalid" || goldPurity <= 0 || goldPurity > 1) {
+    return { success: false, error: "Gold purity must be between 0 and 1" };
+  }
+
+  return {
+    success: true,
+    data: {
+      ...base.data,
+      goldGrams: Math.round(goldGrams * 10000) / 10000,
+      goldPurity,
+      costBasis: costBasis === null ? null : Math.round(costBasis * 100) / 100,
+    },
+  };
 }
 
 export function validateLiabilityBody(body: unknown): ValidationResult<LiabilityInput> {

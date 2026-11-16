@@ -5,14 +5,30 @@ import type {
   ForecastInsight,
   ForecastInsightSeverity,
 } from "@/lib/forecasting/types";
-import { FORECAST_TIMEFRAME_DAYS, roundMoney } from "@/lib/forecasting/types";
+import { FORECAST_TIMEFRAME_DAYS } from "@/lib/forecasting/types";
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(value);
+const LOW_BALANCE_THRESHOLD = 500;
+
+function currencyFormatter(currency: string) {
+  let formatter: Intl.NumberFormat;
+  try {
+    formatter = new Intl.NumberFormat("en-CA", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 0,
+    });
+  } catch {
+    formatter = new Intl.NumberFormat("en-CA", { maximumFractionDigits: 0 });
+  }
+  return (value: number) => formatter.format(value);
+}
+
+function formatDay(dateKey: string): string {
+  return new Date(`${dateKey}T00:00:00Z`).toLocaleDateString("en-CA", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
 }
 
 function insight(
@@ -27,18 +43,42 @@ export function generateForecastInsights(
   input: ForecastEngineInput,
   result: Pick<
     ForecastEngineResult,
-    "projectedBalance" | "forecastChange" | "confidence" | "forecastPoints"
+    "projectedBalance" | "forecastChange" | "confidence" | "forecastPoints" | "projectedRange"
   >
 ): ForecastInsight[] {
+  // Most important first; the list is truncated at the end.
   const insights: ForecastInsight[] = [];
   const { trends, recurringEvents, timeframe } = input;
   const days = FORECAST_TIMEFRAME_DAYS[timeframe];
+  const money = currencyFormatter(input.currency);
+  const projectedPoints = result.forecastPoints.filter((point) => point.isProjected);
+
+  const firstNegative = projectedPoints.find((point) => point.balance < 0);
+  const lowBalancePoint = projectedPoints.find((point) => point.balance < LOW_BALANCE_THRESHOLD);
+
+  if (firstNegative && input.currentBalance >= 0) {
+    insights.push(
+      insight(
+        "overdraft-warning",
+        `Your balance is projected to go negative around ${formatDay(firstNegative.date)}. Consider moving money or delaying a purchase before then.`,
+        "warning"
+      )
+    );
+  } else if (lowBalancePoint && input.currentBalance >= LOW_BALANCE_THRESHOLD) {
+    insights.push(
+      insight(
+        "low-balance-warning",
+        `Balance may fall below ${money(LOW_BALANCE_THRESHOLD)} around ${formatDay(lowBalancePoint.date)}.`,
+        "warning"
+      )
+    );
+  }
 
   if (result.forecastChange > 0) {
     insights.push(
       insight(
         "balance-growth",
-        `Current trends suggest your balance may grow by ${formatCurrency(result.forecastChange)} over the next ${days} days.`,
+        `Your balance is on track to grow by about ${money(result.forecastChange)} over the next ${days} days (likely ${money(result.projectedRange.low)}–${money(result.projectedRange.high)}).`,
         "success"
       )
     );
@@ -46,8 +86,24 @@ export function generateForecastInsights(
     insights.push(
       insight(
         "balance-decline",
-        `Spending patterns suggest your balance may decrease by ${formatCurrency(Math.abs(result.forecastChange))} over the next ${days} days.`,
+        `Your balance may drop by about ${money(Math.abs(result.forecastChange))} over the next ${days} days (likely ${money(result.projectedRange.low)}–${money(result.projectedRange.high)}).`,
         "warning"
+      )
+    );
+  }
+
+  const biggestBill = recurringEvents
+    .filter((event) => event.type === TransactionType.EXPENSE)
+    .reduce<(typeof recurringEvents)[number] | null>(
+      (max, event) => (!max || event.amount > max.amount ? event : max),
+      null
+    );
+  if (biggestBill) {
+    insights.push(
+      insight(
+        "largest-upcoming-bill",
+        `Largest upcoming bill: ${biggestBill.title} (${money(biggestBill.amount)}) on ${formatDay(biggestBill.date)}.`,
+        "info"
       )
     );
   }
@@ -56,7 +112,7 @@ export function generateForecastInsights(
     insights.push(
       insight(
         "recurring-share",
-        `Recurring subscriptions and bills account for about ${trends.recurringExpenseShare.toFixed(0)}% of recent expenses.`,
+        `Recurring bills and subscriptions are about ${trends.recurringExpenseShare.toFixed(0)}% of recent expenses.`,
         trends.recurringExpenseShare >= 35 ? "warning" : "info"
       )
     );
@@ -66,45 +122,25 @@ export function generateForecastInsights(
     insights.push(
       insight(
         "top-variable-category",
-        `${trends.topVariableCategory} remains the largest variable expense category (${trends.topVariableCategoryShare.toFixed(0)}% of discretionary spending).`,
+        `${trends.topVariableCategory} is your largest non-recurring expense category (${trends.topVariableCategoryShare.toFixed(0)}% of discretionary spending).`,
         "info"
       )
     );
   }
 
-  const projectedPoints = result.forecastPoints.filter((point) => point.isProjected);
-  const lowBalancePoint = projectedPoints.find((point) => point.balance < 500);
-
-  if (lowBalancePoint && input.currentBalance >= 500) {
-    const dayIndex = projectedPoints.indexOf(lowBalancePoint) + 1;
+  if (trends.historyDays > 0 && trends.historyDays < 30) {
     insights.push(
       insight(
-        "low-balance-warning",
-        `Balance may fall below ${formatCurrency(500)} within ${dayIndex} days based on current projections.`,
-        "warning"
+        "short-history",
+        `This forecast is based on only ${trends.historyDays} day${trends.historyDays === 1 ? "" : "s"} of history, so it will sharpen as you log more transactions.`,
+        "info"
       )
     );
-  }
-
-  const recurringIncome = recurringEvents.filter((event) => event.type === TransactionType.INCOME);
-  if (recurringIncome.length > 0 && trends.averageDailyIncome > 0) {
-    const monthlyRecurringIncome = recurringIncome.reduce((sum, event) => sum + event.amount, 0);
-    if (result.forecastChange > 0 && monthlyRecurringIncome > 0) {
-      insights.push(
-        insight(
-          "savings-trend",
-          `Stable income and spending habits could add about ${formatCurrency(result.forecastChange)} to your balance this period.`,
-          "success"
-        )
-      );
-    }
-  }
-
-  if (trends.spendingVolatility > 40) {
+  } else if (trends.spendingVolatility > 40) {
     insights.push(
       insight(
         "volatile-spending",
-        "Daily spending has been highly variable recently, which lowers forecast accuracy.",
+        "Daily spending has been highly variable recently, so the likely range is wide.",
         "warning"
       )
     );

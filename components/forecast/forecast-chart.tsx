@@ -3,10 +3,11 @@
 import { useMemo } from "react";
 import { useTheme } from "@mui/material";
 import {
+  Area,
   CartesianGrid,
+  ComposedChart,
   Legend,
   Line,
-  LineChart,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -40,6 +41,13 @@ export function ForecastChart({ points, loading = false }: ForecastChartProps) {
       historicalBalance: point.isProjected ? null : point.balance,
       projectedBalance:
         point.isProjected || (pivot && point.date === pivot) ? point.balance : null,
+      // [low, high] pair for the shaded "likely range" band; pinned at the pivot.
+      range:
+        point.isProjected && point.lower != null && point.upper != null
+          ? [point.lower, point.upper]
+          : pivot && point.date === pivot
+            ? [point.balance, point.balance]
+            : null,
     }));
 
     return {
@@ -53,7 +61,7 @@ export function ForecastChart({ points, loading = false }: ForecastChartProps) {
   return (
     <ChartCard
       title="Balance Forecast"
-      subtitle="Historical balance (solid) and projected balance (dashed)"
+      subtitle="Historical balance (solid), projected balance (dashed), and likely range (shaded)"
       isEmpty={isEmpty}
       emptyMessage="Add transactions to see your balance forecast."
     >
@@ -61,7 +69,7 @@ export function ForecastChart({ points, loading = false }: ForecastChartProps) {
         <ChartPlotShimmer variant="line" height={plotHeight} />
       ) : (
         <ResponsiveContainer width="100%" height={plotHeight}>
-          <LineChart data={chartData} margin={{ top: 12, right: 16, left: 4, bottom: 4 }}>
+          <ComposedChart data={chartData} margin={{ top: 12, right: 16, left: 4, bottom: 4 }}>
             <CartesianGrid
               strokeDasharray="4 4"
               stroke={getChartGridStroke(theme)}
@@ -84,6 +92,10 @@ export function ForecastChart({ points, loading = false }: ForecastChartProps) {
             <Tooltip
               formatter={(value, name) => {
                 if (value == null || value === "") return ["—", String(name)];
+                if (Array.isArray(value)) {
+                  const [low, high] = value.map(Number);
+                  return [`${formatCurrency(low)} – ${formatCurrency(high)}`, String(name)];
+                }
                 return [
                   formatCurrency(typeof value === "number" ? value : Number(value)),
                   String(name),
@@ -101,6 +113,16 @@ export function ForecastChart({ points, loading = false }: ForecastChartProps) {
                 label={{ value: "Forecast", fill: theme.palette.warning.main, fontSize: 11 }}
               />
             )}
+            <Area
+              type="monotone"
+              dataKey="range"
+              name="Likely range"
+              stroke="none"
+              fill={theme.palette.warning.main}
+              fillOpacity={0.12}
+              connectNulls={false}
+              isAnimationActive={false}
+            />
             <Line
               type="monotone"
               dataKey="historicalBalance"
@@ -120,7 +142,7 @@ export function ForecastChart({ points, loading = false }: ForecastChartProps) {
               dot={false}
               connectNulls
             />
-          </LineChart>
+          </ComposedChart>
         </ResponsiveContainer>
       )}
     </ChartCard>

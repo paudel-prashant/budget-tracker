@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db/prisma";
 import { serializeTransaction } from "@/lib/services/serialize-transaction";
 import { listFinanceAccounts } from "@/lib/data/finance-account-data";
 import { accountNetWorthContribution } from "@/lib/domain/account-net-worth";
+import { revalueGoldAssets } from "@/lib/data/gold-holdings-data";
 import type {
   Asset,
   Liability,
@@ -35,6 +36,9 @@ function serializeAsset(row: {
   value: number;
   asOfDate: Date;
   notes: string | null;
+  goldGrams: number | null;
+  goldPurity: number | null;
+  costBasis: number | null;
   createdAt: Date;
   updatedAt: Date;
 }): Asset {
@@ -45,6 +49,9 @@ function serializeAsset(row: {
     value: row.value,
     asOfDate: row.asOfDate.toISOString(),
     notes: row.notes,
+    goldGrams: row.goldGrams,
+    goldPurity: row.goldPurity,
+    costBasis: row.costBasis,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -215,6 +222,9 @@ export async function getNetWorthDashboardData(
   assertDatabaseUrl();
 
   const currentMonth = getCurrentMonthKey();
+
+  // Mark gold holdings to the live price first so totals and the snapshot reflect it.
+  await revalueGoldAssets(userId);
 
   const [assets, liabilities, transactions, accounts] = await Promise.all([
     prisma.asset.findMany({

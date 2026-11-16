@@ -17,6 +17,9 @@ export type ForecastPoint = {
   isProjected: boolean;
   income?: number;
   expenses?: number;
+  /** Projected points only: ~80% likely range given recent day-to-day variation. */
+  lower?: number;
+  upper?: number;
 };
 
 export type ForecastInsight = {
@@ -40,6 +43,13 @@ export type SpendingTrendMetrics = {
   averageWeeklySpending: number;
   averageMonthlySpending: number;
   averageDailyIncome: number;
+  /** Non-recurring daily spending/income used for projection (one-off spikes capped). */
+  variableDailyExpense: number;
+  variableDailyIncome: number;
+  /** Std. dev. of the daily non-recurring net flow; drives the forecast range. */
+  variableDailyStdDev: number;
+  /** Days of transaction history the averages are based on (max 180). */
+  historyDays: number;
   spendingVolatility: number;
   sampleDayCount: number;
   topVariableCategory: string | null;
@@ -62,6 +72,10 @@ export type ForecastEngineResult = {
   timeframe: ForecastTimeframe;
   currentBalance: number;
   projectedBalance: number;
+  /** ~80% likely range for the projected balance at the end of the timeframe. */
+  projectedRange: { low: number; high: number };
+  /** Lowest projected balance in the timeframe and when it happens. */
+  lowestPoint: { date: string; balance: number } | null;
   forecastChange: number;
   confidence: ForecastConfidence;
   forecastPoints: ForecastPoint[];

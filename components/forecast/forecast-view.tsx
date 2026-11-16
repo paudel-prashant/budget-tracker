@@ -68,6 +68,9 @@ export function ForecastView({ initialForecast = null }: ForecastViewProps) {
               projectedBalance={forecast.projectedBalance}
               forecastChange={forecast.forecastChange}
               confidence={forecast.confidence}
+              // Absent in responses cached before the range was added.
+              projectedRange={forecast.projectedRange}
+              lowestPoint={forecast.lowestPoint}
               dimmed={loading}
             />
 

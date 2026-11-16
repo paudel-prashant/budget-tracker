@@ -69,6 +69,7 @@ import type {
   TransactionListPagination,
   TransactionListResponse,
 } from "@/lib/types";
+import { CategoryLabel } from "@/components/shared/ui/category-icon";
 
 export function TransactionsView() {
   const theme = useTheme();
@@ -618,10 +619,11 @@ export function TransactionsView() {
                         />
                       </TableCell>
                       <TableCell>
-                        {transaction.category}
-                        {transaction.splitGroupId && (
-                          <Chip label="Split" size="small" sx={{ ml: 1, height: 20 }} />
-                        )}
+                        <CategoryLabel category={transaction.category}>
+                          {transaction.splitGroupId && (
+                            <Chip label="Split" size="small" sx={{ height: 20 }} />
+                          )}
+                        </CategoryLabel>
                       </TableCell>
                       <TableCell>{formatDate(transaction.date)}</TableCell>
                       <TableCell align="right">

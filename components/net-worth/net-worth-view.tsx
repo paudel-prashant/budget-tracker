@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Box,
@@ -20,6 +20,9 @@ import { StatCard } from "@/components/shared/ui/stat-card";
 import { NetWorthGrowthChart } from "@/components/dashboard/net-worth-growth-chart";
 import { NetWorthItemCard } from "@/components/net-worth/net-worth-item-card";
 import { AssetLiabilityDialog } from "@/components/net-worth/asset-liability-dialog";
+import { GoldPriceCard } from "@/components/net-worth/gold-price-card";
+import { useGoldPrice } from "@/hooks/use-gold-price";
+import { GOLD_CATEGORY, isGoldCategory } from "@/lib/domain/gold";
 import { DeleteNetWorthItemDialog } from "@/components/net-worth/delete-net-worth-item-dialog";
 import { MoveToAccountDialog, type MoveTarget } from "@/components/net-worth/move-to-account-dialog";
 import { SectionPanel } from "@/components/shared/ui/section-panel";
@@ -50,12 +53,15 @@ export function NetWorthView() {
   const [dialogKind, setDialogKind] = useState<"asset" | "liability">("asset");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<Asset | Liability | null>(null);
+  const [dialogCategory, setDialogCategory] = useState<string | undefined>(undefined);
+  const gold = useGoldPrice();
   const [deleteKind, setDeleteKind] = useState<"asset" | "liability">("asset");
   const [deleteTarget, setDeleteTarget] = useState<Asset | Liability | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
+  /** `silent` refreshes in place (e.g. after a gold price tick) without skeletons. */
+  const loadData = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     setError(null);
 
     try {
@@ -78,6 +84,8 @@ export function NetWorthView() {
 
       if (dashboardRes.ok) {
         const dashboard: NetWorthDashboardData = await dashboardRes.json();
+        // The dashboard re-prices gold holdings, so its asset list is the fresher one.
+        if (dashboard.assets) setAssets(dashboard.assets);
         setSummary(dashboard.current);
         setHistory(dashboard.history);
         setAccounts(dashboard.accounts ?? []); // absent in responses cached by older versions
@@ -110,6 +118,22 @@ export function NetWorthView() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  const goldHoldings = useMemo(
+    () => assets.filter((a) => isGoldCategory(a.category) && a.goldGrams !== null),
+    [assets]
+  );
+
+  // When a new gold quote arrives, re-pull totals so net worth tracks the live price.
+  const lastQuoteRef = useRef<string | null>(null);
+  const quoteStamp = gold.quote ? `${gold.quote.updatedAt}:${gold.quote.pricePerOunce}` : null;
+  const hasGold = goldHoldings.length > 0;
+  useEffect(() => {
+    if (!quoteStamp) return;
+    const previous = lastQuoteRef.current;
+    lastQuoteRef.current = quoteStamp;
+    if (previous && previous !== quoteStamp && hasGold) loadData(true);
+  }, [quoteStamp, hasGold, loadData]);
 
   const activeItems = tab === "assets" ? assets : liabilities;
   const activeKind = tab === "assets" ? "asset" : "liability";
@@ -152,6 +176,15 @@ export function NetWorthView() {
   const openAdd = () => {
     setDialogKind(activeKind);
     setEditItem(null);
+    setDialogCategory(undefined);
+    setDialogOpen(true);
+  };
+
+  const openAddGold = () => {
+    setTab("assets");
+    setDialogKind("asset");
+    setEditItem(null);
+    setDialogCategory(GOLD_CATEGORY);
     setDialogOpen(true);
   };
 
@@ -265,6 +298,14 @@ export function NetWorthView() {
           />
         </ResponsiveColumns>
       )}
+
+      <GoldPriceCard
+        quote={gold.quote}
+        loading={gold.loading}
+        error={gold.error}
+        holdings={goldHoldings}
+        onAddHolding={openAddGold}
+      />
 
       {!loading && history.length > 0 && (
         <Box sx={{ mt: 1 }}>
@@ -393,6 +434,7 @@ export function NetWorthView() {
         kind={dialogKind}
         open={dialogOpen}
         item={editItem}
+        initialCategory={dialogCategory}
         onClose={() => {
           setDialogOpen(false);
           setEditItem(null);

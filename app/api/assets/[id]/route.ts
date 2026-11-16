@@ -7,6 +7,7 @@ import { upsertNetWorthSnapshot } from "@/lib/data/net-worth-data";
 import { getCurrentMonthKey } from "@/lib/domain/monthly-report";
 import { revalidateFinancePages } from "@/lib/utils/revalidate-pages";
 import { validateAssetBody } from "@/lib/validation/net-worth-validation";
+import { priceGoldInput } from "@/lib/data/gold-holdings-data";
 
 export const runtime = "nodejs";
 
@@ -54,7 +55,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     const asset = await prisma.asset.update({
       where: { id },
-      data: validation.data,
+      data: await priceGoldInput(auth.userId, validation.data),
     });
 
     await refreshSnapshot(auth.userId);

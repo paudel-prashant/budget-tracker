@@ -9,6 +9,7 @@
 export const ASSET_CATEGORIES = [
   "Cash",
   "Investments",
+  "Gold",
   "Real Estate",
   "Retirement",
   "Other",

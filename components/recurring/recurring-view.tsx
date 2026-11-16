@@ -45,6 +45,7 @@ import type {
   PriceIncreaseSuggestion,
   SubscriptionSuggestion,
 } from "@/lib/domain/subscription-detection";
+import { CategoryLabel } from "@/components/shared/ui/category-icon";
 
 type RecurringTab = "list" | "calendar";
 
@@ -343,7 +344,9 @@ export function RecurringView() {
                             variant="outlined"
                           />
                         </TableCell>
-                        <TableCell>{item.category}</TableCell>
+                        <TableCell>
+                          <CategoryLabel category={item.category} />
+                        </TableCell>
                         <TableCell>
                           <FrequencyBadge frequency={item.frequency} />
                         </TableCell>
