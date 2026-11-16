@@ -80,7 +80,11 @@ export function DashboardCharts({
       gap={2.5}
     >
       <BalanceLineChart data={balanceChartData} chartReady={mounted} />
-      <MonthlyIncomeExpenseChart data={monthlyChartData} chartReady={mounted} />
+      <MonthlyIncomeExpenseChart
+        data={monthlyChartData}
+        dailyData={balanceChartData}
+        chartReady={mounted}
+      />
     </ResponsiveColumns>
   );
 }

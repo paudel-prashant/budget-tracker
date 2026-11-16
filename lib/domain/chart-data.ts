@@ -39,15 +39,19 @@ export function buildBalanceOverTimeData(
 
   for (const date of Array.from(byDate.keys()).sort()) {
     const dayTransactions = byDate.get(date) ?? [];
+    let income = 0;
+    let expenses = 0;
 
     for (const transaction of dayTransactions) {
-      runningBalance +=
-        transaction.type === "INCOME"
-          ? amountForTotals(transaction)
-          : -amountForTotals(transaction);
+      if (transaction.type === "INCOME") {
+        income += amountForTotals(transaction);
+      } else {
+        expenses += amountForTotals(transaction);
+      }
     }
+    runningBalance += income - expenses;
 
-    points.push({ date, balance: runningBalance });
+    points.push({ date, balance: runningBalance, income, expenses });
   }
 
   if (points.length === 0 && openingBalance !== 0 && options.rangeStartDate) {

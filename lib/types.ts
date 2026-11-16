@@ -112,6 +112,9 @@ export type Summary = {
 export type BalanceChartPoint = {
   date: string;
   balance: number;
+  /** That day's totals (absent in responses cached before they were added). */
+  income?: number;
+  expenses?: number;
 };
 
 export type MonthlyChartPoint = {

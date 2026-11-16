@@ -61,3 +61,10 @@ export function getAxisTick(theme: Theme, fontSize = 11) {
 export function currencyAxisTick(value: number | string): string {
   return formatCurrencyAxis(Number(value));
 }
+
+/** The props Recharts passes to a custom tooltip `content` element. */
+export type ChartTooltipProps = {
+  active?: boolean;
+  payload?: ReadonlyArray<{ payload?: unknown }>;
+  label?: string | number;
+};
